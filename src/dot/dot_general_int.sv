@@ -1,35 +1,34 @@
-`ifndef __DOT_GENERAL_SV__
-`define __DOT_GENERAL_SV__
+`ifndef __DOT_GENERAL_INT_SV__
+`define __DOT_GENERAL_INT_SV__
 
 `include "../util/arith/dot_int.sv"
 `include "../util/arith/add_nrm.sv"
 
-module dot_general #(
+module dot_general_int #(
     parameter C = 256,
-
     parameter k = 32,
     parameter bit_width = 8,
     parameter out_width = 8
+
+    localparam dp_width = 2*bit_width + $clog2(k),
+    localparam length = C/k,
+    localparam tree_depth = $clog2(length)
 )(
     input  logic i_clk,
 
     input  logic signed [bit_width-1:0] i_X     [C],
     input  logic signed [bit_width-1:0] i_Y     [C],
-    input  logic         [8-1:0] i_S     [C/k],
-    input  logic         [8-1:0] i_T     [C/k],
-    output logic [out_width-1:0] o_dp,
-    output logic         [8-1:0] o_scale
+    input  logic                [8-1:0] i_S     [length],
+    input  logic                [8-1:0] i_T     [length],
+    output logic        [out_width-1:0] o_dp,
+    output logic                [8-1:0] o_scale
 );
 
-    localparam dp_width = 2*bit_width + $clog2(k);
-
-    localparam length = C/k;
-    localparam tree_depth = $clog2(length);
 
     // Sum within blocks
-    logic signed [dp_width-1:0] dot_out [C/k];
+    logic signed [dp_width-1:0] dot_out [length];
 
-    for(genvar i=0; i<(C/k); i++) begin
+    for(genvar i=0; i<(length); i++) begin
         dot_int #(
             .bit_width(bit_width),
             .k(k)
@@ -41,9 +40,9 @@ module dot_general #(
     end
 
     // Sum scales
-    logic [8-1:0] dot_scales [C/k];
+    logic [8-1:0] dot_scales [length];
 
-    for(genvar i=0; i<(C/k); i++) begin
+    for(genvar i=0; i<(length); i++) begin
         assign dot_scales[i] = i_S[i] + i_T[i];
     end
 
@@ -96,4 +95,4 @@ module dot_general #(
 
 endmodule
 
-`endif // __DOT_GENERAL_SV__
+`endif // __DOT_GENERAL_INT_SV__
