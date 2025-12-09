@@ -1,3 +1,6 @@
+`ifndef __FP_RND_NAN_RNE_SV__
+`define __FP_RND_NAN_RNE_SV__
+
 module fp_rnd_nan_rne #(
     parameter width_i     = 8,
     parameter width_o_exp = 3,
@@ -158,3 +161,5 @@ module fp_rnd_nan_rne #(
     end
 
 endmodule
+
+`endif // __FP_RND_NAN_RNE_SV__

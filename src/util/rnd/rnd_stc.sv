@@ -1,3 +1,6 @@
+`ifndef __RND_STC_SV__
+`define __RND_STC_SV__
+
 module rnd_stc #(
     parameter width_i = 24,
     parameter width_o = 4
@@ -51,3 +54,5 @@ module rnd_stc #(
     end
 
 endmodule
+
+`endif // __RND_STC_SV__

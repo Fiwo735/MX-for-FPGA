@@ -1,3 +1,6 @@
+`ifndef __RND_RNE_SV__
+`define __RND_RNE_SV__
+
 module rnd_rne #(
     parameter width_i = 24,
     parameter width_o = 4
@@ -36,3 +39,5 @@ module rnd_rne #(
     end
 
 endmodule
+
+`endif // __RND_RNE_SV__

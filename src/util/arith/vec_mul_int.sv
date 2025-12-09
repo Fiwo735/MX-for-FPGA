@@ -1,3 +1,8 @@
+`ifndef __VEC_MUL_INT_SV__
+`define __VEC_MUL_INT_SV__
+
+`include "mul_int.sv"
+
 module vec_mul_int #(
     parameter bit_width = 8,
     parameter length    = 32,
@@ -31,3 +36,5 @@ module vec_mul_int #(
     end
 
 endmodule
+
+`endif // __VEC_MUL_INT_SV__

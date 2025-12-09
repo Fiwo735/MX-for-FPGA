@@ -1,3 +1,8 @@
+`ifndef __DOT_FP_SPEC_SV__
+`define __DOT_FP_SPEC_SV__
+
+`include "dot_fp.sv"
+
 module dot_fp_spec #(
     parameter exp_width = 5,
     parameter man_width = 2,
@@ -60,3 +65,5 @@ module dot_fp_spec #(
         
 
 endmodule
+
+`endif // __DOT_FP_SPEC_SV__

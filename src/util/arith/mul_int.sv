@@ -1,3 +1,6 @@
+`ifndef __MUL_INT_SV__
+`define __MUL_INT_SV__
+
 module mul_int #(
     parameter bit_width = 8,
     parameter prd_width = 2*bit_width
@@ -24,5 +27,6 @@ module mul_int #(
         o_prd = prd_sign ? -u_prd : u_prd;
     end
 
-
 endmodule
+
+`endif // __MUL_INT_SV__

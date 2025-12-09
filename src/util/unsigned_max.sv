@@ -1,3 +1,6 @@
+`ifndef __UNSIGNED_MAX_SV__
+`define __UNSIGNED_MAX_SV__
+
 module unsigned_max #(
     parameter width   = 8,   // Width of inputs.
     parameter length  = 32,  // Number of values being compared.
@@ -59,3 +62,5 @@ module unsigned_max #(
     end
 
 endmodule
+
+`endif // __UNSIGNED_MAX_SV__

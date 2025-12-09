@@ -1,3 +1,8 @@
+`ifndef __VEC_MUL_FP_SV__
+`define __VEC_MUL_FP_SV__
+
+`include "mul_fp.sv"
+
 module vec_mul_fp #(
     parameter exp_width = 5,
     parameter man_width = 2,
@@ -35,3 +40,5 @@ module vec_mul_fp #(
     end
 
 endmodule
+
+`endif // __VEC_MUL_FP_SV__

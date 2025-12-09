@@ -1,3 +1,6 @@
+`ifndef __VEC_SUM_INT_SV__
+`define __VEC_SUM_INT_SV__
+
 module vec_sum_int #(
     parameter bit_width  = 16,
     parameter length     = 32,
@@ -37,3 +40,5 @@ module vec_sum_int #(
     assign o_sum = tree_add[tree_depth-1].p0_sum[0];
 
 endmodule
+
+`endif // __VEC_SUM_INT_SV__

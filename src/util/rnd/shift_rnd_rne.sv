@@ -1,3 +1,6 @@
+`ifndef __SHIFT_RND_RNE_SV__
+`define __SHIFT_RND_RNE_SV__
+
 module shift_rnd_rne #(
     parameter width_i     = 9,
     parameter width_o     = 8,
@@ -61,3 +64,5 @@ module shift_rnd_rne #(
 
 
 endmodule
+
+`endif // __SHIFT_RND_RNE_SV__

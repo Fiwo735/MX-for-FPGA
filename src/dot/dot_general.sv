@@ -1,3 +1,9 @@
+`ifndef __DOT_GENERAL_SV__
+`define __DOT_GENERAL_SV__
+
+`include "../util/arith/dot_int.sv"
+`include "../util/arith/add_nrm.sv"
+
 module dot_general #(
     parameter C = 256,
 
@@ -89,3 +95,5 @@ module dot_general #(
 
 
 endmodule
+
+`endif // __DOT_GENERAL_SV__

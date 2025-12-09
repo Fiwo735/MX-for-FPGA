@@ -1,3 +1,6 @@
+`ifndef __CLZ_INT_SV__
+`define __CLZ_INT_SV__
+
 module clz_int #(
     parameter width_i = 8,
     parameter width_o = $clog2(width_i+1)
@@ -22,3 +25,5 @@ module clz_int #(
     assign o_lz = num_lz;
 
 endmodule
+
+`endif // __CLZ_INT_SV__

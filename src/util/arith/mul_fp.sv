@@ -1,3 +1,8 @@
+`ifndef __MUL_FP_SV__
+`define __MUL_FP_SV__
+
+`include "mul_int.sv"
+
 module mul_fp #(
     parameter exp_width = 5,
     parameter man_width = 2,
@@ -60,3 +65,5 @@ module mul_fp #(
     assign o_prd = prd_shifted;
 
 endmodule
+
+`endif // __MUL_FP_SV__

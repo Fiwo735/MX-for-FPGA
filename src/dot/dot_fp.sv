@@ -1,3 +1,9 @@
+`ifndef __DOT_FP_SV__
+`define __DOT_FP_SV__
+
+`include "../util/arith/vec_mul_fp.sv"
+`include "../util/arith/vec_sum_int.sv"
+
 module dot_fp #(
     parameter exp_width = 5,
     parameter man_width = 2,
@@ -40,3 +46,5 @@ module dot_fp #(
 
 
 endmodule
+
+`endif // __DOT_FP_SV__
