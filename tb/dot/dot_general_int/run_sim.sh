@@ -1,7 +1,7 @@
 #!/bin/bash
 
 dir_name="dot"
-module_name="dot_fp"
+module_name="dot_general_int"
 dir_module_name=$dir_name"/"$module_name
 out_dir_name="tb/"$dir_module_name"/output"
 src_file="src/"$dir_module_name".sv"

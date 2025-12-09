@@ -11,4 +11,4 @@ tb_file="tb/"$dir_module_name"/"$module_name"_tb.sv"
 mkdir -p "$out_dir_name" && cd "$out_dir_name"
 
 xvlog -sv ../../../../"$src_file" ../../../../"$tb_file"
-xelab -sv "$module_name"_tb -R
+xelab -sv "$module_name"_tb -R 

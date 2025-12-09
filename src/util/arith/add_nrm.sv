@@ -1,6 +1,8 @@
 `ifndef __ADD_NRM_SV__
 `define __ADD_NRM_SV__
 
+`include "../clz_int.sv"
+
 module add_nrm #(
     parameter int_w = 24,
     parameter scale_w = 8
