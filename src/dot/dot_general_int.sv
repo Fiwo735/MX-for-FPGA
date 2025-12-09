@@ -1,12 +1,12 @@
 `ifndef __DOT_GENERAL_INT_SV__
 `define __DOT_GENERAL_INT_SV__
 
-`include "dot_int.sv"
-`include "../util/arith/add_nrm.sv"
+`include "../../dot/dot_int.sv"
+`include "../../util/arith/add_nrm.sv"
 
 module dot_general_int #(
-    parameter C = 256,
-    parameter k = 32,
+    parameter C = 8,
+    parameter k = 4,
     parameter bit_width = 8,
     parameter out_width = 8,
 
@@ -15,7 +15,6 @@ module dot_general_int #(
     localparam tree_depth = $clog2(block_count)
 )(
     input  logic i_clk,
-
     input  logic signed [bit_width-1:0] i_X     [C],
     input  logic signed [bit_width-1:0] i_Y     [C],
     input  logic                [8-1:0] i_S     [block_count],

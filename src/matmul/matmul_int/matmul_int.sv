@@ -1,14 +1,14 @@
 `ifndef __MATMUL_INT_SV__
 `define __MATMUL_INT_SV__
 
-`include "dot_general_int.sv"
+`include "../../dot/dot_general_int.sv"
 
 module matmul_int #(
     parameter x_rows = 4,
-    parameter vec_elem_count = 256, // = x_cols = y_rows
+    parameter vec_elem_count = 8, // = x_cols = y_rows
     parameter y_cols = 2,
 
-    parameter k = 32, // block size
+    parameter k = 2, // block size
     parameter bit_width = 8,
     parameter out_width = 8,
     parameter scale_width = 8,
@@ -28,6 +28,18 @@ module matmul_int #(
 
     for (genvar i=0; i<x_rows; i++) begin : row_loop
         for (genvar j=0; j<y_cols; j++) begin : col_loop
+
+            logic signed [bit_width-1:0]   B_col [y_rows];
+            logic      [scale_width-1:0] S_B_col [block_count];
+
+            for (genvar r = 0; r < y_rows; r++) begin
+                assign B_col[r] = B_i[r][j];
+            end
+
+            for (genvar r = 0; r < block_count; r++) begin
+                assign S_B_col[r] = S_B_i[r][j];
+            end
+
             dot_general_int #(
                 .C(vec_elem_count),
                 .k(k),
@@ -36,9 +48,9 @@ module matmul_int #(
             ) u_dot_general (
                 .i_clk(i_clk),
                 .i_X(A_i[i]),
-                .i_Y(B_i[:,j]),
+                .i_Y(B_col),
                 .i_S(S_A_i[i]),
-                .i_T(S_B_i[:,j]),
+                .i_T(S_B_col),
                 .o_dp(C_o[i][j]),
                 .o_scale(S_C_o[i][j])
             );

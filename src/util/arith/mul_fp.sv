@@ -1,7 +1,7 @@
 `ifndef __MUL_FP_SV__
 `define __MUL_FP_SV__
 
-`include "mul_int.sv"
+`include "../util/arith/mul_int.sv"
 
 module mul_fp #(
     parameter exp_width = 5,

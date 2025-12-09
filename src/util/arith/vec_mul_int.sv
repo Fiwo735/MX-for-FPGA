@@ -1,7 +1,7 @@
 `ifndef __VEC_MUL_INT_SV__
 `define __VEC_MUL_INT_SV__
 
-`include "mul_int.sv"
+`include "../../util/arith/mul_int.sv"
 
 module vec_mul_int #(
     parameter bit_width = 8,

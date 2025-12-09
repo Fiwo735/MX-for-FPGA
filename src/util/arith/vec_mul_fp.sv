@@ -1,7 +1,7 @@
 `ifndef __VEC_MUL_FP_SV__
 `define __VEC_MUL_FP_SV__
 
-`include "mul_fp.sv"
+`include "../util/arith/mul_fp.sv"
 
 module vec_mul_fp #(
     parameter exp_width = 5,
