@@ -3,6 +3,11 @@
 
 `include "../../dot/dot_general_int.sv"
 
+// A: [x_rows x x_cols]
+// B: [y_rows x y_cols]
+// C: [x_rows x y_cols]
+// x_cols == y_rows
+
 module matmul_int #(
     parameter x_rows = 4,
     parameter vec_elem_count = 8, // = x_cols = y_rows
@@ -18,16 +23,16 @@ module matmul_int #(
     localparam block_count = vec_elem_count/k
 )(
     input  logic                        i_clk,
-    input  logic signed [bit_width-1:0]   A_i [x_rows][x_cols],
-    input  logic signed [bit_width-1:0]   B_i [y_rows][y_cols],
-    input  logic      [scale_width-1:0] S_A_i [x_rows][block_count],
-    input  logic      [scale_width-1:0] S_B_i [block_count][y_cols],
-    output logic        [out_width-1:0]   C_o [x_rows][y_cols],
-    output logic      [scale_width-1:0] S_C_o [x_rows][y_cols]
+    input  logic signed   [bit_width-1:0]   A_i [x_rows][x_cols],
+    input  logic signed   [bit_width-1:0]   B_i [y_rows][y_cols],
+    input  logic        [scale_width-1:0] S_A_i [x_rows][block_count],
+    input  logic        [scale_width-1:0] S_B_i [block_count][y_cols],
+    output logic signed   [out_width-1:0]   C_o [x_rows][y_cols],
+    output logic        [scale_width-1:0] S_C_o [x_rows][y_cols]
 );
 
-    for (genvar i=0; i<x_rows; i++) begin : row_loop
-        for (genvar j=0; j<y_cols; j++) begin : col_loop
+    for (genvar i = 0; i < x_rows; i++) begin : row_loop
+        for (genvar j = 0; j < y_cols; j++) begin : col_loop
 
             logic signed [bit_width-1:0]   B_col [y_rows];
             logic      [scale_width-1:0] S_B_col [block_count];

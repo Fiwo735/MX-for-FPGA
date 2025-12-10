@@ -10,5 +10,5 @@ $ ./tb/dot/<module_name>/run_sim.sh
 ## Synthesis
 From top-level directory:
 ```
-$ vivado -mode batch -source ./src/matmul/matmul_int/run_synth.tcl
+$ vivado -mode batch -source ./src/attention/attention_int/run_synth.tcl
 ```

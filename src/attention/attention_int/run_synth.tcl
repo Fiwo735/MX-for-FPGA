@@ -1,6 +1,6 @@
 set part        xcu250-figd2104-2L-e
-set top         matmul_int
-set outputDir   ./src/matmul/matmul_int/synth_output
+set top         attention_int
+set outputDir   ./src/attention/attention_int/synth_output
 file mkdir $outputDir
 
 # Set parameters based on command line arguments or defaults
@@ -20,7 +20,7 @@ set timestamp [clock format [clock seconds] -format "%Y%m%d_%H%M"]
 set prefix "${outputDir}/${top}_${timestamp}"
 
 # Read sources
-read_verilog    [glob ./src/matmul/matmul_int/*.sv]
+read_verilog    [glob ./src/attention/attention_int/*.sv]
 read_xdc        [ glob ./src/*.xdc ]
 
 # Synthesis
@@ -39,12 +39,12 @@ puts "Time for write_checkpoint: [expr {($t3 - $t2) / 1000.0}] seconds"
 report_utilization      -file ${prefix}_util.rpt
 set t4 [clock milliseconds]
 puts "Time for report_utilization: [expr {($t4 - $t3) / 1000.0}] seconds"
-report_timing_summary   -datasheet -file ${prefix}_timing.rpt
-set t5 [clock milliseconds]
-puts "Time for report_timing_summary: [expr {($t5 - $t4) / 1000.0}] seconds"
-report_power            -file ${prefix}_power.rpt
-set t6 [clock milliseconds]
-puts "Time for report_power: [expr {($t6 - $t5) / 1000.0}] seconds"
+# report_timing_summary   -datasheet -file ${prefix}_timing.rpt
+# set t5 [clock milliseconds]
+# puts "Time for report_timing_summary: [expr {($t5 - $t4) / 1000.0}] seconds"
+# report_power            -file ${prefix}_power.rpt
+# set t6 [clock milliseconds]
+# puts "Time for report_power: [expr {($t6 - $t5) / 1000.0}] seconds"
 
 # opt_design
 # place_design
