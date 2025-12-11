@@ -6,3 +6,4 @@ doc/img
 .Xil
 vivado*
 *.log
+venv/
