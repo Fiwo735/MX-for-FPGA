@@ -1,14 +1,34 @@
 # MX-for-FPGA
 Implementation of Microscaling data formats in SystemVerilog.
 
-## Simulation
-From top-level directory:
+## How to run
+### Simulation
 ```
-$ ./tb/dot/<module_name>/run_sim.sh
+MX-for-FPGA:~$ ./tb/dot/<module_name>/run_sim.sh
 ```
 
-## Synthesis
-From top-level directory:
+### Synthesis
 ```
-$ vivado -mode batch -source ./src/attention/attention_int/run_synth.tcl
+MX-for-FPGA:~$ vivado -mode batch -source ./src/attention/attention_int/run_synth.tcl
+```
+
+### DSE
+First time:
+```
+MX-for-FPGA:~$ python3 -m venv venv
+MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ pip install -r requirements.txt
+MX-for-FPGA:~$ python DSE.py
+```
+
+Afterwards:
+```
+MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ python DSE.py
+```
+
+For long running jobs:
+```
+MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ nohup python DSE.py > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
 ```
