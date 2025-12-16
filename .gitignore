@@ -7,3 +7,8 @@ doc/img
 vivado*
 *.log
 venv/
+xsim.dir
+tb/attention_test
+attention_test
+src/attention/attention_int/synth_output
+*.pb
