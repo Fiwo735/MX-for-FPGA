@@ -26,6 +26,7 @@ set prefix "${outputDir}/${top}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_
 # Read sources
 read_verilog    [glob ./src/attention/attention_int/*.sv]
 read_verilog    [glob ./src/attention/attention_int/mxoperators/*.sv]
+read_verilog    [glob ./src/attention/attention_int/mxoperators/lib/*.sv]
 read_xdc        [ glob ./src/*.xdc ]
 
 # Synthesis

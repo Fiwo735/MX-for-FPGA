@@ -58,23 +58,26 @@ module or_tree #(
         localparam LEVEL_IN_WIDTH = IN_WIDTH;
         localparam LEVEL_OUT_WIDTH = LEVEL_IN_WIDTH;
 
+        localparam LEVEL_IN_BITS = LEVEL_IN_SIZE * IN_WIDTH;
+        localparam LEVEL_OUT_BITS = LEVEL_OUT_SIZE * IN_WIDTH;
+
         or_tree_layer #(
             .IN_SIZE (LEVEL_IN_SIZE),
             .IN_WIDTH(LEVEL_IN_WIDTH)
         ) layer (
-            .data_in(data[i]),  // flattened LEVEL_IN_SIZE * LEVEL_IN_WIDTH
-            .data_out(or_result[i])  // flattened LEVEL_OUT_SIZE * LEVEL_OUT_WIDTH
+            .data_in(data[i][LEVEL_IN_BITS-1:0]),
+            .data_out(or_result[i][LEVEL_OUT_BITS-1:0])
         );
 
         register_slice #(
-            .DATA_WIDTH(LEVEL_OUT_SIZE * LEVEL_OUT_WIDTH)
+            .DATA_WIDTH(LEVEL_OUT_BITS)
         ) register_slice_i (
             .clk           (clk),
             .rst           (rst),
-            .data_in       (or_result[i]),
+            .data_in       (or_result[i][LEVEL_OUT_BITS-1:0]),
             .data_in_valid (valid[i]),
             .data_in_ready (ready[i]),
-            .data_out      (data[i+1]),
+            .data_out      (data[i+1][LEVEL_OUT_BITS-1:0]),
             .data_out_valid(valid[i+1]),
             .data_out_ready(ready[i+1])
         );
