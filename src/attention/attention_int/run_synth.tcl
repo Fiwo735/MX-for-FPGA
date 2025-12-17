@@ -29,8 +29,10 @@ read_verilog    [glob ./src/attention/attention_int/mxoperators/*.sv]
 read_xdc        [ glob ./src/*.xdc ]
 
 # Synthesis
+# Suppress "Port unconnected" warnings (benign for parameterized IP and combinatorial wrappers)
+set_msg_config -id {Synth 8-7129} -suppress
 set t1 [clock milliseconds]
-synth_design -top $top -part $part -flatten rebuilt -retiming -generic $generics
+synth_design -top $top -part $part -flatten rebuilt -generic $generics
 set t2 [clock milliseconds]
 puts "Time for synth_design: [expr {($t2 - $t1) / 1000.0}] seconds"
 
