@@ -75,11 +75,12 @@ class DesignConfig:
     return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, bit_width=bit_width, out_width=out_width, scale_width=scale_width)
 
 class SynthesisResult:
-  def __init__(self, design_config, power, timing, utilisation):
+  def __init__(self, design_config, power, timing, utilisation, accuracy):
     self.design_config = design_config
     self.power = power
     self.timing = timing
     self.utilisation = utilisation
+    self.accuracy = accuracy
     
   def get_aggregated_resource_usage(self):
     return sum(
@@ -100,6 +101,7 @@ class SynthesisResult:
         "max_freq": 0
     }
     utilisation = copy.deepcopy(SynthesisHandler.get_available_fpga_resources())
+    accuracy = 0.0
     
     for result in all_results:
       power['total'] = min(power['total'], result.power['total'])
@@ -108,8 +110,9 @@ class SynthesisResult:
       timing['max_freq'] = max(timing['max_freq'], result.timing['max_freq'])
       for key in SynthesisHandler.get_available_fpga_resources().keys():
         utilisation[key] = min(utilisation[key], result.utilisation[key])
+      accuracy = max(accuracy, result.accuracy)
     
-    return cls(design_config=design, power=power, timing=timing, utilisation=utilisation)
+    return cls(design_config=design, power=power, timing=timing, utilisation=utilisation, accuracy=accuracy)
     
   @classmethod
   def create_ideal_result_normalised(cls):
@@ -124,8 +127,9 @@ class SynthesisResult:
         "max_freq": 1.0
     }
     utilisation = {key: 0.0 for key in SynthesisHandler.get_available_fpga_resources().keys()}
+    accuracy = 1.0
     
-    return cls(design_config=design, power=power, timing=timing, utilisation=utilisation)
+    return cls(design_config=design, power=power, timing=timing, utilisation=utilisation, accuracy=accuracy)
     
   @staticmethod
   def normalise_results(results):
@@ -137,6 +141,8 @@ class SynthesisResult:
       
       for key in SynthesisHandler.get_available_fpga_resources().keys():
         result.utilisation[key] = result.utilisation[key] / ideal_result.utilisation[key] if ideal_result.utilisation[key] > 0 else 0.0
+        
+      result.accuracy = result.accuracy / ideal_result.accuracy
         
     return results_normalised
   
@@ -152,6 +158,8 @@ class SynthesisResult:
     s += "Resource utilisation:\n"
     for key, value in self.utilisation.items():
       s += f"\t{key}: {value:,} ({(value / SynthesisHandler.get_available_fpga_resources(key)) * 100:.2f}%)\n"
+      
+    s += f"Accuracy: {self.accuracy:.2f}%\n"
 
     return s
 
@@ -184,13 +192,11 @@ class SynthesisHandler:
     
     return AVAILABLE_FPGA_RESOURCES if key is None else AVAILABLE_FPGA_RESOURCES.get(key, None)
     
-  def check_if_results_exist(self, design):
-    base_pattern = f"{design!r}" + "_time_*"
-    power_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_power.rpt"))
-    timing_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_timing.rpt"))
-    util_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_util.rpt"))
-    
-    return power_matches and timing_matches and util_matches
+  def check_if_result_exist(self, design, suffix):
+    return bool(glob.glob(os.path.join(self.synth_output_dir, f"{design!r}_time_*{suffix}")))
+  
+  def check_if_results_exist(self, design, suffixes):
+    return all(self.check_if_result_exist(design, suffix) for suffix in suffixes)
   
   def check_if_design_is_invalid(self, design):
     # All parameters must be >= 0
@@ -217,7 +223,7 @@ class SynthesisHandler:
     print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
     
     for design in self.designs_to_synthesise:
-      if self.check_if_results_exist(design):
+      if self.check_if_results_exist(design, ["_power.rpt", "_timing.rpt", "_util.rpt"]):
         print(f"Skipping synthesis for {design!r} as results already exist.")
         continue
       
@@ -303,23 +309,49 @@ class SynthesisHandler:
     results["Muxes"] = total_muxes
 
     return results
+  
+  def _read_accuracy_report(self, file_path):
+    with open(file_path, 'r') as file:
+      text = file.read()
+      
+    accuracy_match = re.search(r"Validation accuracy:\s*(\d+\.\d+)%", text)
+    accuracy = float(accuracy_match.group(1))
+
+    return accuracy
+  
+  def _generate_accuracy_report(self, design, accuracy_report_path):
+    accuracy_cmd = f"python bert/bert_sst2.py --silent"
+      
+    try:
+        completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Accuracy measurement failed for {design} with return code: {e.returncode}")
+    except Exception as e:
+        print(f"An unknown error occurred while running accuracy measurement for {design}: {e}")
     
   def _process_results(self, design_str, date_time):
     file_path = os.path.join(self.synth_output_dir, f"{design_str}_time_{date_time.strftime(self._time_format)}")
+    design = DesignConfig.from_str(design_str)
     
     power_report_path = f"{file_path}_power.rpt"
     timing_report_path = f"{file_path}_timing.rpt"
     utilisation_report_path = f"{file_path}_util.rpt"
-
+    accuracy_report_path = f"{file_path}_accuracy.txt"
+    
+    # Generate missing accuracy report on the fly
+    if not self.check_if_result_exist(design, "_accuracy.txt"):
+      print(f"Accuracy report not found for {design!r}, generating on the fly...")
+      self._generate_accuracy_report(design, accuracy_report_path)
+      
     try:
       dynamic_power, static_power = self._read_power_report(power_report_path)
       no_timing_violation, max_freq = self._read_timing_report(timing_report_path)
       utilisation = self._read_utilisation_report(utilisation_report_path)
+      accuracy = self._read_accuracy_report(accuracy_report_path)
     except FileNotFoundError as e:
       print(f"Error processing {file_path}: {e} - the report is probably being generated, try again later.")
       return
     
-    design = DesignConfig.from_str(design_str)
     result = SynthesisResult(
       design_config=design,
       power={
@@ -331,7 +363,8 @@ class SynthesisHandler:
           "no_violation": no_timing_violation,
           "max_freq": max_freq
       },
-      utilisation=utilisation
+      utilisation=utilisation,
+      accuracy=accuracy
     )
     
     # Only include results that have valid max frequency

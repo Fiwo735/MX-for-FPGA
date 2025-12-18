@@ -39,7 +39,7 @@ def get_logits_from_outputs(outputs):
         # If it's a tensor or other format, assume it's the logits directly
         return outputs
 
-def validate_model(model, validation_loader, criterion=None):
+def validate_model(model, validation_loader, criterion=None, silent=False):
 
     model.eval()
     device = next(model.parameters()).device
@@ -48,7 +48,7 @@ def validate_model(model, validation_loader, criterion=None):
     loss = 0.0
 
     with torch.no_grad():
-        for batch_idx, batch in enumerate(tqdm(validation_loader, desc="Validating")):
+        for batch_idx, batch in enumerate(tqdm(validation_loader, desc="Validating", disable=silent)):
             input_ids = batch['input_ids'].to(device)
             labels = batch['label'].to(device)
 
@@ -83,29 +83,34 @@ def main():
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size (default: %(default)s)')
     parser.add_argument('--max_length', type=int, default=128, help='Maximum sequence length (default: %(default)s)')
     parser.add_argument('--max_num_samples', type=int, default=None, help='Crop the validation set to a maximum number of samples. None=no cropping. (default: %(default)s)')
-    parser.add_argument('--model_path', default='best_fp32_model.pth', help='Path to saved model weights (optional)')
+    parser.add_argument('--model_path', default='bert/best_fp32_model.pth', help='Path to saved model weights (optional)')
+    parser.add_argument('--silent', action='store_true', help='Silent mode (default: %(default)s)')
     
     args = parser.parse_args()
     
     # Setup
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
+    if not args.silent:
+        print(f"Using device: {device}")
     
     # Load tokenizer and create model
-    print("Loading tokenizer and creating model...")
+    if not args.silent:
+        print("Loading tokenizer and creating model...")
     tokenizer = BertTokenizer.from_pretrained('prajjwal1/bert-tiny')
     config = create_tinybert_config()
     model = BertForSequenceClassification(config)
     
     # Load saved weights if provided
     if args.model_path:
-        print(f"Loading model weights from {args.model_path}")
-        model.load_state_dict(torch.load(args.model_path, map_location=device))
+        if not args.silent:
+            print(f"Loading model weights from {args.model_path}")
+        model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=False))
     
     model.to(device)
     model.eval()
     
-    print(f"Model has {sum(p.numel() for p in model.parameters()):,} parameters")
+    if not args.silent:
+        print(f"Model has {sum(p.numel() for p in model.parameters()):,} parameters")
     
     # Load validation data
     val_loader = fetch_dataloader(
@@ -116,21 +121,21 @@ def main():
         batch_size=args.batch_size
     )
     
-    print(f"Validation samples: {len(val_loader.dataset)}")
+    if not args.silent:
+        print(f"Validation samples: {len(val_loader.dataset)}")
     
     # Evaluate model
-    val_acc, _ = validate_model(model, val_loader)
-    
-    print(f"\nValidation accuracy: {val_acc:.2f}%")
+    val_acc, _ = validate_model(model, val_loader, silent=args.silent)
 
-    weight_dir = pathlib.Path('saved_tensors/weights')
+    weight_dir = pathlib.Path('bert/saved_tensors/weights')
     weight_dir.mkdir(parents=True, exist_ok=True)
     save_weights(model, weight_dir)
 
-    act_dir = pathlib.Path('saved_tensors/acts')
+    act_dir = pathlib.Path('bert/saved_tensors/acts')
     act_dir.mkdir(parents=True, exist_ok=True)
-    save_acts(model, val_loader, model.device, act_dir)
+    save_acts(model, val_loader, model.device, act_dir, silent=args.silent)
 
+    print(f"Validation accuracy: {val_acc:.2f}%")
 
 if __name__ == "__main__":
     main()
