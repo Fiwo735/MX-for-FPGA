@@ -8,6 +8,7 @@ import itertools
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from datetime import datetime
 
 class DesignConfig:
   def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, bit_width=-1, out_width=-1, scale_width=-1):
@@ -29,21 +30,37 @@ class DesignConfig:
       f"bit_width_{self.bit_width}_out_width_{self.out_width}_scale_width_{self.scale_width}"
     )
     
+  def __str__(self):
+    s = f"Design: {self.name}\n"
+    s += f"  S_q: {self.S_q}\n"
+    s += f"  S_kv: {self.S_kv}\n"
+    s += f"  d_kq: {self.d_kq}\n"
+    s += f"  d_v: {self.d_v}\n"
+    s += f"  k: {self.k}\n"
+    s += f"  bit_width: {self.bit_width}\n"
+    s += f"  out_width: {self.out_width}\n"
+    s += f"  scale_width: {self.scale_width}\n"
+    return s
+    
   def get_vivado_tclargs(self):
     return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.bit_width} {self.out_width} {self.scale_width}"
   
   @staticmethod
   def get_filename_regex():
-    return r"/([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_bit_width_(\d+)_out_width_(\d+)_scale_width_(\d+)_time_\d+"
+    return r"([^/]+_S_q_\d+_S_kv_\d+_d_kq_\d+_d_v_\d+_k_\d+_bit_width_\d+_out_width_\d+_scale_width_\d+)_time_(\d+_\d+)"
+  
+  @staticmethod
+  def get_design_regex():
+    return r"([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_bit_width_(\d+)_out_width_(\d+)_scale_width_(\d+)"
   
   @classmethod
-  def from_filename(cls, filename):
+  def from_str(cls, design_str):
     details = re.search(
-      cls.get_filename_regex(),
-      filename
+      cls.get_design_regex(),
+      design_str
     )
     if not details:
-      raise ValueError(f"Filename {filename} does not match expected pattern.")
+      raise ValueError(f"Design string {design_str} does not match expected pattern.")
     
     name = details.group(1)
     S_q = int(details.group(2))
@@ -86,6 +103,8 @@ class SynthesisResult:
     
     for result in all_results:
       power['total'] = min(power['total'], result.power['total'])
+      power['dynamic'] = min(power['dynamic'], result.power['dynamic'])
+      power['static'] = min(power['static'], result.power['static'])
       timing['max_freq'] = max(timing['max_freq'], result.timing['max_freq'])
       for key in SynthesisHandler.get_available_fpga_resources().keys():
         utilisation[key] = min(utilisation[key], result.utilisation[key])
@@ -121,20 +140,20 @@ class SynthesisResult:
         
     return results_normalised
   
-  def __repr__(self):
-    repr = f"{self.design_config!r}\n"
-    repr += f"Power: {self.power['total']:.2f} W (Dynamic {self.power['dynamic']:.2f} W, Static {self.power['static']:.2f} W)\n"
+  def __str__(self):
+    s = f"{self.design_config!s}\n"
+    s += f"Power: {self.power['total']:.2f} W (Dynamic {self.power['dynamic']:.2f} W, Static {self.power['static']:.2f} W)\n"
     
-    repr += f"Max freq: {self.timing['max_freq']} MHz"
+    s += f"Max freq: {self.timing['max_freq']:.2f} MHz"
     if not self.timing['no_violation']:
-      repr += "(TIMING VIOLATION)"
-    repr += "\n"
+      s += " (TIMING VIOLATION)"
+    s += "\n"
     
-    repr += "Resource utilisation:\n"
+    s += "Resource utilisation:\n"
     for key, value in self.utilisation.items():
-      repr += f"\t{key}: {value:,} ({(value / SynthesisHandler.get_available_fpga_resources(key)) * 100:.2f}%)\n"
+      s += f"\t{key}: {value:,} ({(value / SynthesisHandler.get_available_fpga_resources(key)) * 100:.2f}%)\n"
 
-    return repr
+    return s
 
 class SynthesisHandler:
   def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/attention_int", clock_period_ns=5):
@@ -148,6 +167,8 @@ class SynthesisHandler:
     self.board_max_freq = 400 # MHz
     
     self.synth_output_dir = os.path.join(self.hdl_dir, "synth_output")
+    
+    self._time_format = "%Y%m%d_%H%M"
     
   @staticmethod
   def get_available_fpga_resources(key=None):
@@ -164,21 +185,44 @@ class SynthesisHandler:
     return AVAILABLE_FPGA_RESOURCES if key is None else AVAILABLE_FPGA_RESOURCES.get(key, None)
     
   def check_if_results_exist(self, design):
-    base_pattern = f"{design!r}_time_*"
+    base_pattern = f"{design!r}" + "_time_*"
     power_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_power.rpt"))
     timing_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_timing.rpt"))
     util_matches = glob.glob(os.path.join(self.synth_output_dir, base_pattern + "_util.rpt"))
     
     return power_matches and timing_matches and util_matches
+  
+  def check_if_design_is_invalid(self, design):
+    # All parameters must be >= 0
+    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k, design.bit_width, design.out_width, design.scale_width]:
+      if param <= 0:
+        return True
+    
+    # S_q, S_kv, d_kq, d_v must powers of 2 (including 2^0 = 1)
+    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v]:
+      if (param & (param - 1)) != 0:
+        return True
+      
+    # d_kq and d_v must be divisible by k
+    if design.d_kq % design.k != 0 or design.d_v % design.k != 0:
+      return True
+    
+    return False
     
   def run_synthesis(self):
     if not self.designs_to_synthesise:
       print("No designs to synthesise specified.")
       return
     
+    print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
+    
     for design in self.designs_to_synthesise:
       if self.check_if_results_exist(design):
         print(f"Skipping synthesis for {design!r} as results already exist.")
+        continue
+      
+      if self.check_if_design_is_invalid(design):
+        print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
         continue
       
       run_synth_path = os.path.join(self.hdl_dir, "run_synth.tcl")
@@ -187,7 +231,7 @@ class SynthesisHandler:
       
       try:
           start_time = time.perf_counter()
-          # completed_process = subprocess.run(synthesis_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+          completed_process = subprocess.run(synthesis_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
       except subprocess.CalledProcessError as e:
           print(f"Synthesis failed for {design} with return code: {e.returncode}")
       except Exception as e:
@@ -260,8 +304,8 @@ class SynthesisHandler:
 
     return results
     
-  def _process_results(self, file_path):
-    design = DesignConfig.from_filename(file_path)
+  def _process_results(self, design_str, date_time):
+    file_path = os.path.join(self.synth_output_dir, f"{design_str}_time_{date_time.strftime(self._time_format)}")
     
     power_report_path = f"{file_path}_power.rpt"
     timing_report_path = f"{file_path}_timing.rpt"
@@ -275,6 +319,7 @@ class SynthesisHandler:
       print(f"Error processing {file_path}: {e} - the report is probably being generated, try again later.")
       return
     
+    design = DesignConfig.from_str(design_str)
     result = SynthesisResult(
       design_config=design,
       power={
@@ -298,27 +343,45 @@ class SynthesisHandler:
       
   def _find_results(self, directory):
     pattern = re.compile(DesignConfig.get_filename_regex())
-    matches = set()
+    matches = {}
 
     for file_path in glob.glob(os.path.join(directory, "*.rpt")):
-        filename = os.path.basename(file_path)
-        m = pattern.search(filename)
-        if m:
-            matches.add(m.group(1))
+      filename = os.path.basename(file_path)
+      # print(f"\nExtracted filename: {filename}")
+      
+      # Match the filename against the regex
+      m = pattern.match(filename)
+      if not m:
+        print(f"Filename {filename} does not match expected pattern, skipping.")
+        continue
+      
+      matched_str = m.group(1)
+      # print(f"Matched string: {matched_str}")
+      
+      result_date_time = datetime.strptime(m.group(2), self._time_format)
+      # print(f"Extracted datetime: {result_date_time}")
+      
+      # Only store newest synthesis result
+      if matched_str not in matches:
+        matches[matched_str] = result_date_time
+        # print(f"Added new match: {matched_str}")
+      elif result_date_time > matches[matched_str]:
+        matches[matched_str] = result_date_time
+        # print(f"Updated match with newer datetime: {matched_str}")
 
-    return sorted(matches)
+    return matches
   
   def find_and_process_results(self):  
     matches = self._find_results(self.synth_output_dir)
-    for match in matches:
-      self._process_results(os.path.join(self.synth_output_dir, match))
+    for design_str, date_time in matches.items():
+      self._process_results(design_str, date_time)
    
   def find_pareto_optimal(self, weights):
     if not self.results:
       raise ValueError("No synthesis results available to find Pareto optimal solution.")
     
     ideal_result = SynthesisResult.create_ideal_result(self.results)
-    print(f"Ideal Result: {ideal_result}")
+    # print(f"Ideal Result:\n{ideal_result}")
     
     # Normalise results based on the ideal result
     results_normalised = SynthesisResult.normalise_results(self.results)
@@ -345,7 +408,7 @@ class SynthesisHandler:
         resource_diff * weights['utilisation']
       ) ** 0.5
       
-      print(f"Distance for {result.design_config}): {distance:.4f}")
+      # print(f"Distance for {result.design_config}): {distance:.4f}")
       
       if distance < best_distance:
         best_index = index
@@ -581,8 +644,12 @@ class SynthesisHandler:
     plt.tight_layout()
     plt.savefig(os.path.join(directory, filename))
   
-  def __repr__(self):
-    return "\n".join([f"{result!r}" for result in self.results])
+  def __str__(self):
+    spacer = "="*60 + "\n"
+    return (
+      "\t\t\tSynthesis Results:\n" +
+      spacer + ("\n" + spacer).join([f"{result!s}" for result in self.results]) + spacer
+    )
     
 if __name__ == "__main__":  
   designs_to_synthesise = [
@@ -590,8 +657,8 @@ if __name__ == "__main__":
     for name in ["attention_int"]
     for S_q in [4]
     for S_kv in [4]
-    for d_kq in [4]
-    for d_v in [4]
+    for d_kq in [4, 8]
+    for d_v in [8]
     for k in [2]
     for bit_width in [8]
     for out_width in [8]
@@ -605,6 +672,7 @@ if __name__ == "__main__":
   print(synthesis_handler)
 
   pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'power': 1.0, 'timing': 1.0, 'utilisation': 1.0})
-  print(f"Pareto Optimal Result:\n{synthesis_handler._repr_result(pareto_optimal)}")
+  print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  synthesis_handler.plot_results(directory="./plots", plot_file_format="svg")
+  # TODO update plotting
+  # synthesis_handler.plot_results(directory="./plots", plot_file_format="svg")
