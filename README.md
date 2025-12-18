@@ -16,19 +16,21 @@ MX-for-FPGA:~$ vivado -mode batch -source ./src/attention/attention_int/run_synt
 First time:
 ```
 MX-for-FPGA:~$ python3 -m venv venv
-MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ source venv/bin/activate
 MX-for-FPGA:~$ pip install -r requirements.txt
 MX-for-FPGA:~$ python DSE.py
 ```
 
 Afterwards:
 ```
-MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ source venv/bin/activate
 MX-for-FPGA:~$ python DSE.py
 ```
 
 For long running jobs:
 ```
-MX-for-FPGA:~$ venv/bin/activate
+MX-for-FPGA:~$ source venv/bin/activate
 MX-for-FPGA:~$ nohup python DSE.py > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
 ```
+
+1532896
