@@ -30,7 +30,13 @@ MX-for-FPGA:~$ python DSE.py
 For long running jobs:
 ```
 MX-for-FPGA:~$ source venv/bin/activate
-MX-for-FPGA:~$ nohup python DSE.py > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
+MX-for-FPGA:~$ nohup python -u DSE.py > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
+[1] XXXXXXX
 ```
 
-1532896
+Check XXXXXXX process status:
+```
+MX-for-FPGA:~$ ps -fp XXXXXXX
+```
+
+1741603

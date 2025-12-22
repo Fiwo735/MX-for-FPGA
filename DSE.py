@@ -9,6 +9,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 from datetime import datetime
+from argparse import ArgumentParser
 
 class DesignConfig:
   def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, bit_width=-1, out_width=-1, scale_width=-1):
@@ -82,11 +83,14 @@ class SynthesisResult:
     self.utilisation = utilisation
     self.accuracy = accuracy
     
-  def get_aggregated_resource_usage(self):
+  def get_aggregated_resource_usage(self, keys=None):
+    if keys is None:
+      keys = SynthesisHandler.get_available_fpga_resources().keys()
+      
     return sum(
-      self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
-      for key in SynthesisHandler.get_available_fpga_resources().keys()
-    ) / len(SynthesisHandler.get_available_fpga_resources())
+      100 * self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
+      for key in keys
+    ) / len(keys)
     
   @classmethod
   def create_ideal_result(cls, all_results):
@@ -215,25 +219,34 @@ class SynthesisHandler:
     
     return False
     
-  def run_synthesis(self):
+  def run_synthesis(self, dry_run=False, verbose=False):
     if not self.designs_to_synthesise:
       print("No designs to synthesise specified.")
       return
     
-    print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
+    if verbose:
+      print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
     
     for design in self.designs_to_synthesise:
-      if self.check_if_results_exist(design, ["_power.rpt", "_timing.rpt", "_util.rpt"]):
-        print(f"Skipping synthesis for {design!r} as results already exist.")
+      if self.check_if_design_is_invalid(design):
+        if verbose:
+          print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
         continue
       
-      if self.check_if_design_is_invalid(design):
-        print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
+      if self.check_if_results_exist(design, ["_power.rpt", "_timing.rpt", "_util.rpt"]):
+        if verbose:
+          print(f"Skipping synthesis for {design!r} as results already exist.")
         continue
       
       run_synth_path = os.path.join(self.hdl_dir, "run_synth.tcl")
       synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
-      print(f"Results not found, running synthesis command: {synthesis_cmd}")
+      if verbose:
+        print(f"Results for {design!r} not found, running synthesis command: {synthesis_cmd}")
+      
+      if dry_run:
+        if verbose:
+          print("Dry run mode enabled, skipping actual synthesis.")
+        continue
       
       try:
           start_time = time.perf_counter()
@@ -245,9 +258,11 @@ class SynthesisHandler:
           
       end_time = time.perf_counter()
       
-      print(f"Synthesis for {design} completed in {end_time - start_time:.2f} seconds.")
+      if verbose:
+        print(f"Synthesis for {design!r} completed in {end_time - start_time:.2f} seconds.")
           
-    print("Synthesis completed for all designs.")
+    if verbose:
+      print("Synthesis completed for all designs.")
 
   def _read_power_report(self, file_path):
     with open(file_path, 'r') as file:
@@ -450,112 +465,84 @@ class SynthesisHandler:
     self.pareto_optimal = self.results[best_index]
     return self.pareto_optimal
 
-  def _pareto_front(self, x, y, powers, res_usages, freqs, maximize_y=True):
-    points = list(zip(x, y, powers, res_usages, freqs))
-
+  def _pareto_front(self, x, y, maximize_y=True):
+    points = list(zip(x, y))
+    
     # 1. Filter dominated points
     non_dominated = []
     for p in points:
-        dominated = False
-        for q in points:
-            # q dominates p if it's better in all objectives
-            better_power = q[2] <= p[2]
-            better_resources = q[3] <= p[3]
-            better_freq = q[4] >= p[4]
+      dominated = False
+      for q in points:
+        if q == p:
+          continue
 
-            if better_power and better_resources and better_freq and q != p:
-                if q[2] < p[2] or q[3] < p[3] or q[4] > p[4]:
-                    dominated = True
-                    break
-        if not dominated:
-            non_dominated.append(p)
+        better_x = q[0] <= p[0]
+        better_y = q[1] >= p[1] if maximize_y else q[1] <= p[1]
 
-    # 2. Sort by x
-    non_dominated.sort(key=lambda r: r[0])
+        strictly_better_x = q[0] < p[0]
+        strictly_better_y = q[1] > p[1] if maximize_y else q[1] < p[1]
 
-    # 3. Filter to remove "backward" points in y
+        if better_x and better_y and (strictly_better_x or strictly_better_y):
+          dominated = True
+          break
+
+      if not dominated:
+        non_dominated.append(p)
+
+    # 2. Sort by x for plotting
+    non_dominated.sort(key=lambda pt: pt[0])
+
+    # 3. Filter out "backward" y steps (enforce monotonicity in y)
     pareto = []
-    if maximize_y:
-        best_y = -float("inf")
-        for p in non_dominated:
-            if p[1] > best_y:
-                pareto.append(p)
-                best_y = p[1]
-    else:
-        best_y = float("inf")
-        for p in non_dominated:
-            if p[1] < best_y:
-                pareto.append(p)
-                best_y = p[1]
+    best_y = -float("inf") if maximize_y else float("inf")
+    for pt in non_dominated:
+      if (maximize_y and pt[1] > best_y) or (not maximize_y and pt[1] < best_y):
+        pareto.append(pt)
+        best_y = pt[1]
 
     return pareto
 
+
   def plot_results(self, directory="./plots", plot_file_format="svg"):
     color_values = np.array([r.design_config.bit_width for r in self.results])
-  
-    self._plot(
-      x=res_usages,
-      y=powers,
-      color_values=color_values,
-      xlabel="Resource Usage (average %)",
-      ylabel="Power (W)",
-      title=f"Power vs Resource Usage (N={elems_counts[0]})",
-      filename=f"power_vs_resource_usage.{plot_file_format}",
-      directory=directory,
-      do_pareto_front=False,
-      do_best_fit_line=True,
-    )
+    
+    designs = [r.design_config for r in self.results]
+    resource_usages = [synth_result.get_aggregated_resource_usage() for synth_result in self.results]
+    powers = [synth_result.power['total'] for synth_result in self.results]
+    frequencies = [synth_result.timing['max_freq'] for synth_result in self.results]
+    accuracies = [synth_result.accuracy for synth_result in self.results]
     
     self._plot(
-      x=res_usages,
-      y=max_freqs,
-      color_values=color_values,
-      xlabel="Resource Usage (average %)",
-      ylabel="Max Frequency (MHz)",
-      title=f"Max Frequency vs Resource Usage (N={elems_counts[0]})",
-      filename=f"max_freq_vs_resource_usage.{plot_file_format}",
-      directory=directory,
-    )
-    
-    self._plot(
+      designs=designs,
       x=powers,
-      y=max_freqs,
+      y=frequencies,
       color_values=color_values,
       xlabel="Power (W)",
       ylabel="Max Frequency (MHz)",
-      title=f"Max Frequency vs Power (N={elems_counts[0]})",
+      title=f"Max Frequency vs Power",
       filename=f"max_freq_vs_power.{plot_file_format}",
       directory=directory,
     )
 
-  def _plot(self, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False):
+  def _plot(self, designs, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False):
+    # Differentiate designs by block_size k
     marker_map = {
-      "attention_int": "o",
-      "attention_fp": "^",
+      2: "o",
+      4: "^",
     }
 
-    # Prepare data for Pareto front
-    powers = [r.power['total'] for r in self.results]
-    res_usages = [
-      100 * sum(
-        r.utilisation[key] / self.get_available_fpga_resources(key)
-        for key in self.get_available_fpga_resources().keys()
-      )
-      for r in self.results
-    ]
-    freqs = [r.timing['max_freq'] for r in self.results]
-
-    cmap = matplotlib.cm.get_cmap("viridis", len(np.unique(color_values)))
+    cmap = matplotlib.colormaps["viridis"].resampled(len(np.unique(color_values)))
     bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
 
-    plt.figure(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(10, 6))
     plotted_markers = {}
 
     for design, xi, yi, cval in zip(designs, x, y, color_values):
-      label = design.name
-      marker = marker_map.get(label, "s")
-      plt.scatter(
+      block_size = design.k
+      label = f"k={block_size}"
+      marker = marker_map.get(block_size, "s")
+      ax.scatter(
         xi, yi,
         c=[cmap(norm(cval))],
         alpha=1.0,
@@ -565,21 +552,21 @@ class SynthesisHandler:
       )
       plotted_markers[label] = marker
 
-    plt.title(title, fontsize=18)
-    plt.xlabel(xlabel, fontsize=14)
-    plt.ylabel(ylabel, fontsize=14)
-    plt.xticks(fontsize=12)
-    plt.yticks(fontsize=12)
-    plt.grid(True)
+    ax.set_title(title, fontsize=18)
+    ax.set_xlabel(xlabel, fontsize=14)
+    ax.set_ylabel(ylabel, fontsize=14)
+    ax.tick_params(axis='x', labelsize=12)
+    ax.tick_params(axis='y', labelsize=12)
+    ax.grid(True)
 
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = plt.colorbar(sm, boundaries=bounds,
+    cbar = plt.colorbar(sm, ax=ax, boundaries=bounds,
                         ticks=np.arange(color_values.min(), color_values.max() + 1))
     cbar.set_label("Total bit width", fontsize=14)
     cbar.ax.tick_params(labelsize=12)
 
-    handles, labels = plt.gca().get_legend_handles_labels()
+    handles, labels = ax.get_legend_handles_labels()
     unique_labels = list(dict.fromkeys(labels))
 
     black_handles = [
@@ -592,11 +579,11 @@ class SynthesisHandler:
     # === Compute and plot Pareto front ===
     if do_pareto_front:
       maximize_y = not ylabel.lower().startswith("power")
-      pareto_points = self._pareto_front(x, y, powers, res_usages, freqs, maximize_y=maximize_y)
+      pareto_points = self._pareto_front(x, y, maximize_y=maximize_y)
       pareto_x = [p[0] for p in pareto_points]
       pareto_y = [p[1] for p in pareto_points]
 
-      plt.plot(pareto_x, pareto_y, linestyle="dashdot", color="black", linewidth=1.2)
+      ax.plot(pareto_x, pareto_y, linestyle="dashdot", color="black", linewidth=1.2)
       
       pareto_front_legend = matplotlib.lines.Line2D([], [], color="black", linestyle="dashdot", linewidth=1.5, label="Pareto front")
       
@@ -607,19 +594,14 @@ class SynthesisHandler:
     if do_pareto_optimal and self.pareto_optimal is not None:
       # Compute X and Y of the pareto optimal point for this plot
       if xlabel.startswith("Resource"):
-        x_val = 100 * sum(
-          self.pareto_optimal.utilisation[key] / self.get_available_fpga_resources(key)
-          for key in self.get_available_fpga_resources().keys()
-        )
+        x_val = self.pareto_optimal.get_aggregated_resource_usage()
       else:
-        x_val = self.pareto_optimal["power"]["total"]
+        x_val = self.pareto_optimal.power["total"]
 
       if ylabel.startswith("Power"):
-        y_val = self.pareto_optimal["power"]["total"]
+        y_val = self.pareto_optimal.power["total"]
       else:
-        y_val = self.pareto_optimal["timing"]["max_freq"]
-
-      ax = plt.gca()
+        y_val = self.pareto_optimal.timing["max_freq"]
 
       radius_coeff = 0.04
       radius_x = radius_coeff * (ax.get_xlim()[1] - ax.get_xlim()[0])
@@ -650,62 +632,66 @@ class SynthesisHandler:
       black_handles += [ellipse_legend]
       unique_labels += ["Optimal*"]
       
-    # === Plot best fit line (linear regression) ===
-    if do_best_fit_line and len(x) > 1:
-      # Fit
-      coeffs = np.polyfit(x, y, 1)
-      fit_x = np.linspace(min(x), max(x), 100)
-      fit_y = np.polyval(coeffs, fit_x)
+    # # === Plot best fit line (linear regression) ===
+    # if do_best_fit_line and len(x) > 1:
+    #   # Fit
+    #   coeffs = np.polyfit(x, y, 1)
+    #   fit_x = np.linspace(min(x), max(x), 100)
+    #   fit_y = np.polyval(coeffs, fit_x)
 
-      # Compute R^2
-      y_mean = np.mean(y)
-      ss_tot = np.sum((y - y_mean) ** 2)
-      ss_res = np.sum((y - np.polyval(coeffs, x)) ** 2)
-      r2 = 1 - (ss_res / ss_tot)
+    #   # Compute R^2
+    #   y_mean = np.mean(y)
+    #   ss_tot = np.sum((y - y_mean) ** 2)
+    #   ss_res = np.sum((y - np.polyval(coeffs, x)) ** 2)
+    #   r2 = 1 - (ss_res / ss_tot)
 
-      # Plot the line
-      plt.plot(fit_x, fit_y, color="gray", linestyle="dashdot", linewidth=1.3)
+    #   # Plot the line
+    #   ax.plot(fit_x, fit_y, color="gray", linestyle="dashdot", linewidth=1.3)
 
-      # Create a custom handle with R² in label
-      best_fit_label = f"Fit, R$^2$ = {r2:.3f}"
-      best_fit_handle = plt.Line2D([], [], color="gray", linestyle="dashdot", linewidth=1.3, label=best_fit_label)
-      black_handles += [best_fit_handle]
-      unique_labels += [best_fit_label]
+    #   # Create a custom handle with R² in label
+    #   best_fit_label = f"Fit, R$^2$ = {r2:.3f}"
+    #   best_fit_handle = plt.Line2D([], [], color="gray", linestyle="dashdot", linewidth=1.3, label=best_fit_label)
+    #   black_handles += [best_fit_handle]
+    #   unique_labels += [best_fit_label]
       
-    plt.legend(black_handles, unique_labels, fontsize=14)
+    ax.legend(black_handles, unique_labels, fontsize=14)
 
-    plt.tight_layout()
-    plt.savefig(os.path.join(directory, filename))
+    fig.tight_layout()
+    fig.savefig(os.path.join(directory, filename))
   
   def __str__(self):
     spacer = "="*60 + "\n"
     return (
-      "\t\t\tSynthesis Results:\n" +
+      f"\t\t\t{len(self.results)} Synthesis Results:\n" +
       spacer + ("\n" + spacer).join([f"{result!s}" for result in self.results]) + spacer
     )
     
-if __name__ == "__main__":  
+if __name__ == "__main__":
+  parser = ArgumentParser(description='Run DSE for attention module synthesis')
+  parser.add_argument('--dry', action='store_true', help='Dry run, do not run synthesis')
+  parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+  args = parser.parse_args()
+  
   designs_to_synthesise = [
     DesignConfig(name, S_q, S_kv, d_kq, d_v, k, bit_width, out_width, scale_width)
     for name in ["attention_int"]
-    for S_q in [4]
-    for S_kv in [4]
+    for S_q in [4, 8]
+    for S_kv in [4, 8]
     for d_kq in [4, 8]
-    for d_v in [8]
-    for k in [2]
+    for d_v in [4, 8]
+    for k in [2, 4]
     for bit_width in [8]
     for out_width in [8]
     for scale_width in [8]
   ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise)
-  synthesis_handler.run_synthesis()
+  synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
-  print(synthesis_handler)
+  # print(synthesis_handler)
 
   pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'power': 1.0, 'timing': 1.0, 'utilisation': 1.0})
   print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  # TODO update plotting
-  # synthesis_handler.plot_results(directory="./plots", plot_file_format="svg")
+  synthesis_handler.plot_results(directory="./plots", plot_file_format="svg")
