@@ -694,4 +694,4 @@ if __name__ == "__main__":
   pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'power': 1.0, 'timing': 1.0, 'utilisation': 1.0})
   print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  synthesis_handler.plot_results(directory="./plots", plot_file_format="svg")
+  synthesis_handler.plot_results(directory="./plots", plot_file_format="png")
