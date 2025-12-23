@@ -5,7 +5,25 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 
-from transformers.models.bert.modeling_bert import BertSelfAttention
+from transformers.models.bert.modeling_bert import BertSelfAttention, BertForSequenceClassification
+
+
+
+def max_float(
+        exponent_bit_width: torch.Tensor,
+        mantissa_bit_width: torch.Tensor,
+        exponent_bias: torch.Tensor
+    ) -> torch.Tensor:
+    """
+    Get the largest representable value for a given minifloat format.
+    """
+
+    exp = 2**exponent_bit_width - 1 - exponent_bias
+    man = ((2**(mantissa_bit_width+1))-1) * (2**-mantissa_bit_width)
+
+    value = man * 2**exp
+
+    return value
 
 
 class MXFPQuantizer:
@@ -14,11 +32,72 @@ class MXFPQuantizer:
         self.man_w = man_w
         self.group_size = group_size
     
+    def get_scale(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Compute scales for each block in input tensor.
+        """
+
+        # Reshape into group size
+        orig_shape = x.shape
+        reshape = orig_shape[:-1] + [orig_shape[-1] // self.group_size, self.group_size]
+        x_rs = x.view(reshape)
+
+        # Get max values
+        x_max = torch.max(torch.abs(x_rs), dim=-1, keepdim=True)[0]
+        x_max = torch.where(x_max == 0, torch.ones_like(x_max), x_max)
+
+        # Divide by largest representable power of 2
+        max_pot = 2**(self.exp_w-1)
+
+        # Restrict to power of 2
+        x_pot = torch.log2(x_pot) - max_pot
+        x_pot = torch.ceil(x_pot)
+        x_pot = 2**x_pot
+
+        # Clamp to UE8M0
+        x_clamp = torch.clamp(x_pot, 0, 255)
+
+        return x_clamp.expand(reshape).reshape(orig_shape)
+    
+    
+    def to_minifloat(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Quantize values in input tensor to minifloat.
+        """
+
+        # Round to minifloat
+        ##### TODO
+        x_rnd = x
+
+        # Clamp between max and min float values
+        max_repr = max_float(self.exp_w, self.man_w, 2**(self.exp_w-1)-1)
+        x_clamp = torch.clamp(x_rnd, -max_repr, max_repr)
+
+        return x_clamp
+
     def quantize_dynamic(self, x: torch.Tensor) -> torch.Tensor:
-        return x
+        """
+        Apply MX quantization to input tensor.
+        """
+
+        scale = self.get_scale(x)
+
+        # Unapply scales
+        x_descale = x / scale
+
+        # Round and clamp
+        x_rnd = self.to_minifloat(x_descale)
+
+        # Apply scales
+        x_rescale = x_rnd * scale
+        
+        return x_rescale
 
 
 class QuantBertSelfAttention(nn.Module):
+    """
+    A bert attention block with quantization inserted into forward pass.
+    """
     def __init__(self, orig_attn: BertSelfAttention, quantizer):
         super().__init__()
 
@@ -148,7 +227,7 @@ class QuantBertSelfAttention(nn.Module):
 
 
 
-def patch_bert_model(model, attn_block=BertSelfAttention, quantizer=MXFPQuantizer, q_config={}):
+def patch_bert_model(model: BertForSequenceClassification, q_config={'exp_w':8,'man_w':23,'group_size':1}, attn_block=QuantBertSelfAttention, quantizer=MXFPQuantizer):
     """
     Replaces all BertSelfAttention modules with quantized attention.
     """

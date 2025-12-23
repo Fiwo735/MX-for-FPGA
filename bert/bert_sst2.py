@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pathlib
 
 from dist_utils import save_weights, save_acts
+from quant_utils import patch_bert_model
 
 def fetch_dataloader(tokenizer, num_samples=None, max_length=128, split="train", seed=42, batch_size=32):
     def tokenize_function(examples):
@@ -95,12 +96,16 @@ def main():
     print("Loading tokenizer and creating model...")
     tokenizer = BertTokenizer.from_pretrained('prajjwal1/bert-tiny')
     config = create_tinybert_config()
+    config._attn_implementation = "eager"
     model = BertForSequenceClassification(config)
     
     # Load saved weights if provided
     if args.model_path:
         print(f"Loading model weights from {args.model_path}")
         model.load_state_dict(torch.load(args.model_path, map_location=device))
+    
+    # Patch model with quantized attention.
+    model, quantizers = patch_bert_model(model)
     
     model.to(device)
     model.eval()
@@ -123,13 +128,13 @@ def main():
     
     print(f"\nValidation accuracy: {val_acc:.2f}%")
 
-    weight_dir = pathlib.Path('saved_tensors/weights')
-    weight_dir.mkdir(parents=True, exist_ok=True)
-    save_weights(model, weight_dir)
+    # weight_dir = pathlib.Path('saved_tensors/weights')
+    # weight_dir.mkdir(parents=True, exist_ok=True)
+    # save_weights(model, weight_dir)
 
-    act_dir = pathlib.Path('saved_tensors/acts')
-    act_dir.mkdir(parents=True, exist_ok=True)
-    save_acts(model, val_loader, model.device, act_dir)
+    # act_dir = pathlib.Path('saved_tensors/acts')
+    # act_dir.mkdir(parents=True, exist_ok=True)
+    # save_acts(model, val_loader, model.device, act_dir)
 
 
 if __name__ == "__main__":
