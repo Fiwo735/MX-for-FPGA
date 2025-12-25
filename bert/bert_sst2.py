@@ -111,7 +111,23 @@ def main():
     model.eval()
     
     print(f"Model has {sum(p.numel() for p in model.parameters()):,} parameters")
-    
+
+    # Load calib data
+    calib_loader = fetch_dataloader(
+        tokenizer, 
+        num_samples=512, 
+        max_length=args.max_length, 
+        split="train", 
+        batch_size=args.batch_size
+    )
+
+    # Calibrate quantizers
+    for q in quantizers:
+        q.start_calib()
+    calib_acc, _ = validate_model(model, calib_loader)
+    for q in quantizers:
+        q.end_calib()
+
     # Load validation data
     val_loader = fetch_dataloader(
         tokenizer, 
@@ -120,7 +136,7 @@ def main():
         split="validation", 
         batch_size=args.batch_size
     )
-    
+
     print(f"Validation samples: {len(val_loader.dataset)}")
     
     # Evaluate model
