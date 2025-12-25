@@ -1,6 +1,6 @@
 
 import math
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import torch
 import torch.nn as nn
@@ -26,12 +26,44 @@ def max_float(
     return value
 
 
-class MXFPQuantizer:
+class MXFPQuantizer(nn.Module):
+
     def __init__(self, exp_w, man_w, group_size):
+        super().__init__()
+
+        # Quantization configuration
         self.exp_w = exp_w
         self.man_w = man_w
+        self.exp_bias = 2**(exp_w-1)-1
         self.group_size = group_size
-    
+
+        # Calibration and training
+        self.calibration: bool = False
+        self.samples: List[torch.Tensor] = []
+
+    def post_calibration(self):
+        """
+        Calibrate parameters based on collected sample data
+        """
+        pass
+
+    def start_calib(self):
+        self.samples = []
+        self.calibration = True
+
+    def end_calib(self):
+        self.post_calibration()
+        self.calibration = False
+
+    def forward(self, x):
+
+        if self.calibration:
+            self.samples.append(x)
+            return x
+        else:
+            return self.quantize_tensor(x)
+
+
     def get_scale(self, x: torch.Tensor) -> torch.Tensor:
         """
         Compute scales for each block in input tensor.
@@ -39,7 +71,7 @@ class MXFPQuantizer:
 
         # Reshape into group size
         orig_shape = x.shape
-        reshape = orig_shape[:-1] + [orig_shape[-1] // self.group_size, self.group_size]
+        reshape = list(orig_shape[:-1]) + [orig_shape[-1] // self.group_size, self.group_size]
         x_rs = x.view(reshape)
 
         # Get max values
@@ -50,32 +82,55 @@ class MXFPQuantizer:
         max_pot = 2**(self.exp_w-1)
 
         # Restrict to power of 2
-        x_pot = torch.log2(x_pot) - max_pot
-        x_pot = torch.ceil(x_pot)
+        x_pot = torch.log2(x_max) - max_pot
+        x_pot = torch.floor(x_pot)
         x_pot = 2**x_pot
 
         # Clamp to UE8M0
         x_clamp = torch.clamp(x_pot, 0, 255)
 
-        return x_clamp.expand(reshape).reshape(orig_shape)
+        # Expand to original shape
+        x_rep = x_clamp.expand(reshape).reshape(orig_shape)
+
+        return x_rep
     
     
     def to_minifloat(self, x: torch.Tensor) -> torch.Tensor:
         """
         Quantize values in input tensor to minifloat.
         """
+        # Extract signs and zeros
+        signs = x.sign()
+        x_abs = x.abs()
+        zeros = (x == 0)
+        x_abs = torch.where(zeros, torch.ones_like(x_abs), x_abs)
 
-        # Round to minifloat
-        ##### TODO
-        x_rnd = x
+        # Shift mantissas to keep man_w+1 bits before binary point
+        exps = torch.floor(torch.log2(x_abs))
+        mans = x_abs * (2 ** -exps)
+        mans_shifted = mans * (2 ** self.man_w)
+
+        # Round mantissas
+        x_rnd = torch.round(mans_shifted)
+
+        # Undo shifts
+        x_rnd = x_rnd * (2 ** -self.man_w)
+        x_rnd = x_rnd * (2 ** exps)
 
         # Clamp between max and min float values
-        max_repr = max_float(self.exp_w, self.man_w, 2**(self.exp_w-1)-1)
-        x_clamp = torch.clamp(x_rnd, -max_repr, max_repr)
+        max_repr = max_float(self.exp_w, self.man_w, self.exp_bias)
+        min_repr = 2**(-self.exp_bias)
+        lim_zero = min_repr/2
+        x_clamp = torch.clamp(x_rnd, min_repr, max_repr)
+        x_clamp = torch.where(x_abs <= lim_zero, torch.zeros_like(x_clamp), x_clamp)
 
-        return x_clamp
+        # Reapply signs and zeros
+        x_signed = x_clamp * signs
+        x_signed = torch.where(zeros, torch.zeros_like(x_signed), x_signed)
 
-    def quantize_dynamic(self, x: torch.Tensor) -> torch.Tensor:
+        return x_signed
+
+    def quantize_tensor(self, x: torch.Tensor) -> torch.Tensor:
         """
         Apply MX quantization to input tensor.
         """
@@ -134,6 +189,10 @@ class QuantBertSelfAttention(nn.Module):
         past_key_value: Optional[Tuple[Tuple[torch.FloatTensor]]] = None,
         output_attentions: Optional[bool] = False,
     ) -> Tuple[torch.Tensor]:
+
+        # Quantize incoming hidden states.
+        hidden_states = self.quantizer(hidden_states)
+
         mixed_query_layer = self.query(hidden_states)
 
         # If this is instantiated as a cross-attention module, the keys
@@ -172,8 +231,15 @@ class QuantBertSelfAttention(nn.Module):
             # if encoder bi-directional self-attention `past_key_value` is always `None`
             past_key_value = (key_layer, value_layer)
 
+        # Quantize keys and queries
+        key_layer = self.quantizer(key_layer)
+        query_layer = self.quantizer(query_layer)
+
         # Take the dot product between "query" and "key" to get the raw attention scores.
         attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
+
+        # Quantize attention scores
+        attention_scores = self.quantizer(attention_scores)
 
         if self.position_embedding_type == "relative_key" or self.position_embedding_type == "relative_key_query":
             query_length, key_length = query_layer.shape[2], key_layer.shape[2]
@@ -213,7 +279,14 @@ class QuantBertSelfAttention(nn.Module):
         if head_mask is not None:
             attention_probs = attention_probs * head_mask
 
+        # Quantize attention scores and values
+        attention_probs = self.quantizer(attention_probs)
+        value_layer = self.quantizer(value_layer)
+
         context_layer = torch.matmul(attention_probs, value_layer)
+
+        # Quantize attention outputs
+        context_layer = self.quantizer(context_layer)
 
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
         new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
@@ -227,7 +300,7 @@ class QuantBertSelfAttention(nn.Module):
 
 
 
-def patch_bert_model(model: BertForSequenceClassification, q_config={'exp_w':8,'man_w':23,'group_size':1}, attn_block=QuantBertSelfAttention, quantizer=MXFPQuantizer):
+def patch_bert_model(model: BertForSequenceClassification, q_config={'exp_w':2,'man_w':1,'group_size':32}, attn_block=QuantBertSelfAttention, quantizer=MXFPQuantizer):
     """
     Replaces all BertSelfAttention modules with quantized attention.
     """
@@ -237,7 +310,7 @@ def patch_bert_model(model: BertForSequenceClassification, q_config={'exp_w':8,'
         original_attn = layer.attention.self
         layer_quantizer = quantizer(**q_config)
         quantizers.append(layer_quantizer)
-        quant_attn = attn_block(original_attn, quantizer)
+        quant_attn = attn_block(original_attn, layer_quantizer)
         layer.attention.self = quant_attn
 
     print("Model patched with quantized attention.")
