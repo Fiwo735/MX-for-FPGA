@@ -102,7 +102,7 @@ def capture_layer_io(layer, layer_input, attention_mask):
 
 
 @torch.no_grad()
-def save_acts(model, val_loader, dev, output_dir):
+def save_acts(model, val_loader, dev, output_dir, silent=False):
     """Save activations from BERT model using validation dataloader"""
     model.eval()
     
@@ -121,7 +121,8 @@ def save_acts(model, val_loader, dev, output_dir):
     batch_size = input_ids.shape[0]
     seq_length = input_ids.shape[1]
     
-    print(f"Processing batch with shape: {input_ids.shape}")
+    if not silent:
+        print(f"Processing batch with shape: {input_ids.shape}")
 
     # Move embeddings to device
     model.bert.embeddings = model.bert.embeddings.to(dev)
@@ -171,7 +172,8 @@ def save_acts(model, val_loader, dev, output_dir):
     # Process each layer
     outs = None
     for i in range(len(layers)):
-        print(f"Processing Layer {i}...", flush=True)
+        if not silent:
+            print(f"Processing Layer {i}...", flush=True)
         layer = layers[i].to(dev)
 
         # Capture layer input/output
@@ -190,4 +192,5 @@ def save_acts(model, val_loader, dev, output_dir):
         torch.cuda.empty_cache()
         inps = outs.cpu()
 
-    print(f"Activation capture complete! Saved to {output_dir}")
+    if not silent:
+        print(f"Activation capture complete! Saved to {output_dir}")
