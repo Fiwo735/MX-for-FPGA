@@ -8,6 +8,7 @@ from tqdm import tqdm
 import pathlib
 
 from dist_utils import save_weights, save_acts
+from quant_utils import patch_bert_model
 
 def fetch_dataloader(tokenizer, num_samples=None, max_length=128, split="train", seed=42, batch_size=32):
     def tokenize_function(examples):
@@ -98,6 +99,7 @@ def main():
         print("Loading tokenizer and creating model...")
     tokenizer = BertTokenizer.from_pretrained('prajjwal1/bert-tiny')
     config = create_tinybert_config()
+    config._attn_implementation = "eager"
     model = BertForSequenceClassification(config)
     
     # Load saved weights if provided
@@ -106,12 +108,31 @@ def main():
             print(f"Loading model weights from {args.model_path}")
         model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=False))
     
+    # Patch model with quantized attention.
+    model, quantizers = patch_bert_model(model)
+    
     model.to(device)
     model.eval()
     
     if not args.silent:
         print(f"Model has {sum(p.numel() for p in model.parameters()):,} parameters")
-    
+
+    # Load calib data
+    calib_loader = fetch_dataloader(
+        tokenizer, 
+        num_samples=512, 
+        max_length=args.max_length, 
+        split="train", 
+        batch_size=args.batch_size
+    )
+
+    # Calibrate quantizers
+    for q in quantizers:
+        q.start_calib()
+    calib_acc, _ = validate_model(model, calib_loader)
+    for q in quantizers:
+        q.end_calib()
+
     # Load validation data
     val_loader = fetch_dataloader(
         tokenizer, 
