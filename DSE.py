@@ -24,6 +24,12 @@ class DesignConfig:
     self.bit_width = bit_width
     self.out_width = out_width
     self.scale_width = scale_width
+    
+  def get_bert_flags(self):
+    return (
+      f"--S_q {self.S_q} --S_kv {self.S_kv} --d_kq {self.d_kq} --d_v {self.d_v} "
+      f"--k {self.k} --bit_width {self.bit_width} --out_width {self.out_width} --scale_width {self.scale_width}"
+    )
 
   def __repr__(self):
     return (
@@ -335,7 +341,7 @@ class SynthesisHandler:
     return accuracy
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
-    accuracy_cmd = f"python bert/bert_sst2.py --silent"
+    accuracy_cmd = f"python bert/bert_sst2.py --silent {design.get_bert_flags()}"
       
     try:
         completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
