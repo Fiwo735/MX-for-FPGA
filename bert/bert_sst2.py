@@ -86,6 +86,9 @@ def main():
     parser.add_argument('--max_num_samples', type=int, default=None, help='Crop the validation set to a maximum number of samples. None=no cropping. (default: %(default)s)')
     parser.add_argument('--model_path', default='bert/best_fp32_model.pth', help='Path to saved model weights (optional)')
     parser.add_argument('--silent', action='store_true', help='Silent mode (default: %(default)s)')
+    parser.add_argument('--exp_w', type=int, default=4, help='Exponent length. (default: %(default)s)')
+    parser.add_argument('--man_w', type=int, default=3, help='Mantissa length. (default: %(default)s)')
+    parser.add_argument('--group_size', type=int, default=32, help='Group size. (default: %(default)s)')
     
     args = parser.parse_args()
     
@@ -109,7 +112,7 @@ def main():
         model.load_state_dict(torch.load(args.model_path, map_location=device, weights_only=False))
     
     # Patch model with quantized attention.
-    model, quantizers = patch_bert_model(model)
+    model, quantizers = patch_bert_model(model, q_config={'exp_w':args.exp_w, 'man_w':args.man_w, 'group_size':args.group_size})
     
     model.to(device)
     model.eval()
@@ -148,13 +151,13 @@ def main():
     # Evaluate model
     val_acc, _ = validate_model(model, val_loader, silent=args.silent)
 
-    weight_dir = pathlib.Path('bert/saved_tensors/weights')
-    weight_dir.mkdir(parents=True, exist_ok=True)
-    save_weights(model, weight_dir)
+    # weight_dir = pathlib.Path('saved_tensors/weights')
+    # weight_dir.mkdir(parents=True, exist_ok=True)
+    # save_weights(model, weight_dir)
 
-    act_dir = pathlib.Path('bert/saved_tensors/acts')
-    act_dir.mkdir(parents=True, exist_ok=True)
-    save_acts(model, val_loader, model.device, act_dir, silent=args.silent)
+    # act_dir = pathlib.Path('saved_tensors/acts')
+    # act_dir.mkdir(parents=True, exist_ok=True)
+    # save_acts(model, val_loader, model.device, act_dir)
 
     print(f"Validation accuracy: {val_acc:.2f}%")
 
