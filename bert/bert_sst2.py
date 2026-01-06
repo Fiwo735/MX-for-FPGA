@@ -94,7 +94,7 @@ def main():
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size (default: %(default)s)')
     parser.add_argument('--max_length', type=int, default=128, help='Maximum sequence length (default: %(default)s)')
     parser.add_argument('--max_num_samples', type=int, default=None, help='Crop the validation set to a maximum number of samples. None=no cropping. (default: %(default)s)')
-    parser.add_argument('--model_path', default='bert/best_fp32_model.pth', help='Path to saved model weights (optional)')
+    parser.add_argument('--model_id', default='takedarn/bert-tiny-sst2', help='HF Model ID of target model to quantize (optional)')
     parser.add_argument('--silent', action='store_true', help='Silent mode (default: %(default)s)')
     parser.add_argument('--config', action='append', default=[], help='Config in the form name=json. Eg. --config k_quantizer=\{"quant":"MXFPQuantizer","man_w":8\}')
     
@@ -111,9 +111,10 @@ def main():
         print(f"Using device: {device}")
     
     mask = True
+    model_id = args.model_id
     # model_id = "takedarn/bert-tiny-sst2"
     # model_id = "M-FAC/bert-tiny-finetuned-sst2"
-    model_id = "gchhablani/bert-base-cased-finetuned-sst2"
+    # model_id = "gchhablani/bert-base-cased-finetuned-sst2"
     # model_id = "distilbert-base-uncased-finetuned-sst-2-english"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForSequenceClassification.from_pretrained(

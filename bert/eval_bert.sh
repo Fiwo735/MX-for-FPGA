@@ -10,6 +10,7 @@ for v in "${exp_values[@]}"; do
         echo "Running with man_w=$c, exp_w=$v"
         q_config=$(printf '{"quant":"MXFPQuantizer","man_w":%d,"exp_w":%d}' "$c" "$v")
         CUDA_VISIBLE_DEVICES=1 python bert_sst2.py \
+                    --model_id "gchhablani/bert-base-cased-finetuned-sst2" \
                     --config "k_quantizer=$q_config" \
                     --config "q_quantizer=$q_config" \
                     --config "s_quantizer=$q_config" \
