@@ -6,6 +6,7 @@ from torch.utils.data import DataLoader
 
 import argparse
 from tqdm import tqdm
+import json
 
 from dist_utils import save_weights, save_acts
 from quant_utils.patch_utils import patch_bert_model
@@ -95,12 +96,15 @@ def main():
     parser.add_argument('--max_num_samples', type=int, default=None, help='Crop the validation set to a maximum number of samples. None=no cropping. (default: %(default)s)')
     parser.add_argument('--model_path', default='bert/best_fp32_model.pth', help='Path to saved model weights (optional)')
     parser.add_argument('--silent', action='store_true', help='Silent mode (default: %(default)s)')
-    parser.add_argument('--exp_w', type=int, default=4, help='Exponent length. (default: %(default)s)')
-    parser.add_argument('--man_w', type=int, default=3, help='Mantissa length. (default: %(default)s)')
-    parser.add_argument('--group_size', type=int, default=32, help='Group size. (default: %(default)s)')
+    parser.add_argument('--config', action='append', default=[], help='Config in the form name=json. Eg. --config k_quantizer=\{"quant":"MXFPQuantizer","man_w":8\}')
     
     args = parser.parse_args()
-    
+
+    configs = {}
+    for item in args.config:
+        name, json_str = item.split('=', 1)
+        configs[name] = json.loads(json_str)
+
     # Setup
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if not args.silent:
@@ -140,7 +144,7 @@ def main():
     model, quantizers, thresholds = patch_bert_model(
         model, attn_block=BertSelfAttention,
         quant_attn_block=QuantBertSelfAttention,
-        q_config={'exp_w':args.exp_w, 'man_w':args.man_w, 'group_size':args.group_size}
+        q_config=configs,
     )
     
     model.to(device)

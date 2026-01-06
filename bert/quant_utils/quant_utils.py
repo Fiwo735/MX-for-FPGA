@@ -281,3 +281,9 @@ class IntQuantizer(Quantizer):
         x_rescale = x_rnd * scale
         
         return x_rescale
+
+
+q_reg = {
+    "MXFPQuantizer": MXFPQuantizer,
+    "IntQuantizer": IntQuantizer,
+}

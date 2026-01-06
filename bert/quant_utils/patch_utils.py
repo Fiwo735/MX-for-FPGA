@@ -1,7 +1,8 @@
 from .quant_utils import Quantizer
+from copy import deepcopy
 
 
-def patch_bert_model(model, attn_block, quant_attn_block, q_config={}, t_config={}):
+def patch_bert_model(model, attn_block, quant_attn_block, q_config={}):
     """
     Replaces all instances of attn_block modules with quantized attention.
     """
@@ -16,7 +17,7 @@ def patch_bert_model(model, attn_block, quant_attn_block, q_config={}, t_config=
             # Check if this module is an instance of attn_block
             if isinstance(module, attn_block):
                 # Create quantized version
-                quant_attn = quant_attn_block(module, q_config, t_config)
+                quant_attn = quant_attn_block(module, deepcopy(q_config))
 
                 # Collect quantizers and thresholds
                 for child_name, child in quant_attn.named_children():

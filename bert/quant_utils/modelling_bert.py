@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from transformers.models.bert.modeling_bert import BertSelfAttention
 
-from .quant_utils import IntQuantizer, MXFPQuantizer
+from .quant_utils import IntQuantizer, MXFPQuantizer, q_reg
 
 
 
@@ -12,7 +12,7 @@ class QuantBertSelfAttention(nn.Module):
     """
     A bert attention block with quantization inserted into forward pass.
     """
-    def __init__(self, orig_attn: BertSelfAttention, q_config={}, t_config={}):
+    def __init__(self, orig_attn: BertSelfAttention, q_config={}):
         super().__init__()
 
         self.num_attention_heads = orig_attn.num_attention_heads
@@ -31,6 +31,9 @@ class QuantBertSelfAttention(nn.Module):
 
         self.is_decoder = orig_attn.is_decoder
 
+        # Use CLI quantizer configs if available
+        self.init_quantizers(q_config)
+
         # # Ternary Quantization
         # self.k_quantizer = IntQuantizer(bit_w=2, symmetric=True)
         # self.q_quantizer = IntQuantizer(bit_w=2, symmetric=True)
@@ -45,13 +48,35 @@ class QuantBertSelfAttention(nn.Module):
         # self.p_quantizer = IntQuantizer(bit_w=8, signed=False)
         # self.o_quantizer = IntQuantizer(bit_w=q_config['man_w'])
 
-        # MXFP Quantization
-        self.k_quantizer = MXFPQuantizer(**q_config)
-        self.q_quantizer = MXFPQuantizer(**q_config)
-        self.s_quantizer = MXFPQuantizer(**q_config)
-        self.v_quantizer = MXFPQuantizer(**q_config)
-        self.p_quantizer = MXFPQuantizer(**q_config)
-        self.o_quantizer = MXFPQuantizer(**q_config)
+        # # MXFP Quantization
+        # self.k_quantizer = MXFPQuantizer(**q_config)
+        # self.q_quantizer = MXFPQuantizer(**q_config)
+        # self.s_quantizer = MXFPQuantizer(**q_config)
+        # self.v_quantizer = MXFPQuantizer(**q_config)
+        # self.p_quantizer = MXFPQuantizer(**q_config)
+        # self.o_quantizer = MXFPQuantizer(**q_config)
+
+    def init_quantizers(self, q_config):
+        ''' Make quantizers from CLI config. '''
+
+        if 'k_quantizer' in q_config.keys():
+            quant_type = q_config['k_quantizer'].pop('quant')
+            self.k_quantizer = q_reg[quant_type](**q_config['k_quantizer'])
+        if 'q_quantizer' in q_config.keys():
+            quant_type = q_config['q_quantizer'].pop('quant')
+            self.q_quantizer = q_reg[quant_type](**q_config['q_quantizer'])
+        if 's_quantizer' in q_config.keys():
+            quant_type = q_config['s_quantizer'].pop('quant')
+            self.s_quantizer = q_reg[quant_type](**q_config['s_quantizer'])
+        if 'v_quantizer' in q_config.keys():
+            quant_type = q_config['v_quantizer'].pop('quant')
+            self.v_quantizer = q_reg[quant_type](**q_config['v_quantizer'])
+        if 'p_quantizer' in q_config.keys():
+            quant_type = q_config['p_quantizer'].pop('quant')
+            self.p_quantizer = q_reg[quant_type](**q_config['p_quantizer'])
+        if 'o_quantizer' in q_config.keys():
+            quant_type = q_config['o_quantizer'].pop('quant')
+            self.o_quantizer = q_reg[quant_type](**q_config['o_quantizer'])
 
     def transpose_for_scores(self, x: torch.Tensor) -> torch.Tensor:
         new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
