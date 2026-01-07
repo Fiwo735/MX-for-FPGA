@@ -109,18 +109,20 @@ class MXFPQuantizer(Quantizer):
         x_max = torch.where(x_max == 0, torch.ones_like(x_max), x_max)
 
         # Divide by largest representable power of 2
+        # 2^max_pot is the largest representable power of 2
         max_pot = 2**(self.exp_w-1)
 
         # Restrict to power of 2
         x_pot = torch.log2(x_max) - max_pot
         x_pot = torch.floor(x_pot)
-        x_pot = 2**x_pot
 
         # Clamp to UE8M0
-        x_clamp = torch.clamp(x_pot, 0, 255)
+        x_clamp = torch.clamp(x_pot, -127, 128)
+
+        x_scale = 2**x_clamp
 
         # Expand to original shape
-        x_rep = x_clamp.expand(orig_shape)
+        x_rep = x_scale.expand(orig_shape)
 
         return x_rep
 
@@ -187,6 +189,9 @@ class MXFPQuantizer(Quantizer):
         else:
             scale = self.dynamic_scale(x)
 
+        if (scale == 0).any():
+            raise ValueError("A scale was set to 0, use torch.bfloat16 to try to avoid this.")
+
         # Unapply scales
         x_descale = x / scale
 
@@ -195,7 +200,7 @@ class MXFPQuantizer(Quantizer):
 
         # Apply scales
         x_rescale = x_rnd * scale
-        
+
         return x_rescale
 
 

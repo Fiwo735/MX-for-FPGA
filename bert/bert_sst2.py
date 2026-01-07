@@ -31,7 +31,6 @@ def fetch_dataloader(tokenizer, num_samples=None, max_length=128, split="train",
     dataloader = DataLoader(data, batch_size=batch_size, shuffle=split == "train")
     return dataloader
 
-
 def get_logits_from_outputs(outputs):
     # Handle different output formats
     if hasattr(outputs, 'logits'):
@@ -97,7 +96,7 @@ def main():
     parser.add_argument('--model_id', default='takedarn/bert-tiny-sst2', help='HF Model ID of target model to quantize (optional)')
     parser.add_argument('--silent', action='store_true', help='Silent mode (default: %(default)s)')
     parser.add_argument('--config', action='append', default=[], help='Config in the form name=json. Eg. --config k_quantizer=\{"quant":"MXFPQuantizer","man_w":8\}')
-    
+
     args = parser.parse_args()
 
     configs = {}
@@ -126,12 +125,11 @@ def main():
     # Load calib data
     calib_loader = fetch_dataloader(
         tokenizer, 
-        num_samples=512, 
+        num_samples=128, 
         max_length=args.max_length, 
         split="train", 
         batch_size=args.batch_size
     )
-
     # Load validation data
     val_loader = fetch_dataloader(
         tokenizer, 
@@ -140,14 +138,15 @@ def main():
         split="validation", 
         batch_size=args.batch_size
     )
-    
+
+
     # Patch model with quantized attention.
     model, quantizers, thresholds = patch_bert_model(
-        model, attn_block=BertSelfAttention,
+        model,
+        attn_block=BertSelfAttention,
         quant_attn_block=QuantBertSelfAttention,
         q_config=configs,
     )
-    
     model.to(device)
     model.eval()
     
