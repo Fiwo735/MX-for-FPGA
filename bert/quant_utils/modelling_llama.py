@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaAttention, Cache, logger, repeat_kv, apply_rotary_pos_emb
 
-from .quant_utils import IntQuantizer, MXFPQuantizer, TVQuantizer, LUTQuantizer, q_reg
+from .quant_utils import IntQuantizer, MXFPQuantizer, q_reg
 
 
 
