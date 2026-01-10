@@ -10,7 +10,8 @@ module mxint_exp #(
     parameter BLOCK_SIZE        = 16,
     parameter DATA_OUT_MAN_WIDTH= 10,
     parameter DATA_OUT_EXP_WIDTH= 4,
-    parameter DATA_R_WIDTH      = 7
+    parameter DATA_R_WIDTH      = 7,
+    parameter string USE_DSP    = "auto"
 ) (
     /* verilator lint_off UNUSEDSIGNAL */
     input rst,
@@ -50,9 +51,25 @@ module mxint_exp #(
   logic [DATA_N_WIDTH - 1:0] temp_data_out_n[BLOCK_SIZE - 1 : 0];
   logic [DATA_R_WIDTH - 1:0] temp_data_out_r[BLOCK_SIZE - 1 : 0];
 
-  for (genvar i = 0; i < BLOCK_SIZE; i++) begin
-    assign mdata_in_0_log2_e[i] = $signed(mdata_in_0[i]) * MLOG2_E;
-  end
+  generate
+    for (genvar i = 0; i < BLOCK_SIZE; i++) begin : gen_mult
+      if (USE_DSP == "yes") begin : g_dsp
+          always_comb begin
+              (* use_dsp = "yes" *) mdata_in_0_log2_e[i] = $signed(mdata_in_0[i]) * MLOG2_E;
+          end
+      end else if (USE_DSP == "logic") begin : g_logic
+          always_comb begin
+              (* use_dsp = "logic" *) mdata_in_0_log2_e[i] = $signed(mdata_in_0[i]) * MLOG2_E;
+          end
+      end else begin : g_auto
+          always_comb begin
+              // Auto: No attribute
+              mdata_in_0_log2_e[i] = $signed(mdata_in_0[i]) * MLOG2_E;
+          end
+      end
+    end
+  endgenerate
+
   assign edata_in_0_log2_e = $signed(edata_in_0) + ELOG2_E;
 
   // So basically, The input frac_width is DATA_LOG2_E_MAN_FRAC_WIDTH

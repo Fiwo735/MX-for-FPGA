@@ -1,8 +1,7 @@
 `ifndef __DOT_FP_SV__
 `define __DOT_FP_SV__
 
-`include "../util/arith/vec_mul_fp.sv"
-`include "../util/arith/vec_sum_int.sv"
+// Note: Compiled via explicit read_verilog in run_synth.tcl
 
 module dot_fp #(
     parameter exp_width = 5,
@@ -11,7 +10,8 @@ module dot_fp #(
     parameter bit_width = 1 + exp_width + man_width,
     parameter fi_width  = man_width + 2,
     parameter prd_width = 2 * ((1<<exp_width) + man_width),
-    parameter out_width = prd_width + $clog2(k)
+    parameter out_width = prd_width + $clog2(k),
+    parameter string USE_DSP = "auto"
 )(
     input  logic signed [bit_width-1:0] i_vec_a [k],
     input  logic signed [bit_width-1:0] i_vec_b [k],
@@ -24,7 +24,8 @@ module dot_fp #(
     vec_mul_fp #(
         .exp_width(exp_width),
         .man_width(man_width),
-        .length(k)
+        .length(k),
+        .USE_DSP(USE_DSP)
     ) u_vec_mul (
         .i_vec_a(i_vec_a),
         .i_vec_b(i_vec_b),
