@@ -11,7 +11,8 @@ module dot_fp #(
     parameter fi_width  = man_width + 2,
     parameter prd_width = 2 * ((1<<exp_width) + man_width),
     parameter out_width = prd_width + $clog2(k),
-    parameter string USE_DSP = "auto"
+    parameter string USE_DSP = "auto",
+    parameter string ACCUM_METHOD = "Kulisch"
 )(
     input  logic signed [bit_width-1:0] i_vec_a [k],
     input  logic signed [bit_width-1:0] i_vec_b [k],
@@ -35,13 +36,21 @@ module dot_fp #(
     // Calculate sum.
     logic signed [out_width-1:0] p0_sum;
 
-    vec_sum_int #(
-        .bit_width(prd_width),
-        .length(k)
-    ) u_tree_add (
-        .i_vec(p0_prd),
-        .o_sum(p0_sum)
-    );
+    generate
+        if (ACCUM_METHOD == "Kulisch") begin : gen_kulisch_accum
+            vec_sum_int #(
+                .bit_width(prd_width),
+                .length(k)
+            ) u_tree_add (
+                .i_vec(p0_prd),
+                .o_sum(p0_sum)
+            );
+        end else begin : gen_error_accum
+            $error("Unsupported ACCUM_METHOD in dot_fp: " + ACCUM_METHOD);
+        end
+    endgenerate
+
+    
 
     assign o_dp = p0_sum;
 

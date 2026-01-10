@@ -20,6 +20,7 @@ module matmul_fp #(
     parameter out_width = 32,
     parameter scale_width = 8,
     parameter string USE_DSP = "auto",
+    parameter string ACCUM_METHOD = "Kulisch",
 
     localparam x_cols = vec_elem_count,
     localparam y_rows = vec_elem_count,
@@ -58,7 +59,8 @@ module matmul_fp #(
                 .man_width(man_width),
                 .out_width(out_width),
                 .scale_width(scale_width),
-                .USE_DSP(USE_DSP)
+                .USE_DSP(USE_DSP),
+                .ACCUM_METHOD(ACCUM_METHOD)
             ) u_dot_general (
                 .i_clk(i_clk),
                 .i_X(A_i[i]),

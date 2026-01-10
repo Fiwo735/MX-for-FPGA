@@ -8,11 +8,24 @@ import itertools
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from enum import Enum
 from datetime import datetime
 from argparse import ArgumentParser
 
+class MXFPBits:
+  def __init__(self, exp_bits, mant_bits):
+    self.exp_bits = exp_bits
+    self.mant_bits = mant_bits
+    
+  def __repr__(self):
+    return f"E{self.exp_bits}M{self.mant_bits}"
+  
+class AccumMethod(Enum):
+  Kulisch = "KULISCH"
+  Kahan = "KAHAN"
+
 class DesignConfig:
-  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, bit_width=-1, out_width=-1, scale_width=-1):
+  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch):
     self.name = name
     
     self.S_q = S_q
@@ -21,11 +34,17 @@ class DesignConfig:
     self.d_v = d_v
     
     self.k = k
-    self.bit_width = bit_width
-    self.out_width = out_width
     self.scale_width = scale_width
     
+    self.M1_bits = MXFPBits(M1_E, M1_M)
+    self.M2_bits = MXFPBits(M2_E, M2_M)
+    self.M3_bits = MXFPBits(M3_E, M3_M)
+    self.accum_method1 = accum_method1
+    self.accum_method2 = accum_method2
+    self.accum_method3 = accum_method3
+    
   def get_bert_flags(self):
+    # TODO
     return (
       f"--S_q {self.S_q} --S_kv {self.S_kv} --d_kq {self.d_kq} --d_v {self.d_v} "
       f"--k {self.k} --bit_width {self.bit_width} --out_width {self.out_width} --scale_width {self.scale_width}"
@@ -34,7 +53,9 @@ class DesignConfig:
   def __repr__(self):
     return (
       f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k_{self.k}_"
-      f"bit_width_{self.bit_width}_out_width_{self.out_width}_scale_width_{self.scale_width}"
+      f"scale_width_{self.scale_width}_M1_E_{self.M1_bits.exp_bits}_M1_M_{self.M1_bits.mant_bits}_"
+      f"M2_E_{self.M2_bits.exp_bits}_M2_M_{self.M2_bits.mant_bits}_M3_E_{self.M3_bits.exp_bits}_M3_M_{self.M3_bits.mant_bits}_"
+      f"ACCUM_METHOD_{self.accum_method1.value}_{self.accum_method2.value}_{self.accum_method3.value}"
     )
     
   def __str__(self):
@@ -44,21 +65,25 @@ class DesignConfig:
     s += f"  d_kq: {self.d_kq}\n"
     s += f"  d_v: {self.d_v}\n"
     s += f"  k: {self.k}\n"
-    s += f"  bit_width: {self.bit_width}\n"
-    s += f"  out_width: {self.out_width}\n"
     s += f"  scale_width: {self.scale_width}\n"
+    s += f"  M1 bits: {self.M1_bits}\n"
+    s += f"  M2 bits: {self.M2_bits}\n"
+    s += f"  M3 bits: {self.M3_bits}\n"
+    s += f"  Accumulation method 1: {self.accum_method1.value}\n"
+    s += f"  Accumulation method 2: {self.accum_method2.value}\n"
+    s += f"  Accumulation method 3: {self.accum_method3.value}\n"
     return s
     
   def get_vivado_tclargs(self):
-    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.bit_width} {self.out_width} {self.scale_width}"
+    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value}"
   
   @staticmethod
   def get_filename_regex():
-    return r"([^/]+_S_q_\d+_S_kv_\d+_d_kq_\d+_d_v_\d+_k_\d+_bit_width_\d+_out_width_\d+_scale_width_\d+)_time_(\d+_\d+)"
+    return r"([^/]+_S_q_\d+_S_kv_\d+_d_kq_\d+_d_v_\d+_k_\d+_scale_width_\d+_M1_E_\d+_M1_M_\d+_M2_E_\d+_M2_M_\d+_M3_E_\d+_M3_M_\d+_ACCUM_METHOD_[A-Z]+_[A-Z]+_[A-Z]+_DSP_[A-Z]+_[A-Z]+_[A-Z]+)_time_(\d+_\d+)"
   
   @staticmethod
   def get_design_regex():
-    return r"([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_bit_width_(\d+)_out_width_(\d+)_scale_width_(\d+)"
+    return r"([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_scale_width_(\d+)_M1_E_(\d+)_M1_M_(\d+)_M2_E_(\d+)_M2_M_(\d+)_M3_E_(\d+)_M3_M_(\d+)_ACCUM_METHOD_([A-Z]+)_([A-Z]+)_([A-Z]+)_DSP_([A-Z]+)_([A-Z]+)_([A-Z]+)"
   
   @classmethod
   def from_str(cls, design_str):
@@ -75,11 +100,21 @@ class DesignConfig:
     d_kq = int(details.group(4))
     d_v = int(details.group(5))
     k = int(details.group(6))
-    bit_width = int(details.group(7))
-    out_width = int(details.group(8))
-    scale_width = int(details.group(9))
+    scale_width = int(details.group(7))
+    M1_E = int(details.group(8))
+    M1_M = int(details.group(9))
+    M2_E = int(details.group(10))
+    M2_M = int(details.group(11))
+    M3_E = int(details.group(12))
+    M3_M = int(details.group(13))
+    accum_method1 = AccumMethod[details.group(14)]
+    accum_method2 = AccumMethod[details.group(15)]
+    accum_method3 = AccumMethod[details.group(16)]
+    m1_dsp = details.group(17)
+    m2_dsp = details.group(18)
+    sm_dsp = details.group(19)
     
-    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, bit_width=bit_width, out_width=out_width, scale_width=scale_width)
+    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3)
 
 class SynthesisResult:
   def __init__(self, design_config, power, timing, utilisation, accuracy):
@@ -174,7 +209,7 @@ class SynthesisResult:
     return s
 
 class SynthesisHandler:
-  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/attention_int", clock_period_ns=5):
+  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", clock_period_ns=5):
     self.results = []
     self.designs_to_synthesise = designs_to_synthesise
     self.hdl_dir = hdl_dir
@@ -210,8 +245,12 @@ class SynthesisHandler:
   
   def check_if_design_is_invalid(self, design):
     # All parameters must be >= 0
-    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k, design.bit_width, design.out_width, design.scale_width]:
+    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k, design.scale_width]:
       if param <= 0:
+        return True
+      
+    for mxfp_bits in [design.M1_bits, design.M2_bits, design.M3_bits]:
+      if mxfp_bits.exp_bits <= 0 or mxfp_bits.mant_bits <= 0:
         return True
     
     # S_q, S_kv, d_kq, d_v must powers of 2 (including 2^0 = 1)
@@ -244,14 +283,14 @@ class SynthesisHandler:
           print(f"Skipping synthesis for {design!r} as results already exist.")
         continue
       
-      run_synth_path = os.path.join(self.hdl_dir, "run_synth.tcl")
+      run_synth_path = os.path.join(self.hdl_dir, "run_synth_fp.tcl")
       synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
       if verbose:
         print(f"Results for {design!r} not found, running synthesis command: {synthesis_cmd}")
       
       if dry_run:
         if verbose:
-          print("Dry run mode enabled, skipping actual synthesis.")
+          print(f"Dry run mode enabled, skipping actual synthesis, cmd supposed to run:\n{synthesis_cmd}")
         continue
       
       try:
@@ -332,6 +371,8 @@ class SynthesisHandler:
     return results
   
   def _read_accuracy_report(self, file_path):
+    # TODO early return for now
+    return 75.0
     with open(file_path, 'r') as file:
       text = file.read()
       
@@ -342,6 +383,9 @@ class SynthesisHandler:
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
     accuracy_cmd = f"python bert/bert_sst2.py --silent {design.get_bert_flags()}"
+    
+    # TODO early return for now
+    return
       
     try:
         completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
@@ -679,16 +723,18 @@ if __name__ == "__main__":
   args = parser.parse_args()
   
   designs_to_synthesise = [
-    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, bit_width, out_width, scale_width)
-    for name in ["attention_int"]
-    for S_q in [4, 8]
-    for S_kv in [4, 8]
-    for d_kq in [4, 8]
-    for d_v in [4, 8]
-    for k in [2, 4]
-    for bit_width in [8]
-    for out_width in [8]
+    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method)
+    for name in ["attention"]
+    for S_q in [4]
+    for S_kv in [4]
+    for d_kq in [4]
+    for d_v in [4]
+    for k in [2]
     for scale_width in [8]
+    for M1_E, M1_M in [(4, 3)]
+    for M2_E, M2_M in [(4, 3)]
+    for M3_E, M3_M in [(4, 3)]
+    for accum_method in [AccumMethod.Kulisch]
   ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise)

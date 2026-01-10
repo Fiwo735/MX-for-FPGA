@@ -29,6 +29,10 @@ module attention_fp #(
     parameter string M2_USE_DSP = "auto",
     parameter string SOFTMAX_USE_DSP = "auto",
 
+    parameter string ACCUM_METHOD1 = "Kulisch",
+    parameter string ACCUM_METHOD2 = "Kulisch",
+    parameter string ACCUM_METHOD3 = "Kulisch",
+
     parameter accumulator_width_1 = 32,
     parameter accumulator_width_2 = 32
 )(
@@ -72,7 +76,8 @@ module attention_fp #(
         .man_width(M1_MAN_WIDTH),
         .out_width(MM1_OUT_WIDTH),
         .scale_width(scale_width),
-        .USE_DSP(M1_USE_DSP)
+        .USE_DSP(M1_USE_DSP),
+        .ACCUM_METHOD(ACCUM_METHOD1),
     ) u_matmul_QK (
         .i_clk(i_clk),
         .A_i(Q_i),
@@ -172,7 +177,8 @@ module attention_fp #(
         .man_width(M2_MAN_WIDTH),
         .out_width(MM2_OUT_WIDTH),
         .scale_width(scale_width),
-        .USE_DSP(M2_USE_DSP)
+        .USE_DSP(M2_USE_DSP),
+        .ACCUM_METHOD(ACCUM_METHOD3),
     ) u_matmul_SMV (
         .i_clk(i_clk),
         .A_i(soft_res),

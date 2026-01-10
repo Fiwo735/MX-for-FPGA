@@ -14,6 +14,7 @@ module dot_general_fp #(
     parameter out_width = 8,
     parameter scale_width = 8, // Added
     parameter string USE_DSP = "auto",
+    parameter string ACCUM_METHOD = "Kulisch",
 
     localparam dp_width = 2*bit_width + $clog2(k), 
     // Note: dp_width might need tuning for FP accumulation size, 
@@ -43,7 +44,8 @@ module dot_general_fp #(
             // but dot_fp derives them from exp/man/k. A mismatch check might be good.
             .bit_width(bit_width),
             .out_width(dp_width),
-            .USE_DSP(USE_DSP)
+            .USE_DSP(USE_DSP),
+            .ACCUM_METHOD(ACCUM_METHOD)
         ) u_dot_fp (
             .i_vec_a(i_X[i*k +: k]),
             .i_vec_b(i_Y[i*k +: k]),
