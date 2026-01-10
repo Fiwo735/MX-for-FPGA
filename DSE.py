@@ -25,7 +25,7 @@ class AccumMethod(Enum):
   Kahan = "KAHAN"
 
 class DesignConfig:
-  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch):
+  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
     self.name = name
     
     self.S_q = S_q
@@ -42,12 +42,17 @@ class DesignConfig:
     self.accum_method1 = accum_method1
     self.accum_method2 = accum_method2
     self.accum_method3 = accum_method3
+
+    self.m1_dsp = m1_dsp
+    self.m2_dsp = m2_dsp
+    self.m3_dsp = m3_dsp
     
   def get_bert_flags(self):
     # TODO
     return (
       f"--S_q {self.S_q} --S_kv {self.S_kv} --d_kq {self.d_kq} --d_v {self.d_v} "
-      f"--k {self.k} --bit_width {self.bit_width} --out_width {self.out_width} --scale_width {self.scale_width}"
+      # f"--k {self.k} --bit_width {self.bit_width} --out_width {self.out_width} --scale_width {self.scale_width}"
+      f"--k {self.k} --scale_width {self.scale_width}"
     )
 
   def __repr__(self):
@@ -55,7 +60,8 @@ class DesignConfig:
       f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k_{self.k}_"
       f"scale_width_{self.scale_width}_M1_E_{self.M1_bits.exp_bits}_M1_M_{self.M1_bits.mant_bits}_"
       f"M2_E_{self.M2_bits.exp_bits}_M2_M_{self.M2_bits.mant_bits}_M3_E_{self.M3_bits.exp_bits}_M3_M_{self.M3_bits.mant_bits}_"
-      f"ACCUM_METHOD_{self.accum_method1.value}_{self.accum_method2.value}_{self.accum_method3.value}"
+      f"ACCUM_METHOD_{self.accum_method1.value}_{self.accum_method2.value}_{self.accum_method3.value}_"
+      f"DSP_{self.m1_dsp}_{self.m2_dsp}_{self.m3_dsp}"
     )
     
   def __str__(self):
@@ -79,18 +85,20 @@ class DesignConfig:
   
   @staticmethod
   def get_filename_regex():
-    return r"([^/]+_S_q_\d+_S_kv_\d+_d_kq_\d+_d_v_\d+_k_\d+_scale_width_\d+_M1_E_\d+_M1_M_\d+_M2_E_\d+_M2_M_\d+_M3_E_\d+_M3_M_\d+_ACCUM_METHOD_[A-Z]+_[A-Z]+_[A-Z]+_DSP_[A-Z]+_[A-Z]+_[A-Z]+)_time_(\d+_\d+)"
+    return r"([^/]+_S_q_\d+_S_kv_\d+_d_kq_\d+_d_v_\d+_k_\d+_scale_width_\d+_M1_E_\d+_M1_M_\d+_M2_E_\d+_M2_M_\d+_M3_E_\d+_M3_M_\d+_ACCUM_METHOD_[A-Z]+_[A-Z]+_[A-Z]+_DSP_[a-zA-Z]+_[a-zA-Z]+_[a-zA-Z]+)_time_(\d+_\d+)"
   
   @staticmethod
   def get_design_regex():
-    return r"([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_scale_width_(\d+)_M1_E_(\d+)_M1_M_(\d+)_M2_E_(\d+)_M2_M_(\d+)_M3_E_(\d+)_M3_M_(\d+)_ACCUM_METHOD_([A-Z]+)_([A-Z]+)_([A-Z]+)_DSP_([A-Z]+)_([A-Z]+)_([A-Z]+)"
+    return r"([^/]+)_S_q_(\d+)_S_kv_(\d+)_d_kq_(\d+)_d_v_(\d+)_k_(\d+)_scale_width_(\d+)_M1_E_(\d+)_M1_M_(\d+)_M2_E_(\d+)_M2_M_(\d+)_M3_E_(\d+)_M3_M_(\d+)_ACCUM_METHOD_([A-Z]+)_([A-Z]+)_([A-Z]+)_DSP_([a-zA-Z]+)_([a-zA-Z]+)_([a-zA-Z]+)"
   
   @classmethod
   def from_str(cls, design_str):
     details = re.search(
       cls.get_design_regex(),
       design_str
-    )
+    ) 
+    print(cls.get_design_regex())
+    print(design_str)
     if not details:
       raise ValueError(f"Design string {design_str} does not match expected pattern.")
     
@@ -107,14 +115,14 @@ class DesignConfig:
     M2_M = int(details.group(11))
     M3_E = int(details.group(12))
     M3_M = int(details.group(13))
-    accum_method1 = AccumMethod[details.group(14)]
-    accum_method2 = AccumMethod[details.group(15)]
-    accum_method3 = AccumMethod[details.group(16)]
+    accum_method1 = AccumMethod(details.group(14))
+    accum_method2 = AccumMethod(details.group(15))
+    accum_method3 = AccumMethod(details.group(16))
     m1_dsp = details.group(17)
     m2_dsp = details.group(18)
-    sm_dsp = details.group(19)
+    m3_dsp = details.group(19)
     
-    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3)
+    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
 
 class SynthesisResult:
   def __init__(self, design_config, power, timing, utilisation, accuracy):
@@ -449,6 +457,7 @@ class SynthesisHandler:
       
       # Match the filename against the regex
       m = pattern.match(filename)
+      print(pattern)
       if not m:
         print(f"Filename {filename} does not match expected pattern, skipping.")
         continue
@@ -554,8 +563,8 @@ class SynthesisHandler:
 
 
   def plot_results(self, directory="./plots", plot_file_format="svg"):
-    color_values = np.array([r.design_config.bit_width for r in self.results])
-    
+    # color_values = np.array([r.design_config.bit_width for r in self.results])
+    color_values = np.array([r.design_config.scale_width for r in self.results])
     designs = [r.design_config for r in self.results]
     resource_usages = [synth_result.get_aggregated_resource_usage() for synth_result in self.results]
     powers = [synth_result.power['total'] for synth_result in self.results]
@@ -724,7 +733,7 @@ if __name__ == "__main__":
   
   designs_to_synthesise = [
     DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method)
-    for name in ["attention"]
+    for name in ["attention_fp"]
     for S_q in [4]
     for S_kv in [4]
     for d_kq in [4]

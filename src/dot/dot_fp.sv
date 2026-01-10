@@ -37,7 +37,7 @@ module dot_fp #(
     logic signed [out_width-1:0] p0_sum;
 
     generate
-        if (ACCUM_METHOD == "Kulisch") begin : gen_kulisch_accum
+        if (ACCUM_METHOD == "KULISCH") begin : gen_kulisch_accum
             vec_sum_int #(
                 .bit_width(prd_width),
                 .length(k)
@@ -46,7 +46,7 @@ module dot_fp #(
                 .o_sum(p0_sum)
             );
         end else begin : gen_error_accum
-            $error("Unsupported ACCUM_METHOD in dot_fp: " + ACCUM_METHOD);
+            $error("Unsupported ACCUM_METHOD in dot_fp:");
         end
     endgenerate
 
