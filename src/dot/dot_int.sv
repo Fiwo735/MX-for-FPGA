@@ -1,8 +1,8 @@
 `ifndef __DOT_INT_SV__
 `define __DOT_INT_SV__
 
-`include "../../util/arith/vec_mul_int.sv"
-`include "../../util/arith/vec_sum_int.sv"
+`include "../util/arith/vec_mul_int.sv"
+`include "../util/arith/vec_sum_int.sv"
 
 module dot_int #(
     parameter bit_width = 8,

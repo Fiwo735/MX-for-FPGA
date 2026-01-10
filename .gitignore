@@ -12,3 +12,17 @@ tb/attention_test
 attention_test
 src/attention/attention_int/synth_output
 *.pb
+
+# Vivado Generated Files
+*.jou
+*.wdb
+*.dcp
+*.str
+*.lpr
+
+# Synthesis Outputs
+src/attention/synth_logs/
+src/attention/synth_output_int/
+src/attention/synth_output_fp/
+*.tmp
+*.backup

@@ -1,6 +1,6 @@
 set part        xcu250-figd2104-2L-e
 set top         attention_int
-set outputDir   ./src/attention/attention_int/synth_output
+set outputDir   ./src/attention/synth_output_int
 file mkdir $outputDir
 
 # Set parameters based on command line arguments or defaults
@@ -24,9 +24,9 @@ set timestamp [clock format [clock seconds] -format "%Y%m%d_%H%M"]
 set prefix "${outputDir}/${top}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_k_${k}_bit_width_${bit_width}_out_width_${out_width}_scale_width_${scale_width}_time_${timestamp}"
 
 # Read sources
-read_verilog    [glob ./src/attention/attention_int/*.sv]
-read_verilog    [glob ./src/attention/attention_int/mxoperators/*.sv]
-read_verilog    [glob ./src/attention/attention_int/mxoperators/lib/*.sv]
+read_verilog    [glob ./src/attention/attention_int.sv]
+read_verilog    [glob ./src/attention/mxoperators/*.sv]
+read_verilog    [glob ./src/attention/mxoperators/lib/*.sv]
 read_xdc        [ glob ./src/*.xdc ]
 
 # Synthesis

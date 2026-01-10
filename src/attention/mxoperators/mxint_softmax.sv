@@ -18,7 +18,8 @@ module mxint_softmax #(
     parameter DATA_OUT_0_DIM = DATA_IN_0_DIM,
     parameter DATA_OUT_0_PARALLELISM = DATA_IN_0_PARALLELISM,
     parameter EXP_SUM_UNDERFLOW_BITS = 4,
-    parameter DIVISION_UNDERFLOW_BITS = 4
+    parameter DIVISION_UNDERFLOW_BITS = 4,
+    parameter string USE_DSP = "auto"
 ) (
     /* verilator lint_off UNUSEDSIGNAL */
     input rst,
@@ -101,7 +102,8 @@ module mxint_softmax #(
       .BLOCK_SIZE(BLOCK_SIZE),
       .DATA_R_WIDTH(DATA_R_WIDTH),
       .DATA_OUT_MAN_WIDTH(DATA_EXP_0_PRECISION_0),
-      .DATA_OUT_EXP_WIDTH(DATA_EXP_0_PRECISION_1)
+      .DATA_OUT_EXP_WIDTH(DATA_EXP_0_PRECISION_1),
+      .USE_DSP(USE_DSP)
   ) mxint_exp_inst (
       .rst(rst),
       .clk(clk),

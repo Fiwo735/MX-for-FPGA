@@ -1,7 +1,8 @@
 `ifndef __ATTENTION_INT_SV__
 `define __ATTENTION_INT_SV__
 
-`include "../../matmul/matmul_int/matmul_int.sv"
+
+`include "../matmul/matmul_int/matmul_int.sv"
 
 // Attention(Q, K, V) = softmax(Q * K^T / sqrt(d_kq)) * V
 // Q: [S_q x d_kq]
@@ -98,7 +99,7 @@ module attention_int #(
     end
 
     // softmax(Q * K^T / sqrt(d_kq))
-    logic signed [out_width-1:0] softmax_m [S_q][S_kv];
+    logic signed [bit_width-1:0] softmax_m [S_q][S_kv];
     logic [scale_width-1:0] softmax_e [S_q];
     
     genvar gi;

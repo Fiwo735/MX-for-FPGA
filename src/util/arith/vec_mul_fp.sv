@@ -1,7 +1,7 @@
 `ifndef __VEC_MUL_FP_SV__
 `define __VEC_MUL_FP_SV__
 
-`include "../util/arith/mul_fp.sv"
+// Note: Compiled via explicit read_verilog in run_synth.tcl
 
 module vec_mul_fp #(
     parameter exp_width = 5,
@@ -9,7 +9,8 @@ module vec_mul_fp #(
     parameter length    = 32,
     parameter bit_width = 1 + exp_width + man_width,
     parameter fi_width  = man_width + 2,
-    parameter prd_width = 2 * ((1<<exp_width) + man_width)
+    parameter prd_width = 2 * ((1<<exp_width) + man_width),
+    parameter string USE_DSP = "auto"
 )(
     input  logic signed [bit_width-1:0] i_vec_a [length],
     input  logic signed [bit_width-1:0] i_vec_b [length],
@@ -23,7 +24,8 @@ module vec_mul_fp #(
 
         mul_fp #(
             .exp_width(exp_width),
-            .man_width(man_width)
+            .man_width(man_width),
+            .USE_DSP(USE_DSP)
         ) u_mul (
             .i_op0(i_vec_a[i]),
             .i_op1(i_vec_b[i]),
