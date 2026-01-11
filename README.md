@@ -24,13 +24,13 @@ MX-for-FPGA:~$ python DSE.py
 Afterwards:
 ```
 MX-for-FPGA:~$ source venv/bin/activate
-MX-for-FPGA:~$ python DSE.py
+MX-for-FPGA:~$ python DSE.py --verbose
 ```
 
 For long running jobs:
 ```
 MX-for-FPGA:~$ source venv/bin/activate
-MX-for-FPGA:~$ nohup python -u DSE.py > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
+MX-for-FPGA:~$ nohup python -u DSE.py --verbose > DSE_run_$(date +%F_%H-%M-%S).log 2>&1 &
 [1] XXXXXXX
 ```
 

@@ -732,7 +732,7 @@ if __name__ == "__main__":
   args = parser.parse_args()
   
   designs_to_synthesise = [
-    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method)
+    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
     for name in ["attention_fp"]
     for S_q in [4]
     for S_kv in [4]
@@ -743,7 +743,12 @@ if __name__ == "__main__":
     for M1_E, M1_M in [(4, 3)]
     for M2_E, M2_M in [(4, 3)]
     for M3_E, M3_M in [(4, 3)]
-    for accum_method in [AccumMethod.Kulisch]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for accum_method_2 in [AccumMethod.Kulisch]
+    for accum_method_3 in [AccumMethod.Kulisch]
+    for m1_dsp in ["yes"]
+    for m2_dsp in ["yes"]
+    for m3_dsp in ["yes"]
   ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise)
