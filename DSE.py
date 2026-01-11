@@ -258,7 +258,7 @@ class SynthesisHandler:
         return True
       
     for mxfp_bits in [design.M1_bits, design.M2_bits, design.M3_bits]:
-      if mxfp_bits.exp_bits <= 0 or mxfp_bits.mant_bits <= 0:
+      if mxfp_bits.exp_bits < 0 or mxfp_bits.mant_bits <= 0: ###########
         return True
     
     # S_q, S_kv, d_kq, d_v must powers of 2 (including 2^0 = 1)
