@@ -14,9 +14,7 @@ for v in "${exp_values[@]}"; do
                     --config "k_quantizer=$q_config" \
                     --config "q_quantizer=$q_config" \
                     --config "s_quantizer=$q_config" \
-                    --config "v_quantizer=$q_config" \
-                    --config "p_quantizer=$q_config" \
-                    --config "o_quantizer=$q_config"
+                    --config "v_quantizer=$q_config"
         echo "Completed man_w=$c, exp_w=$v"
         echo "---"
     done

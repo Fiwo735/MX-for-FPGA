@@ -6,6 +6,7 @@ import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaAttention, Cache, logger, repeat_kv, apply_rotary_pos_emb
 
 from .quant_utils import IntQuantizer, MXFPQuantizer, q_reg
+from ordmm import ordmm_linear_chunk_bcast
 
 
 
@@ -38,30 +39,27 @@ class QuantLlamaAttention(nn.Module):
         # Use CLI quantizer configs if available
         self.init_quantizers(q_config)
 
-        # # Ternary Quantization
-        # self.k_thresh = IntQuantizer(bit_w=2, symmetric=True)
-        # self.q_thresh = IntQuantizer(bit_w=2, symmetric=True)
-        # self.v_thresh = IntQuantizer(bit_w=2, symmetric=True)
-        # self.p_thresh = IntQuantizer(bit_w=8, signed=False)
-
-        # # self.k_thresh = TVQuantizer()
-        # # self.q_thresh = TVQuantizer()
+        self.acc_man_w = 3
+        self.acc_exp_w = 4
+        self.acc_ful_q = True
+        if 'acc_man_w' in q_config.keys():
+            self.acc_man_w = q_config['acc_man_w']
+        if 'acc_exp_w' in q_config.keys():
+            self.acc_exp_w = q_config['acc_exp_w']
+        if 'acc_ful_q' in q_config.keys():
+            self.acc_ful_q = q_config['acc_ful_q']
 
         # # Int Quantization
         # self.k_quantizer = IntQuantizer(bit_w=8,static_scale=False)
         # self.q_quantizer = IntQuantizer(bit_w=4)
         # self.s_quantizer = IntQuantizer(bit_w=4)
         # self.v_quantizer = IntQuantizer(bit_w=4)
-        # self.p_quantizer = IntQuantizer(bit_w=8, signed=False)
-        # self.o_quantizer = IntQuantizer(bit_w=4)
 
         # # # MXFP Quantization
         # self.k_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
         # self.q_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
         # self.s_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
         # self.v_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
-        # self.p_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
-        # self.o_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
 
     def init_quantizers(self, q_config):
         ''' Make quantizers from CLI config. '''
@@ -78,30 +76,6 @@ class QuantLlamaAttention(nn.Module):
         if 'v_quantizer' in q_config.keys():
             quant_type = q_config['v_quantizer'].pop('quant')
             self.v_quantizer = q_reg[quant_type](**q_config['v_quantizer'])
-        if 'p_quantizer' in q_config.keys():
-            quant_type = q_config['p_quantizer'].pop('quant')
-            self.p_quantizer = q_reg[quant_type](**q_config['p_quantizer'])
-        if 'o_quantizer' in q_config.keys():
-            quant_type = q_config['o_quantizer'].pop('quant')
-            self.o_quantizer = q_reg[quant_type](**q_config['o_quantizer'])
-        if 'k_thresh' in q_config.keys():
-            quant_type = q_config['k_thresh'].pop('quant')
-            self.k_thresh = q_reg[quant_type](**q_config['k_thresh'])
-        if 'q_thresh' in q_config.keys():
-            quant_type = q_config['q_thresh'].pop('quant')
-            self.q_thresh = q_reg[quant_type](**q_config['q_thresh'])
-        if 's_thresh' in q_config.keys():
-            quant_type = q_config['s_thresh'].pop('quant')
-            self.s_thresh = q_reg[quant_type](**q_config['s_thresh'])
-        if 'v_thresh' in q_config.keys():
-            quant_type = q_config['v_thresh'].pop('quant')
-            self.v_thresh = q_reg[quant_type](**q_config['v_thresh'])
-        if 'p_thresh' in q_config.keys():
-            quant_type = q_config['p_thresh'].pop('quant')
-            self.p_thresh = q_reg[quant_type](**q_config['p_thresh'])
-        if 'o_thresh' in q_config.keys():
-            quant_type = q_config['o_thresh'].pop('quant')
-            self.o_thresh = q_reg[quant_type](**q_config['o_thresh'])
 
     def forward(
         self,
@@ -165,36 +139,45 @@ class QuantLlamaAttention(nn.Module):
 
         # Quantize keys and queries
         # if self.k_thresh.calibration == False: import pdb; pdb.set_trace()
-        if hasattr(self, "k_thresh"): key_states = self.k_thresh(key_states)
-        if hasattr(self, "q_thresh"): query_states = self.q_thresh(query_states)
         if hasattr(self, "k_quantizer"): key_states = self.k_quantizer(key_states)
         if hasattr(self, "q_quantizer"): query_states = self.q_quantizer(query_states)
 
         attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+        # attn_weights = ordmm_linear_chunk_bcast(query_states, key_states, self.acc_man_w, self.acc_exp_w, self.acc_ful_q) / math.sqrt(self.head_dim)
 
-        # Quantize attention scores
-        if hasattr(self, "s_thresh"): attn_weights = self.s_thresh(attn_weights)
-        if hasattr(self, "s_quantizer"): attn_weights = self.s_quantizer(attn_weights)
+        # Quantize attention scores to arbitrary FP, no scales
+        if hasattr(self, "s_quantizer"):
+            self.s_quantizer.static_scale = True
+            self.s_quantizer.scale_calib = torch.tensor(1)
+            attn_weights = self.s_quantizer(attn_weights)
 
         if attention_mask is not None:  # no matter the length, we just slice it
             causal_mask = attention_mask[:, :, :, : key_states.shape[-2]]
             attn_weights = attn_weights + causal_mask
 
+        # Step 0: cast to float32
+        x = attn_weights.to(torch.float32)
+        # Step 1: subtract max for numerical stability
+        x = x - x.max(dim=-1, keepdim=True).values
+        # Step 2: exponentiate
+        exp_x = torch.exp(x)
+        # Quantize exp output
+        if hasattr(self, "v_quantizer"): exp_x = self.v_quantizer(exp_x)
+        # Step 3: sum # TODO: need to quantize this accumulation
+        sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
+        # Step 4: normalize
+        softmax_x = exp_x / sum_exp_x
+        # Step 5: cast back
+        softmax_x = softmax_x.to(query_states.dtype)
+
         # upcast attention to fp32
         attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
 
-        # Quantize attention probabilities and values
-        if hasattr(self, "p_thresh"): attn_weights = self.p_thresh(attn_weights)
-        if hasattr(self, "v_thresh"): value_states = self.v_thresh(value_states.transpose(-1,-2)).transpose(-1,-2)
-        if hasattr(self, "p_quantizer"): attn_weights = self.p_quantizer(attn_weights)
+        # Quantize values
         if hasattr(self, "v_quantizer"): value_states = self.v_quantizer(value_states.transpose(-1,-2)).transpose(-1,-2)
 
         attn_output = torch.matmul(attn_weights, value_states)
-
-        # Quantize attention outputs
-        if hasattr(self, "o_thresh"): attn_output = self.o_thresh(attn_output)
-        if hasattr(self, "o_quantizer"): attn_output = self.o_quantizer(attn_output)
 
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
             raise ValueError(

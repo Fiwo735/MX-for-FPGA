@@ -165,16 +165,17 @@ def main():
     
     print(f"Model has {sum(p.numel() for p in model.parameters()):,} parameters")
 
-    # Calibrate quantizers
-    for q in thresholds:
-        q.start_calib()
-    for q in quantizers:
-        q.start_calib()
-    calib_ppl = evaluator(model, calib_loader, model.device, args.batch_size)
-    for q in thresholds:
-        q.end_calib()
-    for q in quantizers:
-        q.end_calib()
+    # Calibration disabled because it is not necessary and interferes with v_quantizer being reused
+    # # Calibrate quantizers
+    # for q in thresholds:
+    #     q.start_calib()
+    # for q in quantizers:
+    #     q.start_calib()
+    # calib_ppl = evaluator(model, calib_loader, model.device, args.batch_size)
+    # for q in thresholds:
+    #     q.end_calib()
+    # for q in quantizers:
+    #     q.end_calib()
 
 
     # Evaluate model
