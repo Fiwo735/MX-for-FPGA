@@ -58,7 +58,8 @@ module dot_fp #(
                 kahan_adder_tree #(
                     .EXP_WIDTH_I(exp_width),
                     .MANT_WIDTH_I(man_width),
-                    .ELEMS_COUNT(k)
+                    .ELEMS_COUNT(k),
+                    .SUM_WIDTH_O(out_width)
                 ) u_kahan_tree (
                     .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
@@ -69,7 +70,8 @@ module dot_fp #(
                 twosum_adder_tree #(
                     .EXP_WIDTH_I(exp_width),
                     .MANT_WIDTH_I(man_width),
-                    .ELEMS_COUNT(k)
+                    .ELEMS_COUNT(k),
+                    .SUM_WIDTH_O(out_width)
                 ) u_twosum_tree (
                     .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
@@ -80,7 +82,8 @@ module dot_fp #(
                 fasttwosum_adder_tree #(
                     .EXP_WIDTH_I(exp_width),
                     .MANT_WIDTH_I(man_width),
-                    .ELEMS_COUNT(k)
+                    .ELEMS_COUNT(k),
+                    .SUM_WIDTH_O(out_width)
                 ) u_fasttwosum_tree (
                     .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
@@ -91,7 +94,8 @@ module dot_fp #(
                 neumaier_adder_tree #(
                     .EXP_WIDTH_I(exp_width),
                     .MANT_WIDTH_I(man_width),
-                    .ELEMS_COUNT(k)
+                    .ELEMS_COUNT(k),
+                    .SUM_WIDTH_O(out_width)
                 ) u_neumaier_tree (
                     .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
@@ -102,7 +106,8 @@ module dot_fp #(
                 klein_adder_tree #(
                     .EXP_WIDTH_I(exp_width),
                     .MANT_WIDTH_I(man_width),
-                    .ELEMS_COUNT(k)
+                    .ELEMS_COUNT(k),
+                    .SUM_WIDTH_O(out_width)
                 ) u_klein_tree (
                     .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
