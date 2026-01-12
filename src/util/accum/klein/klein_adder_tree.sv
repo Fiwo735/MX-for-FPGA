@@ -129,32 +129,36 @@ module klein_adder_tree #(
     // Assign output by adding the final results of the tree.
     logic res1_underflow_flag, res1_overflow_flag, res1_invalid_operation_flag;
     logic signed [SUM_WIDTH_O-1:0] res1_sum;
-    floating_point_adder #(
-        EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
-    ) fp_adder_res (
-        .a(final_cs_res),
-        .b(final_ccs_res),
-        .subtract(1'b0),
+    // floating_point_adder #(
+    //     EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
+    // ) fp_adder_res (
+    //     .a(final_cs_res),
+    //     .b(final_ccs_res),
+    //     .subtract(1'b0),
 
-        .out(res1_sum),
-        .underflow_flag(res1_underflow_flag),
-        .overflow_flag(res1_overflow_flag),
-        .invalid_operation_flag(res1_invalid_operation_flag)
-    );
+    //     .out(res1_sum),
+    //     .underflow_flag(res1_underflow_flag),
+    //     .overflow_flag(res1_overflow_flag),
+    //     .invalid_operation_flag(res1_invalid_operation_flag)
+    // );
+    // Use + or - operator instead of floating_point_adder for better synthesis results
+    assign res1_sum = final_cs_res[SUM_WIDTH_O-1:0] + final_ccs_res[SUM_WIDTH_O-1:0];
 
     logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
     logic res2_underflow_flag, res2_overflow_flag, res2_invalid_operation_flag;
-    floating_point_adder #(
-        EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
-    ) fp_adder_res2 (
-        .a(final_sum_res),
-        .b(res1_sum),
-        .subtract(1'b0),
-        .out(o_sum_reg),
-        .underflow_flag(res2_underflow_flag),
-        .overflow_flag(res2_overflow_flag),
-        .invalid_operation_flag(res2_invalid_operation_flag)
-    );
+    // floating_point_adder #(
+    //     EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
+    // ) fp_adder_res2 (
+    //     .a(final_sum_res),
+    //     .b(res1_sum),
+    //     .subtract(1'b0),
+    //     .out(o_sum_reg),
+    //     .underflow_flag(res2_underflow_flag),
+    //     .overflow_flag(res2_overflow_flag),
+    //     .invalid_operation_flag(res2_invalid_operation_flag)
+    // );
+    // Use + or - operator instead of floating_point_adder for better synthesis results
+    assign o_sum_reg = final_sum_res[SUM_WIDTH_O-1:0] + res1_sum;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin

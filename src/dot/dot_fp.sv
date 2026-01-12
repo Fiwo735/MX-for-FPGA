@@ -65,6 +65,50 @@ module dot_fp #(
                     .i_vec(p0_prd_trunc),
                     .o_sum(p0_sum)
                 );
+            end else if (ACCUM_METHOD == "TWOSUM") begin : gen_twosum_accum
+                twosum_adder_tree #(
+                    .EXP_WIDTH_I(exp_width),
+                    .MANT_WIDTH_I(man_width),
+                    .ELEMS_COUNT(k)
+                ) u_twosum_tree (
+                    .clk_i(i_clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(p0_prd_trunc),
+                    .o_sum(p0_sum)
+                );
+            end else if (ACCUM_METHOD == "FASTTWOSUM") begin : gen_fasttwosum_accum
+                fasttwosum_adder_tree #(
+                    .EXP_WIDTH_I(exp_width),
+                    .MANT_WIDTH_I(man_width),
+                    .ELEMS_COUNT(k)
+                ) u_fasttwosum_tree (
+                    .clk_i(i_clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(p0_prd_trunc),
+                    .o_sum(p0_sum)
+                );
+            end else if (ACCUM_METHOD == "NEUMAIER") begin : gen_neumaier_accum
+                neumaier_adder_tree #(
+                    .EXP_WIDTH_I(exp_width),
+                    .MANT_WIDTH_I(man_width),
+                    .ELEMS_COUNT(k)
+                ) u_neumaier_tree (
+                    .clk_i(i_clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(p0_prd_trunc),
+                    .o_sum(p0_sum)
+                );
+            end else if (ACCUM_METHOD == "KLEIN") begin : gen_klein_accum
+                klein_adder_tree #(
+                    .EXP_WIDTH_I(exp_width),
+                    .MANT_WIDTH_I(man_width),
+                    .ELEMS_COUNT(k)
+                ) u_klein_tree (
+                    .clk_i(i_clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(p0_prd_trunc),
+                    .o_sum(p0_sum)
+                );
             end else begin : gen_error_accum
                 $error("Unsupported ACCUM_METHOD");
             end
