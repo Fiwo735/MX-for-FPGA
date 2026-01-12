@@ -35,7 +35,7 @@ module dot_general_fp #(
     // Sum within blocks
     logic signed [dp_width-1:0] dot_out [block_count];
 
-    for(genvar i=0; i<(block_count); i++) begin
+    for(genvar i=0; i<block_count; i++) begin
         dot_fp #(
             .exp_width(exp_width),
             .man_width(man_width),
