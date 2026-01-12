@@ -198,7 +198,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
     dim3 grid_dim((out_features + TILE_SIZE_2 - 1) / TILE_SIZE_2, (in_batch + TILE_SIZE_2 - 1) / TILE_SIZE_2, part);
 
     if(!full_quant){
-        AT_DISPATCH_INTEGRAL_TYPES(input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
             ordmm_chunk_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
@@ -213,7 +213,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
             );
         }));
     }else{
-        AT_DISPATCH_INTEGRAL_TYPES(input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
             ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),

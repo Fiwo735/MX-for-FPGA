@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaAttention, Cache, logger, repeat_kv, apply_rotary_pos_emb
 
-from .quant_utils import IntQuantizer, MXFPQuantizer, q_reg
-from ordmm import ordmm_linear_chunk_bcast
+from .quant_utils import q_reg
+from ordmm import ordmm_chunk_bcast_scaled, ordacc_chunk_scaled
 
 
 
@@ -39,27 +39,9 @@ class QuantLlamaAttention(nn.Module):
         # Use CLI quantizer configs if available
         self.init_quantizers(q_config)
 
-        self.acc_man_w = 3
-        self.acc_exp_w = 4
-        self.acc_ful_q = True
-        if 'acc_man_w' in q_config.keys():
-            self.acc_man_w = q_config['acc_man_w']
-        if 'acc_exp_w' in q_config.keys():
-            self.acc_exp_w = q_config['acc_exp_w']
-        if 'acc_ful_q' in q_config.keys():
-            self.acc_ful_q = q_config['acc_ful_q']
-
-        # # Int Quantization
-        # self.k_quantizer = IntQuantizer(bit_w=8,static_scale=False)
-        # self.q_quantizer = IntQuantizer(bit_w=4)
-        # self.s_quantizer = IntQuantizer(bit_w=4)
-        # self.v_quantizer = IntQuantizer(bit_w=4)
-
-        # # # MXFP Quantization
-        # self.k_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
-        # self.q_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
-        # self.s_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
-        # self.v_quantizer = MXFPQuantizer(man_w=1,exp_w=2,group_size=32,static_scale=False)
+        self.use_kulisch = True
+        if 'use_kulisch' in q_config.keys():
+            self.use_kulisch = q_config['use_kulisch']
 
     def init_quantizers(self, q_config):
         ''' Make quantizers from CLI config. '''
@@ -142,8 +124,16 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "k_quantizer"): key_states = self.k_quantizer(key_states)
         if hasattr(self, "q_quantizer"): query_states = self.q_quantizer(query_states)
 
-        attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
-        # attn_weights = ordmm_linear_chunk_bcast(query_states, key_states, self.acc_man_w, self.acc_exp_w, self.acc_ful_q) / math.sqrt(self.head_dim)
+        if hasattr(self, "k_quantizer") and hasattr(self, "q_quantizer") and not self.use_kulisch:
+            k_scale = self.k_quantizer.dynamic_scale(key_states) if not self.k_quantizer.static_scale else self.k_quantizer.scale_calib
+            q_scale = self.q_quantizer.dynamic_scale(query_states) if not self.q_quantizer.static_scale else self.q_quantizer.scale_calib
+
+            k_quant = key_states / k_scale
+            q_quant = query_states / q_scale
+
+            attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, 23, 8, True) / math.sqrt(self.head_dim)
+        else:
+            attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
 
         # Quantize attention scores to arbitrary FP, no scales
         if hasattr(self, "s_quantizer"):
@@ -163,15 +153,21 @@ class QuantLlamaAttention(nn.Module):
         exp_x = torch.exp(x)
         # Quantize exp output
         if hasattr(self, "v_quantizer"): exp_x = self.v_quantizer(exp_x)
-        # Step 3: sum # TODO: need to quantize this accumulation
-        sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
+        # Step 3: sum
+        if hasattr(self, "v_quantizer") and not self.use_kulisch:
+            e_scale = self.v_quantizer.dynamic_scale(exp_x) if not self.v_quantizer.static_scale else self.v_quantizer.scale_calib
+            e_quant = exp_x / e_scale
+            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, 23, 8, True).unsqueeze(-1)
+        else:
+            sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
+        import pdb; pdb.set_trace()
         # Step 4: normalize
         softmax_x = exp_x / sum_exp_x
         # Step 5: cast back
-        softmax_x = softmax_x.to(query_states.dtype)
+        attn_weights = softmax_x.to(query_states.dtype)
 
         # upcast attention to fp32
-        attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
+        # attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
 
         # Quantize values
