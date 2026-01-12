@@ -37,7 +37,9 @@ module vec_sum_int #(
     end
 
     // Assign outputs.
-    assign o_sum = tree_add[tree_depth-1].p0_sum[0];
+    // assign o_sum = tree_add[tree_depth-1].p0_sum[0];
+    assign o_sum = tree_add[tree_depth-1].p0_sum[0][sum_width-1:0]; // Truncate to sum_width
+    
 
 endmodule
 

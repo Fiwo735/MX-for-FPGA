@@ -40,7 +40,8 @@ module dot_fp #(
         if (ACCUM_METHOD == "KULISCH") begin : gen_kulisch_accum
             vec_sum_int #(
                 .bit_width(prd_width),
-                .length(k)
+                .length(k),
+                .sum_width(out_width) // Enforce output width
             ) u_tree_add (
                 .i_vec(p0_prd),
                 .o_sum(p0_sum)

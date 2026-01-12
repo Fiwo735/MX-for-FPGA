@@ -26,9 +26,10 @@ set accum_method3 [expr {[llength $argv] > 14 ? [lindex $argv 14] : "KULISCH"}]
 # DSP Control Params (Defaults to "yes")
 set m1_dsp        [expr {[llength $argv] > 15 ? [lindex $argv 15] : "yes"}]
 set m2_dsp        [expr {[llength $argv] > 16 ? [lindex $argv 16] : "yes"}]
-set sm_dsp        [expr {[llength $argv] > 17 ? [lindex $argv 17] : "yes"}]
+set m3_dsp        [expr {[llength $argv] > 17 ? [lindex $argv 17] : "yes"}]
+# set sm_dsp        [expr {[llength $argv] > 18 ? [lindex $argv 18] : "yes"}]
 
-set generics "S_q=$S_q S_kv=$S_kv d_kq=$d_kq d_v=$d_v k=$k scale_width=$scale_width M1_EXP_WIDTH=$m1_exp M1_MAN_WIDTH=$m1_man M2_EXP_WIDTH=$m2_exp M2_MAN_WIDTH=$m2_man M3_EXP_WIDTH=$m3_exp M3_MAN_WIDTH=$m3_man ACCUM_METHOD1=$accum_method1 ACCUM_METHOD2=$accum_method2 ACCUM_METHOD3=$accum_method3 M1_USE_DSP=\"$m1_dsp\" M2_USE_DSP=\"$m2_dsp\" SOFTMAX_USE_DSP=\"$sm_dsp\""
+set generics "S_q=$S_q S_kv=$S_kv d_kq=$d_kq d_v=$d_v k=$k scale_width=$scale_width M1_EXP_WIDTH=$m1_exp M1_MAN_WIDTH=$m1_man M2_EXP_WIDTH=$m2_exp M2_MAN_WIDTH=$m2_man M3_EXP_WIDTH=$m3_exp M3_MAN_WIDTH=$m3_man ACCUM_METHOD1=$accum_method1 ACCUM_METHOD2=$accum_method2 ACCUM_METHOD3=$accum_method3 M1_USE_DSP=\"$m1_dsp\" M2_USE_DSP=\"$m2_dsp\" M3_USE_DSP=\"$m3_dsp\" "
 
 # Set the number of threads for Vivado
 set_param general.maxThreads 12
@@ -37,7 +38,7 @@ set_param general.maxThreads 12
 set timestamp [clock format [clock seconds] -format "%Y%m%d_%H%M"]
 
 # Build common prefix
-set prefix "${outputDir}/${top}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_k_${k}_scale_width_${scale_width}_M1_E_${m1_exp}_M1_M_${m1_man}_M2_E_${m2_exp}_M2_M_${m2_man}_M3_E_${m3_exp}_M3_M_${m3_man}_ACCUM_METHOD_${accum_method1}_${accum_method2}_${accum_method3}_DSP_${m1_dsp}_${m2_dsp}_${sm_dsp}_time_${timestamp}"
+set prefix "${outputDir}/${top}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_k_${k}_scale_width_${scale_width}_M1_E_${m1_exp}_M1_M_${m1_man}_M2_E_${m2_exp}_M2_M_${m2_man}_M3_E_${m3_exp}_M3_M_${m3_man}_ACCUM_METHOD_${accum_method1}_${accum_method2}_${accum_method3}_DSP_${m1_dsp}_${m2_dsp}_${m3_dsp}_time_${timestamp}"
 
 # Read sources
 read_verilog    [glob ./src/attention/attention_fp.sv]

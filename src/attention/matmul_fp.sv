@@ -17,7 +17,7 @@ module matmul_fp #(
     parameter bit_width = 8,
     parameter exp_width = 5, // Defaults to 0 for Integer compatibility
     parameter man_width = 2,
-    parameter out_width = 32,
+    parameter out_width = bit_width,
     parameter scale_width = 8,
     parameter string USE_DSP = "auto",
     parameter string ACCUM_METHOD = "Kulisch",

@@ -28,7 +28,7 @@ module dot_general_fp #(
     input  logic signed [bit_width-1:0] i_Y     [C],
     input  logic             [scale_width-1:0] i_S     [block_count],
     input  logic             [scale_width-1:0] i_T     [block_count],
-    output logic        [out_width-1:0] o_dp,
+    output logic               [out_width-1:0] o_dp,
     output logic             [scale_width-1:0] o_scale
 );
 
@@ -107,7 +107,8 @@ module dot_general_fp #(
 
 
     // Form output
-    assign o_dp = tree_add[tree_depth-1].p0_sum[0];
+    // assign o_dp = tree_add[tree_depth-1].p0_sum[0];
+    assign o_dp = tree_add[tree_depth-1].p0_sum[0][out_width-1:0]; // Truncate to out_width
     assign o_scale = tree_add[tree_depth-1].p0_scale[0];
 
 endmodule

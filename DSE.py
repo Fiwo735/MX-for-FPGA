@@ -48,11 +48,12 @@ class DesignConfig:
     self.m3_dsp = m3_dsp
     
   def get_bert_flags(self):
-    # TODO
     return (
-      f"--S_q {self.S_q} --S_kv {self.S_kv} --d_kq {self.d_kq} --d_v {self.d_v} "
-      # f"--k {self.k} --bit_width {self.bit_width} --out_width {self.out_width} --scale_width {self.scale_width}"
-      f"--k {self.k} --scale_width {self.scale_width}"
+      "--model_id 'meta-llama/Llama-3.2-1B' "
+      f"--config 'k_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
+      f"--config 'q_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
+      f"--config 's_quantizer={{'quant':'MXFPQuantizer','man_w':{},'exp_w':{},'group_size':{self.k},'static_scale':True}}' "
+      f"--config 'v_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M3_bits.mant_bits},'exp_w':{self.M3_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
     )
 
   def __repr__(self):
