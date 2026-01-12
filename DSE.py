@@ -52,7 +52,7 @@ class DesignConfig:
       "--model_id 'meta-llama/Llama-3.2-1B' "
       f"--config 'k_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
       f"--config 'q_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
-      f"--config 's_quantizer={{'quant':'MXFPQuantizer','man_w':{},'exp_w':{},'group_size':{self.k},'static_scale':True}}' "
+      # f"--config 's_quantizer={{'quant':'MXFPQuantizer','man_w':{},'exp_w':{},'group_size':{self.k},'static_scale':True}}' "
       f"--config 'v_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M3_bits.mant_bits},'exp_w':{self.M3_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
     )
 
