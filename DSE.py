@@ -732,7 +732,28 @@ if __name__ == "__main__":
   parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
   args = parser.parse_args()
   
-  designs_to_synthesise = [
+  # Combined Sweep:
+  # 1. INT (Logarithmic) Sweep: Widths 2-16 (E0, M=width-1)
+  # 2. FP (Standard) Sweep: Widths 2-16
+  
+  # Define FP Configurations for each width (2-16)
+  def get_fp_config(w):
+      # Returns (Exp, Man) s.t. 1 + Exp + Man = w
+      if w == 2: return (1, 0)
+      if w == 3: return (2, 0)
+      if w == 4: return (2, 1)
+      if w == 5: return (2, 2)
+      if w == 6: return (3, 2)
+      if w == 7: return (3, 3)
+      if w == 8: return (4, 3) # E4M3 (Std)
+      if w == 9: return (4, 4)
+      # For w >= 10, use E5 (converging to FP16)
+      return (5, w - 6)
+
+  designs_to_synthesise = []
+  
+  # INT Sweep (2-16)
+  designs_to_synthesise += [
     DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
     for name in ["attention_fp"]
     for S_q in [4]
@@ -741,15 +762,39 @@ if __name__ == "__main__":
     for d_v in [4]
     for k in [2]
     for scale_width in [8]
-    for M1_E, M1_M in [(4, 3)]
-    for M2_E, M2_M in [(4, 3)]
-    for M3_E, M3_M in [(4, 3)]
+    for width in range(2, 17) # INT 2-16
+    for M1_E, M1_M in [(0, width-1)]
+    for M2_E, M2_M in [(0, width-1)]
+    for M3_E, M3_M in [(0, width-1)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for accum_method_2 in [AccumMethod.Kulisch]
     for accum_method_3 in [AccumMethod.Kulisch]
-    for m1_dsp in ["yes"]
-    for m2_dsp in ["yes"]
-    for m3_dsp in ["yes"]
+    for m1_dsp in ["auto"]
+    for m2_dsp in ["auto"]
+    for m3_dsp in ["auto"]
+  ]
+
+  # FP Sweep (2-16)
+  designs_to_synthesise += [
+    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+    for name in ["attention_fp"]
+    for S_q in [4]
+    for S_kv in [4]
+    for d_kq in [4]
+    for d_v in [4]
+    for k in [2]
+    for scale_width in [8]
+    for width in range(2, 17) # FP 2-16
+    for exp_width, man_width in [get_fp_config(width)] 
+    for M1_E, M1_M in [(exp_width, man_width)]
+    for M2_E, M2_M in [(exp_width, man_width)]
+    for M3_E, M3_M in [(exp_width, man_width)]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for accum_method_2 in [AccumMethod.Kulisch]
+    for accum_method_3 in [AccumMethod.Kulisch]
+    for m1_dsp in ["auto"]
+    for m2_dsp in ["auto"]
+    for m3_dsp in ["auto"]
   ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise)

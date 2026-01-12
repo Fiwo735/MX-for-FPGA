@@ -116,7 +116,7 @@ module attention_fp #(
     logic signed [BW_3-1:0] soft_res [S_q][S_kv];
     logic [scale_width-1:0] soft_scale [S_q][S_kv/k];
 
-    logic signed   [BW_2-1:0]   QKt_2 [S_q][S_kv];
+    logic    [BW_2-1:0]   QKt_2 [S_q][S_kv];
     // Cast (BW_2 < BW_1) or 0-pad (BW_2 > BW_1) QKt into QKt_2 
     always_comb begin
         for (int i = 0; i < S_q; i++) begin
@@ -142,6 +142,16 @@ module attention_fp #(
             logic r_in; 
             
             // Reuse mxint_softmax
+            
+            // Temporary variables for explicit slicing (Avoids Vivado unpacked array slicing bugs)
+            logic [BW_2-1:0] sm_in_slice [k];
+            logic [BW_3-1:0] sm_out_slice [k];
+            
+            // Manually copy input slice
+            for (genvar el = 0; el < k; el++) begin : in_slice_assign
+                assign sm_in_slice[el] = QKt_2[i][j*k + el];
+            end
+            
             mxint_softmax #(
                 .DATA_IN_0_PRECISION_0(BW_2), // Treating as bits
                 .DATA_IN_0_PRECISION_1(scale_width),
@@ -155,15 +165,21 @@ module attention_fp #(
             ) u_curr_softmax (
                 .rst(i_rst),
                 .clk(i_clk),
-                .mdata_in_0(QKt_2[i][j * k : (j+1) * k]),
+                .mdata_in_0(sm_in_slice), // Connected via temp variable
                 .edata_in_0(S_QKt_scaled[i][j]),
                 .data_in_0_valid(1'b1),
                 .data_in_0_ready(r_in),
-                .mdata_out_0(soft_res[i][j * k : (j+1) * k]),
+                .mdata_out_0(sm_out_slice), // Output to temp variable
                 .edata_out_0(soft_scale[i][j]),
                 .data_out_0_valid(v_out),
                 .data_out_0_ready(1'b1)
             );
+
+            // Manually copy output slice back
+            for (genvar el = 0; el < k; el++) begin : out_slice_assign
+                 assign soft_res[i][j*k + el] = sm_out_slice[el];
+            end
+
 
             // // Capture and Cast to M2 (MatMul 2 Input)
             // always_ff @(posedge i_clk) begin

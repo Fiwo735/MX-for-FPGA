@@ -1,0 +1,333 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version     : Vivado v.2025.1 (lin64) Build 6140274 Wed May 21 22:58:25 MDT 2025
+| Date             : Sun Jan 11 12:46:36 2026
+| Host             : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
+| Command          : report_power -file ./src/attention/synth_output/attention_fp_S_q_4_S_kv_4_d_kq_4_d_v_4_k_2_scale_width_8_M1_E_0_M1_M_7_M2_E_0_M2_M_7_M3_E_0_M3_M_7_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260111_1239_power.rpt
+| Design           : attention_fp
+| Device           : xcu250-figd2104-2L-e
+| Design State     : synthesized
+| Grade            : extended
+| Process          : typical
+| Characterization : Production
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Power Report
+
+Table of Contents
+-----------------
+1. Summary
+1.1 On-Chip Components
+1.2 Power Supply Summary
+1.3 Confidence Level
+2. Settings
+2.1 Environment
+2.2 Clock Constraints
+3. Detailed Reports
+3.1 By Hierarchy
+
+1. Summary
+----------
+
++--------------------------+--------------+
+| Total On-Chip Power (W)  | 4.362        |
+| Design Power Budget (W)  | Unspecified* |
+| Power Budget Margin (W)  | NA           |
+| Dynamic (W)              | 1.392        |
+| Device Static (W)        | 2.970        |
+| Effective TJA (C/W)      | 0.5          |
+| Max Ambient (C)          | 97.7         |
+| Junction Temperature (C) | 27.3         |
+| Confidence Level         | Low          |
+| Setting File             | ---          |
+| Simulation Activity File | ---          |
+| Design Nets Matched      | NA           |
++--------------------------+--------------+
+* Specify Design Power Budget using, set_operating_conditions -design_power_budget <value in Watts>
+
+
+1.1 On-Chip Components
+----------------------
+
++--------------------------+-----------+----------+-----------+-----------------+
+| On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
++--------------------------+-----------+----------+-----------+-----------------+
+| Clocks                   |     0.018 |        3 |       --- |             --- |
+| CLB Logic                |     0.455 |    32244 |       --- |             --- |
+|   LUT as Logic           |     0.434 |    21477 |   1728000 |            1.24 |
+|   CARRY8                 |     0.012 |     1628 |    216000 |            0.75 |
+|   LUT as Distributed RAM |     0.008 |       96 |    791040 |            0.01 |
+|   Register               |     0.001 |     2374 |   3456000 |            0.07 |
+|   Others                 |     0.000 |      796 |       --- |             --- |
+|   F7/F8 Muxes            |     0.000 |       20 |   1728000 |           <0.01 |
+| Signals                  |     0.318 |    24724 |       --- |             --- |
+| I/O                      |     0.601 |      769 |       676 |          113.76 |
+| Static Power             |     2.970 |          |           |                 |
+| Total                    |     4.362 |          |           |                 |
++--------------------------+-----------+----------+-----------+-----------------+
+
+
+1.2 Power Supply Summary
+------------------------
+
++------------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Source           | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
++------------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Vccint           |       0.850 |     2.100 |       0.930 |      1.170 |       NA    | Unspecified | NA         |
+| Vccint_io        |       0.850 |     0.172 |       0.030 |      0.142 |       NA    | Unspecified | NA         |
+| Vccbram          |       0.850 |     0.021 |       0.000 |      0.021 |       NA    | Unspecified | NA         |
+| Vccaux           |       1.800 |     0.885 |       0.000 |      0.885 |       NA    | Unspecified | NA         |
+| Vccaux_io        |       1.800 |     0.198 |       0.094 |      0.104 |       NA    | Unspecified | NA         |
+| Vcco33           |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco25           |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco18           |       1.800 |     0.226 |       0.226 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco15           |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco135          |       1.350 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco12           |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco10           |       1.000 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vccadc           |       1.800 |     0.032 |       0.000 |      0.032 |       NA    | Unspecified | NA         |
+| VMGTAVCC (GTY)   |       0.900 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VMGTAVTT (GTY)   |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VMGTVCCAUX (GTY) |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
++------------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+
+
+1.3 Confidence Level
+--------------------
+
++-----------------------------+------------+--------------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+| User Input Data             | Confidence | Details                                                | Action                                                                                                     |
++-----------------------------+------------+--------------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+| Design implementation state | Low        | Design is synthesized                                  | Accuracy of the tool is not optimal until design is fully placed and routed                                |
+| Clock nodes activity        | High       | User specified more than 95% of clocks                 |                                                                                                            |
+| I/O nodes activity          | Low        | More than 75% of inputs are missing user specification | Provide missing input activity with simulation results or by editing the "By Resource Type -> I/Os" view   |
+| Internal nodes activity     | Medium     | User specified less than 25% of internal nodes         | Provide missing internal nodes activity with simulation results or by editing the "By Resource Type" views |
+| Device models               | High       | Device models are Production                           |                                                                                                            |
+|                             |            |                                                        |                                                                                                            |
+| Overall confidence level    | Low        |                                                        |                                                                                                            |
++-----------------------------+------------+--------------------------------------------------------+------------------------------------------------------------------------------------------------------------+
+
+
+2. Settings
+-----------
+
+2.1 Environment
+---------------
+
++-----------------------+--------------------------+
+| Ambient Temp (C)      | 25.0                     |
+| ThetaJA (C/W)         | 0.5                      |
+| Airflow (LFM)         | 250                      |
+| Heat Sink             | medium (Medium Profile)  |
+| ThetaSA (C/W)         | 0.7                      |
+| Board Selection       | medium (10"x10")         |
+| # of Board Layers     | 12to15 (12 to 15 Layers) |
+| Board Temperature (C) | 25.0                     |
++-----------------------+--------------------------+
+
+
+2.2 Clock Constraints
+---------------------
+
++-------+--------+-----------------+
+| Clock | Domain | Constraint (ns) |
++-------+--------+-----------------+
+| i_clk | i_clk  |             5.0 |
++-------+--------+-----------------+
+
+
+3. Detailed Reports
+-------------------
+
+3.1 By Hierarchy
+----------------
+
++------------------------------------------------+-----------+
+| Name                                           | Power (W) |
++------------------------------------------------+-----------+
+| attention_fp                                   |     1.392 |
+|   sm_inst[0].u_curr_softmax                    |     0.017 |
+|     acc_circular                               |     0.002 |
+|       mdata_in_0_buffer                        |     0.002 |
+|     cast_inst                                  |     0.003 |
+|       data_in_0_unpacked_mx_split2_with_data_i |     0.003 |
+|     div_inst                                   |     0.005 |
+|       split2_dividend                          |     0.002 |
+|       split2_divisor                           |     0.002 |
+|     mxint_accumulator_inst                     |     0.003 |
+|     mxint_exp_inst                             |     0.002 |
+|       ovshift_inst                             |     0.002 |
+|     split2_mxint_exp_inst                      |     0.003 |
+|       split2_with_data_i                       |     0.003 |
+|   sm_inst[1].u_curr_softmax                    |     0.017 |
+|     acc_circular                               |     0.002 |
+|       mdata_in_0_buffer                        |     0.002 |
+|     cast_inst                                  |     0.003 |
+|       data_in_0_unpacked_mx_split2_with_data_i |     0.003 |
+|     div_inst                                   |     0.005 |
+|       split2_dividend                          |     0.002 |
+|       split2_divisor                           |     0.002 |
+|     mxint_accumulator_inst                     |     0.003 |
+|     mxint_exp_inst                             |     0.002 |
+|       ovshift_inst                             |     0.002 |
+|     split2_mxint_exp_inst                      |     0.003 |
+|       split2_with_data_i                       |     0.003 |
+|   sm_inst[2].u_curr_softmax                    |     0.017 |
+|     acc_circular                               |     0.002 |
+|       mdata_in_0_buffer                        |     0.002 |
+|     cast_inst                                  |     0.003 |
+|       data_in_0_unpacked_mx_split2_with_data_i |     0.003 |
+|     div_inst                                   |     0.005 |
+|       split2_dividend                          |     0.002 |
+|       split2_divisor                           |     0.002 |
+|     mxint_accumulator_inst                     |     0.003 |
+|     mxint_exp_inst                             |     0.002 |
+|       ovshift_inst                             |     0.002 |
+|     split2_mxint_exp_inst                      |     0.003 |
+|       split2_with_data_i                       |     0.003 |
+|   sm_inst[3].u_curr_softmax                    |     0.017 |
+|     acc_circular                               |     0.002 |
+|       mdata_in_0_buffer                        |     0.002 |
+|     cast_inst                                  |     0.003 |
+|       data_in_0_unpacked_mx_split2_with_data_i |     0.003 |
+|     div_inst                                   |     0.005 |
+|       split2_dividend                          |     0.002 |
+|       split2_divisor                           |     0.002 |
+|     mxint_accumulator_inst                     |     0.003 |
+|     mxint_exp_inst                             |     0.002 |
+|       ovshift_inst                             |     0.002 |
+|     split2_mxint_exp_inst                      |     0.003 |
+|       split2_with_data_i                       |     0.003 |
+|   u_matmul_QK                                  |     0.399 |
+|     row_loop[0].col_loop[0].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[0].col_loop[1].u_dot_general      |     0.045 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.039 |
+|     row_loop[0].col_loop[2].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[0].col_loop[3].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[1].col_loop[0].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[1].col_loop[1].u_dot_general      |     0.045 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.039 |
+|     row_loop[1].col_loop[2].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[1].col_loop[3].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[2].col_loop[0].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[2].col_loop[1].u_dot_general      |     0.045 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.039 |
+|     row_loop[2].col_loop[2].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[2].col_loop[3].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[3].col_loop[0].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[3].col_loop[1].u_dot_general      |     0.045 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.039 |
+|     row_loop[3].col_loop[2].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[3].col_loop[3].u_dot_general      |     0.018 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|   u_matmul_SMV                                 |     0.291 |
+|     row_loop[0].col_loop[0].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[0].col_loop[1].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[0].col_loop[2].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[0].col_loop[3].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[1].col_loop[0].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[1].col_loop[1].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[1].col_loop[2].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[1].col_loop[3].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[2].col_loop[0].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[2].col_loop[1].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[2].col_loop[2].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[2].col_loop[3].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[3].col_loop[0].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[3].col_loop[1].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
+|     row_loop[3].col_loop[2].u_dot_general      |     0.019 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.014 |
+|     row_loop[3].col_loop[3].u_dot_general      |     0.017 |
+|       genblk1[0].u_dot_fp                      |     0.003 |
+|       genblk1[1].u_dot_fp                      |     0.003 |
+|       tree_add[0].genblk1[0].u_add_nrm         |     0.012 |
++------------------------------------------------+-----------+
+
+
