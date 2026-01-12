@@ -17,8 +17,8 @@ module mxint_softmax #(
     parameter DATA_OUT_0_PRECISION_1 = 8,
     parameter DATA_OUT_0_DIM = DATA_IN_0_DIM,
     parameter DATA_OUT_0_PARALLELISM = DATA_IN_0_PARALLELISM,
-    parameter EXP_SUM_UNDERFLOW_BITS = 4,
-    parameter DIVISION_UNDERFLOW_BITS = 4,
+    parameter EXP_SUM_UNDERFLOW_BITS = 0,
+    parameter DIVISION_UNDERFLOW_BITS = 0,
     parameter string USE_DSP = "auto"
 ) (
     /* verilator lint_off UNUSEDSIGNAL */
@@ -45,7 +45,7 @@ module mxint_softmax #(
   localparam DATA_EXP_0_FRAC_WIDTH = DATA_EXP_0_PRECISION_0 - 2;
   localparam DATA_EXP_0_PRECISION_1 = DATA_OUT_0_PRECISION_1;
 
-  localparam ACC_WIDTH = $clog2(IN_0_DEPTH) + DATA_EXP_0_PRECISION_0 + EXP_SUM_UNDERFLOW_BITS;
+  localparam ACC_WIDTH = DATA_EXP_0_PRECISION_0;
   localparam ACC_FRAC_WIDTH = DATA_EXP_0_FRAC_WIDTH + EXP_SUM_UNDERFLOW_BITS;
 
   localparam DATA_DIVIDEND_PRECISION_0 = DATA_EXP_0_PRECISION_0 + EXP_SUM_UNDERFLOW_BITS + DIVISION_UNDERFLOW_BITS;
@@ -54,7 +54,7 @@ module mxint_softmax #(
   localparam DATA_DIVISOR_PRECISION_1 = DATA_EXP_0_PRECISION_1;
   localparam DATA_QUOTIENT_PRECISION_0 = DATA_OUT_0_PRECISION_0;
   localparam DATA_QUOTIENT_FRAC_WIDTH = DIVISION_UNDERFLOW_BITS;
-  localparam DATA_QUOTIENT_PRECISION_1 =DATA_EXP_0_PRECISION_1 + 1;
+  localparam DATA_QUOTIENT_PRECISION_1 = DATA_EXP_0_PRECISION_1 + 1;
 
 
   localparam BLOCK_SIZE = DATA_IN_0_PARALLELISM;
@@ -176,7 +176,8 @@ module mxint_softmax #(
       .DATA_IN_0_PRECISION_1(DATA_EXP_0_PRECISION_1),
       .BLOCK_SIZE(DATA_OUT_0_PARALLELISM),
       .IN_DEPTH(IN_0_DEPTH),
-      .UNDERFLOW_BITS(EXP_SUM_UNDERFLOW_BITS)
+      .UNDERFLOW_BITS(EXP_SUM_UNDERFLOW_BITS),
+      .DATA_OUT_0_PRECISION_0(DATA_EXP_0_PRECISION_0)
   ) mxint_accumulator_inst (
       .clk(clk),
       .rst(rst),
