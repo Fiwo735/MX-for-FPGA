@@ -82,7 +82,7 @@ class DesignConfig:
     return s
     
   def get_vivado_tclargs(self):
-    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value}"
+    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
   
   @staticmethod
   def get_filename_regex():
@@ -755,7 +755,7 @@ if __name__ == "__main__":
   # INT Sweep (2-16)
   designs_to_synthesise += [
     DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-    for name in ["attention_fp"]
+    for name in ["attention_fp"] # Reverted to standard name
     for S_q in [4]
     for S_kv in [4]
     for d_kq in [4]
@@ -777,7 +777,7 @@ if __name__ == "__main__":
   # FP Sweep (2-16)
   designs_to_synthesise += [
     DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-    for name in ["attention_fp"]
+    for name in ["attention_fp"] # Reverted to standard name
     for S_q in [4]
     for S_kv in [4]
     for d_kq in [4]
