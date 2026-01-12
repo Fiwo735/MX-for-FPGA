@@ -12,7 +12,7 @@ module dot_fp #(
     parameter prd_width = 2 * ((1<<exp_width) + man_width),
     parameter out_width = prd_width + $clog2(k),
     parameter string USE_DSP = "auto",
-    parameter string ACCUM_METHOD = "Kulisch"
+    parameter string ACCUM_METHOD = "KULISCH"
 )(
     input  logic signed [bit_width-1:0] i_vec_a [k],
     input  logic signed [bit_width-1:0] i_vec_b [k],
@@ -46,8 +46,28 @@ module dot_fp #(
                 .i_vec(p0_prd),
                 .o_sum(p0_sum)
             );
-        end else begin : gen_error_accum
-            $error("Unsupported ACCUM_METHOD in dot_fp:");
+        end else begin : gen_other_accum
+            // Truncate p0_prd to bit_width for other accumulation methods.
+            logic signed [bit_width-1:0] p0_prd_trunc [k];
+            for (genvar i=0; i<k; i++) begin
+                assign p0_prd_trunc[i] = p0_prd[i][bit_width-1:0];
+            end
+
+            // Use other accumulation methods
+            if (ACCUM_METHOD == "KAHAN") begin : gen_kahan_accum
+                kahan_adder_tree #(
+                    .EXP_WIDTH_I(exp_width),
+                    .MANT_WIDTH_I(man_width),
+                    .ELEMS_COUNT(k)
+                ) u_kahan_tree (
+                    .clk_i(i_clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(p0_prd_trunc),
+                    .o_sum(p0_sum)
+                );
+            end else begin : gen_error_accum
+                $error("Unsupported ACCUM_METHOD");
+            end
         end
     endgenerate
 

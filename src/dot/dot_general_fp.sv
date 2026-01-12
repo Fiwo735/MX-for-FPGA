@@ -14,7 +14,7 @@ module dot_general_fp #(
     parameter out_width = 8,
     parameter scale_width = 8, // Added
     parameter string USE_DSP = "auto",
-    parameter string ACCUM_METHOD = "Kulisch",
+    parameter string ACCUM_METHOD = "KULISCH",
 
     localparam dp_width = 2*bit_width + $clog2(k), 
     // Note: dp_width might need tuning for FP accumulation size, 

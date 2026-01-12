@@ -1,0 +1,141 @@
+`ifndef __TWOSUM_ADDER_TREE_SV__
+`define __TWOSUM_ADDER_TREE_SV__
+
+`include "../twosum/twosum_start.sv"
+`include "../twosum/twosum_merge.sv"
+`include "../parametrizable-floating-point-verilog/floating_point_adder.v"
+
+module twosum_adder_tree #(
+    parameter  EXP_WIDTH_I  = 5,
+    parameter  MANT_WIDTH_I = 2,
+    parameter  ELEMS_COUNT  = 32,
+    localparam BIT_WIDTH_I  = 1 + EXP_WIDTH_I + MANT_WIDTH_I, // 1 for sign bit
+    localparam SUM_WIDTH_O  = BIT_WIDTH_I + $clog2(ELEMS_COUNT),
+    localparam TREE_DEPTH   = $clog2(ELEMS_COUNT)
+)(
+    input  logic clk_i,
+    input  logic rst_ni,
+    input  logic signed [BIT_WIDTH_I-1:0] i_vec [ELEMS_COUNT],
+    output logic signed [SUM_WIDTH_O-1:0] o_sum
+);
+
+    logic signed [BIT_WIDTH_I-1:0] i_vec_reg [ELEMS_COUNT];
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            for (int k = 0; k < ELEMS_COUNT; k++) begin
+                i_vec_reg[k] <= '0;  // Reset each element to 0
+            end
+        end else begin
+            i_vec_reg <= i_vec;
+        end
+    end
+
+
+  // Define adder tree.
+  for(genvar i=0; i<TREE_DEPTH; i++) begin : top_tree
+      // Declare adders.
+      logic signed [BIT_WIDTH_I+i-1:0] sum_a [ELEMS_COUNT>>(1+i)];
+      logic signed [BIT_WIDTH_I+i-1:0] error_a [ELEMS_COUNT>>(1+i)];
+      logic signed [BIT_WIDTH_I+i-1:0] sum_b [ELEMS_COUNT>>(1+i)];
+      logic signed [BIT_WIDTH_I+i-1:0] error_b [ELEMS_COUNT>>(1+i)];
+
+      logic signed   [BIT_WIDTH_I+i-1:0] sum_res  [ELEMS_COUNT>>(1+i)];
+      logic signed   [BIT_WIDTH_I+i-1:0] error_res  [ELEMS_COUNT>>(1+i)];
+
+      for(genvar j=0; j<ELEMS_COUNT>>(1+i); j++) begin : twosum_adders
+          twosum_merge #(
+              .EXP_WIDTH_I(EXP_WIDTH_I+i),
+              .MANT_WIDTH_I(MANT_WIDTH_I)
+          ) twosum_merge_inst (
+              .clk_i(clk_i),
+              .rst_ni(rst_ni),
+              .sum_a_i(sum_a[j]),
+              .error_a_i(error_a[j]),
+              .sum_b_i(sum_b[j]),
+              .error_b_i(error_b[j]),
+              .sum_o(sum_res[j]),
+              .error_o(error_res[j])
+          );
+      end
+
+      // Connections to previous layers.
+      if(i != 0) begin
+          for(genvar j=0; j<(ELEMS_COUNT>>(1+i)); j++) begin : twosum_connections
+              always_ff @(posedge clk_i or negedge rst_ni) begin
+                    if (!rst_ni) begin
+                        sum_a[j] <= '0;
+                        error_a[j] <= '0;
+                        sum_b[j] <= '0;
+                        error_b[j] <= '0;
+                    end else begin
+                        sum_a[j] <= top_tree[i-1].sum_res[2*j];
+                        error_a[j] <= top_tree[i-1].error_res[2*j];
+                        sum_b[j] <= top_tree[i-1].sum_res[2*j+1];
+                        error_b[j] <= top_tree[i-1].error_res[2*j+1];
+                    end
+                end
+          end
+      end else begin
+          for(genvar j=0; j<(ELEMS_COUNT>>2); j++) begin : twosum_starts
+              twosum_start #(
+                  .EXP_WIDTH_I(EXP_WIDTH_I+i),
+                  .MANT_WIDTH_I(MANT_WIDTH_I)
+              ) twosum_start_inst (
+                  .clk_i(clk_i),
+                  .rst_ni(rst_ni),
+                  .e0(i_vec_reg[4*j]),
+                  .e1(i_vec_reg[4*j+1]),
+                  .e2(i_vec_reg[4*j+2]),
+                  .e3(i_vec_reg[4*j+3]),
+                  .sum_a_o(sum_a[j]),
+                  .sum_b_o(sum_b[j]),
+                  .error_a_o(error_a[j]),
+                  .error_b_o(error_b[j])
+              );
+          end
+      end
+  end
+
+    
+    logic signed [BIT_WIDTH_I+TREE_DEPTH-1:0] final_sum_res;
+    logic signed [BIT_WIDTH_I+TREE_DEPTH-1:0] final_error_res;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            final_sum_res <= '0;
+            final_error_res <= '0;
+        end else begin
+            final_sum_res <= top_tree[TREE_DEPTH-1].sum_res[0];
+            final_error_res <= top_tree[TREE_DEPTH-1].error_res[0];
+        end
+    end
+
+  // Assign output by adding the final results of the tree.
+  logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
+  logic res_underflow_flag, res_overflow_flag, res_invalid_operation_flag;
+  floating_point_adder #(
+    EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
+  ) fp_adder_res (
+    .a(final_sum_res),
+    .b(final_error_res),
+    .subtract(1'b0),
+
+    .out(o_sum_reg),
+    .underflow_flag(res_underflow_flag),
+    .overflow_flag(res_overflow_flag),
+    .invalid_operation_flag(res_invalid_operation_flag)
+  );
+
+  always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            o_sum <= '0;
+        end else begin
+            o_sum <= o_sum_reg;
+        end
+    end
+
+
+endmodule
+
+`endif

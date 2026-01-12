@@ -30,9 +30,9 @@ module attention_fp #(
     parameter string M3_USE_DSP = "auto",
     parameter string SOFTMAX_USE_DSP = "auto",
 
-    parameter string ACCUM_METHOD1 = "Kulisch",
-    parameter string ACCUM_METHOD2 = "Kulisch",
-    parameter string ACCUM_METHOD3 = "Kulisch",
+    parameter string ACCUM_METHOD1 = "KULISCH",
+    parameter string ACCUM_METHOD2 = "KULISCH",
+    parameter string ACCUM_METHOD3 = "KULISCH",
 
     parameter accumulator_width_1 = 32,
     parameter accumulator_width_2 = 32

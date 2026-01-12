@@ -20,7 +20,7 @@ module matmul_fp #(
     parameter out_width = bit_width,
     parameter scale_width = 8,
     parameter string USE_DSP = "auto",
-    parameter string ACCUM_METHOD = "Kulisch",
+    parameter string ACCUM_METHOD = "KULISCH",
 
     localparam x_cols = vec_elem_count,
     localparam y_rows = vec_elem_count,
