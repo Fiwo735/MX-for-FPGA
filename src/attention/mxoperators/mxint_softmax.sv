@@ -41,9 +41,9 @@ module mxint_softmax #(
   // each iteration recieves a batch of blocks
 
   // The current version only support precision of taylor_exp output to be the same with data_out_r
-  localparam DATA_EXP_0_PRECISION_0 = DATA_IN_0_PRECISION_0;
+  localparam DATA_EXP_0_PRECISION_0 = DATA_OUT_0_PRECISION_0;
   localparam DATA_EXP_0_FRAC_WIDTH = DATA_EXP_0_PRECISION_0 - 2;
-  localparam DATA_EXP_0_PRECISION_1 = DATA_IN_0_PRECISION_1;
+  localparam DATA_EXP_0_PRECISION_1 = DATA_OUT_0_PRECISION_1;
 
   localparam ACC_WIDTH = $clog2(IN_0_DEPTH) + DATA_EXP_0_PRECISION_0 + EXP_SUM_UNDERFLOW_BITS;
   localparam ACC_FRAC_WIDTH = DATA_EXP_0_FRAC_WIDTH + EXP_SUM_UNDERFLOW_BITS;
@@ -52,7 +52,7 @@ module mxint_softmax #(
   localparam DATA_DIVIDEND_PRECISION_1 = DATA_EXP_0_PRECISION_1;
   localparam DATA_DIVISOR_PRECISION_0 = ACC_WIDTH;
   localparam DATA_DIVISOR_PRECISION_1 = DATA_EXP_0_PRECISION_1;
-  localparam DATA_QUOTIENT_PRECISION_0 = DATA_DIVIDEND_PRECISION_0;
+  localparam DATA_QUOTIENT_PRECISION_0 = DATA_OUT_0_PRECISION_0;
   localparam DATA_QUOTIENT_FRAC_WIDTH = DIVISION_UNDERFLOW_BITS;
   localparam DATA_QUOTIENT_PRECISION_1 =DATA_EXP_0_PRECISION_1 + 1;
 
@@ -64,9 +64,14 @@ module mxint_softmax #(
   end
 
   // Add missing signals for mxint_exp interface
-  logic [DATA_EXP_0_PRECISION_0-1:0] mdata_exp[BLOCK_SIZE - 1:0];
-  logic [DATA_EXP_0_PRECISION_1-1:0] edata_exp[BLOCK_SIZE - 1:0];
+  logic [DATA_IN_0_PRECISION_0-1:0] mdata_exp[BLOCK_SIZE - 1:0];
+  logic [DATA_IN_0_PRECISION_1-1:0] edata_exp[BLOCK_SIZE - 1:0];
   logic data_exp_valid, data_exp_ready;
+
+  // New intermediate signals for Cast Output
+  logic [DATA_EXP_0_PRECISION_0-1:0] cast_mdata[BLOCK_SIZE - 1:0];
+  logic [DATA_EXP_0_PRECISION_1-1:0] cast_edata[BLOCK_SIZE - 1:0];
+  logic cast_data_valid, cast_data_ready;
 
   // Split2 and FF signals for exp path
   logic [DATA_EXP_0_PRECISION_0-1:0] ff_exp_mdata_out[DATA_IN_0_PARALLELISM-1:0];
@@ -101,8 +106,8 @@ module mxint_softmax #(
       .DATA_IN_EXP_WIDTH(DATA_IN_0_PRECISION_1),
       .BLOCK_SIZE(BLOCK_SIZE),
       .DATA_R_WIDTH(DATA_R_WIDTH),
-      .DATA_OUT_MAN_WIDTH(DATA_EXP_0_PRECISION_0),
-      .DATA_OUT_EXP_WIDTH(DATA_EXP_0_PRECISION_1),
+      .DATA_OUT_MAN_WIDTH(DATA_IN_0_PRECISION_0), // Output Input Width (High Precision)
+      .DATA_OUT_EXP_WIDTH(DATA_IN_0_PRECISION_1), 
       .USE_DSP(USE_DSP)
   ) mxint_exp_inst (
       .rst(rst),
@@ -113,25 +118,47 @@ module mxint_softmax #(
       .data_in_0_valid(data_in_0_valid),
       .data_in_0_ready(data_in_0_ready),
       // Output interface
-      .mdata_out_0(mdata_exp),
+      .mdata_out_0(mdata_exp), // High Precision Out
       .edata_out_0(edata_exp),
       .data_out_0_valid(data_exp_valid),
       .data_out_0_ready(data_exp_ready)
   );
 
+  // New Cast Instantiation
+  mxint_cast #(
+      .IN_MAN_WIDTH(DATA_IN_0_PRECISION_0),
+      .IN_MAN_FRAC_WIDTH(DATA_IN_0_PRECISION_0 - 2), 
+      .IN_EXP_WIDTH(DATA_IN_0_PRECISION_1),
+      .OUT_MAN_WIDTH(DATA_EXP_0_PRECISION_0), // Target Output Width
+      .OUT_EXP_WIDTH(DATA_EXP_0_PRECISION_1),
+      .BLOCK_SIZE(BLOCK_SIZE),
+      .ROUND_BITS(4)
+  ) cast_exp_inst (
+      .clk(clk),
+      .rst(rst),
+      .mdata_in(mdata_exp),
+      .edata_in(edata_exp[0]), // Assuming uniform exponent or taking 0
+      .data_in_valid(data_exp_valid),
+      .data_in_ready(data_exp_ready),
+      .mdata_out(cast_mdata),
+      .edata_out(cast_edata[0]),
+      .data_out_valid(cast_data_valid),
+      .data_out_ready(cast_data_ready)
+  );
+
   unpacked_mx_split2_with_data #(
       .DEPTH(DATA_IN_0_DIM * 2),
-      .MAN_WIDTH(DATA_EXP_0_PRECISION_0),
+      .MAN_WIDTH(DATA_EXP_0_PRECISION_0), // Uses Low Precision
       .EXP_WIDTH(DATA_EXP_0_PRECISION_1),
       .IN_SIZE(DATA_IN_0_PARALLELISM)
   ) split2_mxint_exp_inst (
       .clk(clk),
       .rst(rst),
-      // Input from mxint exp
-      .mdata_in(mdata_exp),
-      .edata_in(edata_exp[0]),
-      .data_in_valid(data_exp_valid),
-      .data_in_ready(data_exp_ready),
+      // Input from CAST (Low Precision)
+      .mdata_in(cast_mdata),
+      .edata_in(cast_edata[0]),
+      .data_in_valid(cast_data_valid),
+      .data_in_ready(cast_data_ready),
       // FIFO output path
       .fifo_mdata_out(ff_exp_mdata_out),
       .fifo_edata_out(ff_exp_edata_out),  // Not used
@@ -209,34 +236,12 @@ module mxint_softmax #(
       .edivisor_data(circ_edata_out),
       .divisor_data_valid(circ_data_out_valid),
       .divisor_data_ready(circ_data_out_ready),
-      // Connect quotient output
-      .mquotient_data(mquotient_data),
-      .equotient_data(equotient_data),
-      .quotient_data_valid(quotient_data_valid),
-      .quotient_data_ready(quotient_data_ready)
+      // Connect quotient output directly to Module Output
+      .mquotient_data(mdata_out_0), 
+      .equotient_data(edata_out_0), 
+      .quotient_data_valid(data_out_0_valid),
+      .quotient_data_ready(data_out_0_ready)
   );
 
-
-  // Add mxint_cast instance
-  mxint_cast #(
-      .IN_MAN_WIDTH(DATA_QUOTIENT_PRECISION_0),
-      .IN_MAN_FRAC_WIDTH(DATA_QUOTIENT_FRAC_WIDTH),
-      .IN_EXP_WIDTH(DATA_QUOTIENT_PRECISION_1),
-      .OUT_MAN_WIDTH(DATA_OUT_0_PRECISION_0),
-      .OUT_EXP_WIDTH(DATA_OUT_0_PRECISION_1),
-      .BLOCK_SIZE(DATA_OUT_0_PARALLELISM),
-      .ROUND_BITS(4)
-  ) cast_inst (
-      .clk(clk),
-      .rst(rst),
-      .mdata_in(mquotient_data),
-      .edata_in(equotient_data),
-      .data_in_valid(quotient_data_valid),      // Updated
-      .data_in_ready(quotient_data_ready),      // Updated
-      .mdata_out(mdata_out_0),
-      .edata_out(edata_out_0),
-      .data_out_valid(data_out_0_valid),
-      .data_out_ready(data_out_0_ready)
-  );
 
 endmodule
