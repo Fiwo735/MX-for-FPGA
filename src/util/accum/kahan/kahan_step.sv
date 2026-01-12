@@ -35,9 +35,7 @@ module kahan_step #(
   //   .invalid_operation_flag(y_invalid_operation_flag)
   // );
   // Use + or - operator instead of floating_point_adder for better synthesis results
-  for (genvar i = 0; i < BIT_WIDTH_I; i++) begin : y_adder_loop
-    assign y_comb[i] = elem_i[i] - c_i[i];
-  end
+  assign y_comb = elem_i - c_i;
 
   logic [BIT_WIDTH_I-1:0] y_r;
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -65,9 +63,7 @@ module kahan_step #(
   //   .invalid_operation_flag(t_invalid_operation_flag)
   // );
   // Use + or - operator instead of floating_point_adder for better synthesis results
-  for (genvar i = 0; i < BIT_WIDTH_I; i++) begin : t_adder_loop
-    assign t_comb[i] = sum_i[i] + y_r[i];
-  end
+  assign t_comb = sum_i + y_r;
 
   logic [BIT_WIDTH_I-1:0] t_r;
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -95,9 +91,7 @@ module kahan_step #(
   //   .invalid_operation_flag(tms_invalid_operation_flag)
   // );
   // Use + or - operator instead of floating_point_adder for better synthesis results
-  for (genvar i = 0; i < BIT_WIDTH_I; i++) begin : tms_adder_loop
-    assign t_minus_sum_comb[i] = t_r[i] - sum_i[i];
-  end
+  assign t_minus_sum_comb = t_r - sum_i;
 
   logic [BIT_WIDTH_I-1:0] t_minus_sum_r;
   always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -125,9 +119,7 @@ module kahan_step #(
   //   .invalid_operation_flag(c_invalid_operation_flag)
   // );
   // Use + or - operator instead of floating_point_adder for better synthesis results
-  for (genvar i = 0; i < BIT_WIDTH_I; i++) begin : c_adder_loop
-    assign c_comb[i] = t_minus_sum_r[i] - y_r[i];
-  end
+  assign c_comb = t_minus_sum_r - y_r;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
