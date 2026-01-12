@@ -111,23 +111,25 @@ module fasttwosum_adder_tree #(
         end
     end
 
-  // Assign output by adding the final results of the tree.
-  logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
-  logic res_underflow_flag, res_overflow_flag, res_invalid_operation_flag;
-  floating_point_adder #(
-    EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
-  ) fp_adder_res (
-    .a(final_sum_res),
-    .b(final_error_res),
-    .subtract(1'b0),
+    // Assign output by adding the final results of the tree.
+    logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
+    logic res_underflow_flag, res_overflow_flag, res_invalid_operation_flag;
+    // floating_point_adder #(
+    //     EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
+    // ) fp_adder_res (
+    //     .a(final_sum_res),
+    //     .b(final_error_res),
+    //     .subtract(1'b0),
 
-    .out(o_sum_reg),
-    .underflow_flag(res_underflow_flag),
-    .overflow_flag(res_overflow_flag),
-    .invalid_operation_flag(res_invalid_operation_flag)
-  );
+    //     .out(o_sum_reg),
+    //     .underflow_flag(res_underflow_flag),
+    //     .overflow_flag(res_overflow_flag),
+    //     .invalid_operation_flag(res_invalid_operation_flag)
+    // );
+    // Use + or - operator instead of floating_point_adder for better synthesis results
+    assign o_sum_reg = final_sum_res[SUM_WIDTH_O-1:0] + final_error_res[SUM_WIDTH_O-1:0];
 
-  // Assign output
+    // Assign output
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             o_sum <= '0;

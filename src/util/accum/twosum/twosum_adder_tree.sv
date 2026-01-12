@@ -112,8 +112,8 @@ module twosum_adder_tree #(
     end
 
   // Assign output by adding the final results of the tree.
-  logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
-  logic res_underflow_flag, res_overflow_flag, res_invalid_operation_flag;
+    logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
+    logic res_underflow_flag, res_overflow_flag, res_invalid_operation_flag;
 //   floating_point_adder #(
 //     EXP_WIDTH_I + $clog2(ELEMS_COUNT), MANT_WIDTH_I
 //   ) fp_adder_res (
@@ -126,10 +126,10 @@ module twosum_adder_tree #(
 //     .overflow_flag(res_overflow_flag),
 //     .invalid_operation_flag(res_invalid_operation_flag)
 //   );
-  // Use + or - operator instead of floating_point_adder for better synthesis results
+    // Use + or - operator instead of floating_point_adder for better synthesis results
     assign o_sum_reg = final_sum_res[SUM_WIDTH_O-1:0] + final_error_res[SUM_WIDTH_O-1:0];
 
-  always_ff @(posedge clk_i or negedge rst_ni) begin
+    always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             o_sum <= '0;
         end else begin

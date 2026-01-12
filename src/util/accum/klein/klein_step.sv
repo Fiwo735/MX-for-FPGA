@@ -24,11 +24,13 @@ module klein_step #(
   // Stage 1: temp = sum + elem
   // =========================
   logic [BIT_WIDTH_I-1:0] temp_comb;
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_temp (
-    .a(sum_i), .b(elem_i), .subtract(1'b0),
-    .out(temp_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_temp (
+  //   .a(sum_i), .b(elem_i), .subtract(1'b0),
+  //   .out(temp_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign temp_comb = sum_i + elem_i;
 
   logic [BIT_WIDTH_I-1:0] temp_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -40,15 +42,19 @@ module klein_step #(
   // =========================
   logic [BIT_WIDTH_I-1:0] sum_minus_temp_comb, elem_minus_temp_comb;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_sum_minus_temp (
-    .a(sum_i), .b(temp_r), .subtract(1'b1), .out(sum_minus_temp_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_sum_minus_temp (
+  //   .a(sum_i), .b(temp_r), .subtract(1'b1), .out(sum_minus_temp_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign sum_minus_temp_comb = sum_i - temp_r;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_elem_minus_temp (
-    .a(elem_i), .b(temp_r), .subtract(1'b1), .out(elem_minus_temp_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_elem_minus_temp (
+  //   .a(elem_i), .b(temp_r), .subtract(1'b1), .out(elem_minus_temp_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign elem_minus_temp_comb = elem_i - temp_r;
 
   logic [BIT_WIDTH_I-1:0] sum_minus_temp_r, elem_minus_temp_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -65,15 +71,19 @@ module klein_step #(
   // =========================
   logic [BIT_WIDTH_I-1:0] c_sum1_comb, c_sum2_comb;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_sum1 (
-    .a(sum_minus_temp_r), .b(elem_i), .subtract(1'b0), .out(c_sum1_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_sum1 (
+  //   .a(sum_minus_temp_r), .b(elem_i), .subtract(1'b0), .out(c_sum1_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign c_sum1_comb = sum_minus_temp_r + elem_i;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_sum2 (
-    .a(elem_minus_temp_r), .b(sum_i), .subtract(1'b0), .out(c_sum2_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_sum2 (
+  //   .a(elem_minus_temp_r), .b(sum_i), .subtract(1'b0), .out(c_sum2_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign c_sum2_comb = elem_minus_temp_r + sum_i;
 
   logic [BIT_WIDTH_I-1:0] c_sum1_r, c_sum2_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -102,10 +112,12 @@ module klein_step #(
   // Stage 5: temp2 = cs + c
   // =========================
   logic [BIT_WIDTH_I-1:0] temp2_comb;
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_temp2 (
-    .a(cs_i), .b(c_r), .subtract(1'b0), .out(temp2_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_temp2 (
+  //   .a(cs_i), .b(c_r), .subtract(1'b0), .out(temp2_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign temp2_comb = cs_i + c_r;
 
   logic [BIT_WIDTH_I-1:0] temp2_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -117,15 +129,20 @@ module klein_step #(
   // =========================
   logic [BIT_WIDTH_I-1:0] cs_minus_temp2_comb, c_minus_temp2_comb;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cs_minus_temp2 (
-    .a(cs_i), .b(temp2_r), .subtract(1'b1), .out(cs_minus_temp2_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cs_minus_temp2 (
+  //   .a(cs_i), .b(temp2_r), .subtract(1'b1), .out(cs_minus_temp2_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign cs_minus_temp2_comb = cs_i - temp2_r;
+  
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_minus_temp2 (
-    .a(c_r), .b(temp2_r), .subtract(1'b1), .out(c_minus_temp2_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_c_minus_temp2 (
+  //   .a(c_r), .b(temp2_r), .subtract(1'b1), .out(c_minus_temp2_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign c_minus_temp2_comb = c_r - temp2_r;
 
   logic [BIT_WIDTH_I-1:0] cs_minus_temp2_r, c_minus_temp2_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -142,15 +159,18 @@ module klein_step #(
   // =========================
   logic [BIT_WIDTH_I-1:0] cc_sum1_comb, cc_sum2_comb;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cc_sum1 (
-    .a(cs_minus_temp2_r), .b(c_r), .subtract(1'b0), .out(cc_sum1_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cc_sum1 (
+  //   .a(cs_minus_temp2_r), .b(c_r), .subtract(1'b0), .out(cc_sum1_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign cc_sum1_comb = cs_minus_temp2_r + c_r;
 
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cc_sum2 (
-    .a(c_minus_temp2_r), .b(cs_i), .subtract(1'b0), .out(cc_sum2_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_cc_sum2 (
+  //   .a(c_minus_temp2_r), .b(cs_i), .subtract(1'b0), .out(cc_sum2_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  assign cc_sum2_comb = c_minus_temp2_r + cs_i;
 
   logic [BIT_WIDTH_I-1:0] cc_sum1_r, cc_sum2_r;
   always_ff @(posedge clk_i or negedge rst_ni)
@@ -176,10 +196,12 @@ module klein_step #(
     else         cc_r <= (decision2 ? cc_sum1_r : cc_sum2_r);
 
   logic [BIT_WIDTH_I-1:0] ccs_comb;
-  floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_ccs (
-    .a(ccs_i), .b(cc_r), .subtract(1'b0), .out(ccs_comb),
-    .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
-  );
+  // floating_point_adder #(EXP_WIDTH_I, MANT_WIDTH_I) fp_adder_ccs (
+  //   .a(ccs_i), .b(cc_r), .subtract(1'b0), .out(ccs_comb),
+  //   .underflow_flag(), .overflow_flag(), .invalid_operation_flag()
+  // );
+  // Use + or - operator instead of floating_point_adder for better synthesis results
+  assign ccs_comb = ccs_i + cc_r;
 
   always_ff @(posedge clk_i or negedge rst_ni) begin
     if (!rst_ni) begin
