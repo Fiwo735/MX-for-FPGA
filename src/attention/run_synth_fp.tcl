@@ -1,4 +1,6 @@
-set part        xcu250-figd2104-2L-e
+# Using Alveo V80 part directly as board definition 'xilinx.com:v80:1.0' is missing in this install
+# set part        xcu250-figd2104-2L-e
+set part        xcv80-lsva4737-2MHP-e-S
 set top         attention_fp
 set outputDir   ./src/attention/synth_output
 file mkdir $outputDir

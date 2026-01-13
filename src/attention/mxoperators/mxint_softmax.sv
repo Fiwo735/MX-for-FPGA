@@ -80,9 +80,19 @@ module mxint_softmax #(
   logic ff_exp_data_valid, ff_exp_data_ready;
 
   // Straight path signals
-  logic [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_out[DATA_IN_0_PARALLELISM-1:0];
+  // Output from Split2 (Descending/Unsigned)
+  logic [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_from_split[DATA_IN_0_PARALLELISM-1:0];
+  // Adapted for Accumulator (Ascending/Signed)
+  logic signed [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_out[DATA_IN_0_PARALLELISM];
   logic [DATA_EXP_0_PRECISION_1-1:0] straight_exp_edata_out;
   logic straight_exp_data_out_valid, straight_exp_data_out_ready;
+
+  // Adapt Split2 output to Accumulator input
+  always_comb begin
+      for (int i = 0; i < DATA_IN_0_PARALLELISM; i++) begin
+          straight_exp_mdata_out[i] = $signed(straight_exp_mdata_from_split[i]);
+      end
+  end
 
   // Accumulator signals
   logic [ACC_WIDTH-1:0] acc_mdata_out[BLOCK_SIZE-1:0];
@@ -166,7 +176,7 @@ module mxint_softmax #(
       .fifo_data_out_valid(ff_exp_data_valid),
       .fifo_data_out_ready(ff_exp_data_ready),
       // Straight output path
-      .straight_mdata_out(straight_exp_mdata_out),
+      .straight_mdata_out(straight_exp_mdata_from_split),
       .straight_edata_out(straight_exp_edata_out),
       .straight_data_out_valid(straight_exp_data_out_valid),
       .straight_data_out_ready(straight_exp_data_out_ready)
@@ -203,9 +213,9 @@ module mxint_softmax #(
             if (ACCUM_METHOD == "KAHAN") begin : gen_kahan_accum
                 kahan_adder_tree #(
                     .EXP_WIDTH_I(0),
-                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
-                    .SUM_WIDTH(ACC_WIDTH)
+                    .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_kahan_tree (
                     .clk_i(clk),
                     .rst_ni(1'b1), // No reset
@@ -215,9 +225,9 @@ module mxint_softmax #(
             end else if (ACCUM_METHOD == "TWOSUM") begin : gen_twosum_accum
                 twosum_adder_tree #(
                     .EXP_WIDTH_I(0),
-                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
-                    .SUM_WIDTH(ACC_WIDTH)
+                    .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_twosum_tree (
                     .clk_i(clk),
                     .rst_ni(1'b1), // No reset
@@ -227,9 +237,9 @@ module mxint_softmax #(
             end else if (ACCUM_METHOD == "FASTTWOSUM") begin : gen_fasttwosum_accum
                 fasttwosum_adder_tree #(
                     .EXP_WIDTH_I(0),
-                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
-                    .SUM_WIDTH(ACC_WIDTH)
+                    .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_fasttwosum_tree (
                     .clk_i(clk),
                     .rst_ni(1'b1), // No reset
@@ -239,9 +249,9 @@ module mxint_softmax #(
             end else if (ACCUM_METHOD == "NEUMAIER") begin : gen_neumaier_accum
                 neumaier_adder_tree #(
                     .EXP_WIDTH_I(0),
-                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
-                    .SUM_WIDTH(ACC_WIDTH)
+                    .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_neumaier_tree (
                     .clk_i(clk),
                     .rst_ni(1'b1), // No reset
@@ -251,9 +261,9 @@ module mxint_softmax #(
             end else if (ACCUM_METHOD == "KLEIN") begin : gen_klein_accum
                 klein_adder_tree #(
                     .EXP_WIDTH_I(0),
-                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
-                    .SUM_WIDTH(ACC_WIDTH)
+                    .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_klein_tree (
                     .clk_i(clk),
                     .rst_ni(1'b1), // No reset

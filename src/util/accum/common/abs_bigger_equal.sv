@@ -12,25 +12,40 @@ module abs_bigger_equal #(
 );
 
   // Sign doesn't matter for absolute value comparison
-  logic [EXP_WIDTH_I-1:0]  a_exp = a_i[BIT_WIDTH_I-2:MANT_WIDTH_I];
-  logic [MANT_WIDTH_I-1:0] a_mant = a_i[MANT_WIDTH_I-1:0];
-  logic [EXP_WIDTH_I-1:0]  b_exp = b_i[BIT_WIDTH_I-2:MANT_WIDTH_I];
-  logic [MANT_WIDTH_I-1:0] b_mant = b_i[MANT_WIDTH_I-1:0];
+  logic [MANT_WIDTH_I-1:0] a_mant;
+  logic [MANT_WIDTH_I-1:0] b_mant;
+  
+  assign a_mant = a_i[MANT_WIDTH_I-1:0];
+  assign b_mant = b_i[MANT_WIDTH_I-1:0];
 
-  // Compare absolute values of a_i and b_i
-  always_comb begin
-    if (a_exp >= b_exp) begin
-      res_o = 1'b1;
-    end else if (a_exp < b_exp) begin
-      res_o = 1'b0;
-    end else begin // a_exp == b_exp
-      if (a_mant >= b_mant) begin
-        res_o = 1'b1; // a_i is greater than or equal to b_i
-      end else begin
-        res_o = 1'b0; // a_i is less than b_i
-      end
+  generate
+    if (EXP_WIDTH_I > 0) begin : gen_has_exp
+        logic [EXP_WIDTH_I-1:0]  a_exp;
+        logic [EXP_WIDTH_I-1:0]  b_exp;
+        
+        assign a_exp = a_i[BIT_WIDTH_I-2:MANT_WIDTH_I];
+        assign b_exp = b_i[BIT_WIDTH_I-2:MANT_WIDTH_I];
+
+        always_comb begin
+            if (a_exp > b_exp) begin
+                res_o = 1'b1;
+            end else if (a_exp < b_exp) begin
+                res_o = 1'b0;
+            end else begin
+                // Exponents equal, compare mantissas
+                if (a_mant >= b_mant) res_o = 1'b1;
+                else                  res_o = 1'b0;
+            end
+        end
+    end else begin : gen_no_exp
+        // Integer mode (No exponent)
+        // Just compare magnitude (mantissa)
+        always_comb begin
+            if (a_mant >= b_mant) res_o = 1'b1;
+            else                  res_o = 1'b0;
+        end
     end
-  end
+  endgenerate
 
 endmodule
 

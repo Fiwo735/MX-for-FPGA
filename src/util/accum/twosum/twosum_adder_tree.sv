@@ -127,7 +127,7 @@ module twosum_adder_tree #(
 //     .invalid_operation_flag(res_invalid_operation_flag)
 //   );
     // Use + or - operator instead of floating_point_adder for better synthesis results
-    assign o_sum_reg = final_sum_res[SUM_WIDTH_O-1:0] + final_error_res[SUM_WIDTH_O-1:0];
+    assign o_sum_reg = final_sum_res + final_error_res;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
