@@ -11,7 +11,7 @@
 
 
 template <typename scalar_t>
-__global__ void ordacc_chunk_scaled_kernel(
+__global__ void ordacc_chunk_comp_sum_scaled_kernel(
     const scalar_t* __restrict__ input,
     const float* __restrict__ scale_input,
     float* __restrict__ output,
@@ -24,18 +24,23 @@ __global__ void ordacc_chunk_scaled_kernel(
     if (idx >= batch_size) return;
     
     float acc = 0;
+    float c_comp_sum = 0;
+    float y_comp_sum;
+    float t_comp_sum;
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
-    // Process elements and apply rounding every ROUND_INTERVAL elements
+    // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        acc += val * scale;
-        
-        // Apply rounding every 32 elements or at the end
-        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
-            acc = round_rne_fp_full(acc, man_width, exp_width);
-        }
+        float scaled_product = val * scale;
+
+        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+        y_comp_sum = round_rne_fp_full(scaled_product - c_comp_sum, man_width, exp_width);
+        t_comp_sum = round_rne_fp_full(acc + y_comp_sum, man_width, exp_width);
+        c_comp_sum = round_rne_fp_full(t_comp_sum - acc, man_width, exp_width) - y_comp_sum;
+        c_comp_sum = round_rne_fp_full(c_comp_sum, man_width, exp_width);
+        acc = round_rne_fp_full(t_comp_sum, man_width, exp_width);
     }
     
     output[prt * batch_size + idx] = acc;
@@ -74,7 +79,7 @@ torch::Tensor ordacc_chunk_scaled(
     torch::Tensor input,
     torch::Tensor scale_input,
     int man_width, int exp_width,
-    bool full_quant=false
+    bool comp_sum=false
 ){
     // Input shape: [..., batch_size, reduce_dim]
     // Output shape: [..., batch_size]
@@ -103,9 +108,9 @@ torch::Tensor ordacc_chunk_scaled(
     dim3 block_dim(TILE_SIZE_SUM);
     dim3 grid_dim((rows + TILE_SIZE_SUM - 1) / TILE_SIZE_SUM, part);
     
-    if (!full_quant){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled", ([&]{
-            ordacc_chunk_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+    if (!comp_sum){
+        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_full_quant", ([&]{
+            ordacc_chunk_full_quant_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
                 output.data_ptr<float>(),
@@ -117,7 +122,7 @@ torch::Tensor ordacc_chunk_scaled(
         }));
     } else {
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_full_quant", ([&]{
-            ordacc_chunk_full_quant_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordacc_chunk_comp_sum_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
                 output.data_ptr<float>(),

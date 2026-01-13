@@ -12,7 +12,7 @@
 
 
 template <typename scalar_t>
-__global__ void ordmm_chunk_bcast_scaled_kernel(
+__global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
     const float* __restrict__ scale_input,
@@ -31,8 +31,12 @@ __global__ void ordmm_chunk_bcast_scaled_kernel(
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    float acc = 0;
+    float acc;
+    float c_comp_sum;
+    float y_comp_sum;
+    float t_comp_sum;
 
     // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
@@ -54,25 +58,37 @@ __global__ void ordmm_chunk_bcast_scaled_kernel(
             shared_B[threadIdx.y][threadIdx.x] = 0;
             shared_B_scale[threadIdx.y][threadIdx.x] = 0;
         }
+        if (row < in_batch && col < out_features){
+            shared_C[threadIdx.y][threadIdx.x] = output[prt * in_batch * out_features + row * out_features + col];
+        } else {
+            shared_C[threadIdx.y][threadIdx.x] = 0;
+        }
 
         __syncthreads();
 
-        float local_acc = 0;
+        acc = 0;
+        c_comp_sum = 0;
 
         // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
-            local_acc += scaled_product;
+
+            scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+            y_comp_sum = round_rne_fp_full(scaled_product - c_comp_sum, man_width, exp_width);
+            t_comp_sum = round_rne_fp_full(acc + y_comp_sum, man_width, exp_width);
+            c_comp_sum = round_rne_fp_full(t_comp_sum - acc, man_width, exp_width) - y_comp_sum;
+            c_comp_sum = round_rne_fp_full(c_comp_sum, man_width, exp_width);
+            acc = round_rne_fp_full(t_comp_sum, man_width, exp_width);
         }
 
-        acc += local_acc;
+        acc += shared_C[threadIdx.y][threadIdx.x];
         acc = round_rne_fp_full(acc, man_width, exp_width);
+        if (row < in_batch && col < out_features){
+            output[prt * in_batch * out_features + row * out_features + col] = acc;
+        }
 
         __syncthreads();
-    }
-    if (row < in_batch && col < out_features){
-        output[prt * in_batch * out_features + row * out_features + col] = acc;
     }
 }
 
@@ -154,7 +170,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
     torch::Tensor scale_input,
     torch::Tensor scale_weight_tpose,
     int man_width, int exp_width,
-    bool full_quant=false
+    bool comp_sum=false
 ){
     // Broadcast tensors to compatible batch shapes
     auto batch_shape = torch::infer_size(
@@ -197,9 +213,9 @@ torch::Tensor ordmm_chunk_bcast_scaled(
     dim3 block_dim(TILE_SIZE_2, TILE_SIZE_2);
     dim3 grid_dim((out_features + TILE_SIZE_2 - 1) / TILE_SIZE_2, (in_batch + TILE_SIZE_2 - 1) / TILE_SIZE_2, part);
 
-    if(!full_quant){
+    if(!comp_sum){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
-            ordmm_chunk_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
@@ -214,7 +230,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
         }));
     }else{
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
-            ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
