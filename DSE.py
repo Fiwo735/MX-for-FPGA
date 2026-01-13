@@ -293,7 +293,8 @@ class SynthesisHandler:
         continue
       
       run_synth_path = os.path.join(self.hdl_dir, "run_synth_fp.tcl")
-      synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
+      # synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
+      synthesis_cmd = f"/mnt/applications/Xilinx/24.2/Vivado/2024.2/bin/vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
       if verbose:
         print(f"Results for {design!r} not found, running synthesis command: {synthesis_cmd}")
       
