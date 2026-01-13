@@ -47,6 +47,7 @@ module dot_general_fp #(
             .USE_DSP(USE_DSP),
             .ACCUM_METHOD(ACCUM_METHOD)
         ) u_dot_fp (
+            .i_clk(i_clk),
             .i_vec_a(i_X[i*k +: k]),
             .i_vec_b(i_Y[i*k +: k]),
             .o_dp(dot_out[i])

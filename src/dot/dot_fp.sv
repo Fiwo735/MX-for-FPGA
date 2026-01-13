@@ -14,6 +14,7 @@ module dot_fp #(
     parameter string USE_DSP = "auto",
     parameter string ACCUM_METHOD = "KULISCH"
 )(
+    input logic i_clk,  
     input  logic signed [bit_width-1:0] i_vec_a [k],
     input  logic signed [bit_width-1:0] i_vec_b [k],
     output logic signed [out_width-1:0] o_dp
