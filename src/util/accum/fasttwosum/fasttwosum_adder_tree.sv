@@ -10,7 +10,7 @@ module fasttwosum_adder_tree #(
     parameter  MANT_WIDTH_I = 2,
     parameter  ELEMS_COUNT  = 32,
     localparam BIT_WIDTH_I  = 1 + EXP_WIDTH_I + MANT_WIDTH_I, // 1 for sign bit
-    localparam SUM_WIDTH_O  = BIT_WIDTH_I + $clog2(ELEMS_COUNT),
+    parameter SUM_WIDTH_O  = BIT_WIDTH_I + $clog2(ELEMS_COUNT),
     localparam TREE_DEPTH   = $clog2(ELEMS_COUNT)
 )(
     input  logic clk_i,
