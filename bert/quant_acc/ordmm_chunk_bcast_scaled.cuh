@@ -5,13 +5,10 @@
 #include <torch/extension.h>
 #include "round_fp.cuh"
 
-#define TILE_SIZE 16
-#define NUM_BINS 16
-#define TILE_SIZE_2 32  // Also the block size k in MX
 
 
-
-template <typename scalar_t>
+// Template-based kernel implementations for different tile sizes
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -21,28 +18,23 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    // Quantized accumulation for outer loop.
     float sum_outer;
     float value_outer;
     float c_outer = 0;
     float y_outer;
     float t_outer;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -68,13 +60,11 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
 
         __syncthreads();
 
-        // Quantized accumulation for inner loop.
         float acc = 0;
         float c_inner = 0;
         float y_inner;
         float t_inner;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -87,7 +77,6 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
             acc = round_rne_fp_full(t_inner, man_width, exp_width);
         }
 
-        // Load sum and value for outer loop
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = acc;
 
@@ -105,7 +94,7 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
     }
 }
 
-template <typename scalar_t>
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -115,19 +104,16 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    // Quantized accumulation for outer loop.
     float sum_outer;
     float value_outer;
     float error_outer = 0;
@@ -138,9 +124,7 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
     float value_p_outer;
     float d_added_outer;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -166,7 +150,6 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
 
         __syncthreads();
 
-        // Quantized accumulation for inner loop.
         float acc = 0;
         float error_inner = 0;
         float s_inner;
@@ -176,7 +159,6 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
         float value_p_inner;
         float d_added_inner;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -192,7 +174,6 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
             acc = s_inner;
         }
 
-        // Load sum and value for outer loop
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
 
@@ -213,7 +194,7 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
     }
 }
 
-template <typename scalar_t>
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -223,19 +204,16 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    // Quantized accumulation for outer loop.
     float sum_outer;
     float value_outer;
     float error_outer = 0;
@@ -243,9 +221,7 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
     float z_outer;
     float val_z_sub_outer;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -271,14 +247,12 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
 
         __syncthreads();
 
-        // Quantized accumulation for inner loop.
         float acc = 0;
         float error_inner = 0;
         float s_inner;
         float z_inner;
         float val_z_sub_inner;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -291,7 +265,6 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
             acc = s_inner;
         }
 
-        // Load sum and value for outer loop
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
 
@@ -309,7 +282,7 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
     }
 }
 
-template <typename scalar_t>
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -319,27 +292,22 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    // Quantized accumulation for outer loop.
     float sum_outer;
     float value_outer;
     float c_outer = 0;
     float s_outer;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -365,12 +333,10 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
 
         __syncthreads();
 
-        // Quantized accumulation for inner loop.
         float acc = 0;
         float c_inner = 0;
         float s_inner;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -384,7 +350,6 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
             acc = s_inner;
         }
 
-        // Load sum and value for outer loop
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + c_inner, man_width, exp_width);
 
@@ -403,7 +368,7 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
     }
 }
 
-template <typename scalar_t>
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -413,19 +378,16 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
 
-    // Quantized accumulation for outer loop.
     float sum_outer;
     float value_outer;
     float cs_outer = 0;
@@ -435,9 +397,7 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
     float c_outer;
     float cc_outer;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -463,7 +423,6 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
 
         __syncthreads();
 
-        // Quantized accumulation for inner loop.
         float acc = 0;
         float cs_inner = 0;
         float ccs_inner = 0;
@@ -472,7 +431,6 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
         float c_inner;
         float cc_inner;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -491,7 +449,6 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
             ccs_inner = round_rne_fp_full(ccs_inner + cc_inner, man_width, exp_width);
         }
 
-        // Load sum and value for outer loop
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + round_rne_fp_full(cs_inner + ccs_inner, man_width, exp_width), man_width, exp_width);
 
@@ -515,7 +472,7 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
     }
 }
 
-template <typename scalar_t>
+template <typename scalar_t, int TILE_SIZE_2>
 __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
     const scalar_t* __restrict__ input,
     const scalar_t* __restrict__ weight,
@@ -525,12 +482,10 @@ __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-
     int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
     int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
     int prt = blockIdx.z;
 
-    // Shared memory for tiles of input and weight
     __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
     __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
@@ -539,9 +494,7 @@ __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
 
     float acc;
 
-    // Loop over the tiles of the input in steps of TILE_SIZE_2
     for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
-        // Collaborative loading of tiles into shared memory
         const int input_col = t * TILE_SIZE_2 + threadIdx.x;
         const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
 
@@ -569,7 +522,6 @@ __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
 
         acc = 0;
 
-        // Perform the multiplication for this tile
         for (int k=0; k < TILE_SIZE_2; ++k){
             float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
                                    shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
@@ -587,14 +539,101 @@ __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
     }
 }
 
+// Kernel launcher helper template
+template<typename scalar_t, int TILE_SIZE_2>
+void launch_kernel(
+    const std::string& sum_type,
+    dim3 grid_dim, dim3 block_dim,
+    const scalar_t* input, const scalar_t* weight,
+    const float* scale_input, const float* scale_weight,
+    float* output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+    if(sum_type == "quant"){
+        ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }else if(sum_type == "kahan"){
+        ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }else if(sum_type == "2sum"){
+        ordmm_chunk_2sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }else if(sum_type == "fast2sum"){
+        ordmm_chunk_fast2sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }else if(sum_type == "neumaier"){
+        ordmm_chunk_neumaier_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }else if(sum_type == "klein"){
+        ordmm_chunk_klein_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
+            input, weight, scale_input, scale_weight, output,
+            in_batch, in_features, out_features, man_width, exp_width);
+    }
+}
+
+// Runtime tile size dispatcher
+template<typename scalar_t>
+void dispatch_tile_size(
+    int tile_size,
+    const std::string& sum_type,
+    dim3 grid_dim, dim3 block_dim,
+    const scalar_t* input, const scalar_t* weight,
+    const float* scale_input, const float* scale_weight,
+    float* output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+    switch(tile_size){
+        case 2:
+            launch_kernel<scalar_t, 2>(sum_type, grid_dim, block_dim, input, weight,
+                scale_input, scale_weight, output, in_batch, in_features, out_features,
+                man_width, exp_width);
+            break;
+        case 4:
+            launch_kernel<scalar_t, 4>(sum_type, grid_dim, block_dim, input, weight,
+                scale_input, scale_weight, output, in_batch, in_features, out_features,
+                man_width, exp_width);
+            break;
+        case 8:
+            launch_kernel<scalar_t, 8>(sum_type, grid_dim, block_dim, input, weight,
+                scale_input, scale_weight, output, in_batch, in_features, out_features,
+                man_width, exp_width);
+            break;
+        case 16:
+            launch_kernel<scalar_t, 16>(sum_type, grid_dim, block_dim, input, weight,
+                scale_input, scale_weight, output, in_batch, in_features, out_features,
+                man_width, exp_width);
+            break;
+        case 32:
+            launch_kernel<scalar_t, 32>(sum_type, grid_dim, block_dim, input, weight,
+                scale_input, scale_weight, output, in_batch, in_features, out_features,
+                man_width, exp_width);
+            break;
+        default:
+            throw std::invalid_argument("tile_size must be one of {2, 4, 8, 16, 32}");
+    }
+}
+
 torch::Tensor ordmm_chunk_bcast_scaled(
     torch::Tensor input,
     torch::Tensor weight_tpose,
     torch::Tensor scale_input,
     torch::Tensor scale_weight_tpose,
-    int man_width, int exp_width,
+    int man_width, int exp_width, int tile_size=32,
     std::string sum_type="quant"
 ){
+    // Validate tile_size
+    if(tile_size != 2 && tile_size != 4 && tile_size != 8 && 
+       tile_size != 16 && tile_size != 32){
+        throw std::invalid_argument("tile_size must be one of {2, 4, 8, 16, 32}");
+    }
+
     // Broadcast tensors to compatible batch shapes
     auto batch_shape = torch::infer_size(
         input.sizes().slice(0, input.dim() - 2),
@@ -631,104 +670,27 @@ torch::Tensor ordmm_chunk_bcast_scaled(
     int in_features = input_flat.size(2);
     int out_features = weight_tpose_flat.size(1);
 
-    torch::Tensor output = torch::zeros({part, in_batch, out_features}, torch::TensorOptions().dtype(torch::kFloat).device(input.device()));
+    torch::Tensor output = torch::zeros({part, in_batch, out_features}, 
+        torch::TensorOptions().dtype(torch::kFloat).device(input.device()));
 
-    dim3 block_dim(TILE_SIZE_2, TILE_SIZE_2);
-    dim3 grid_dim((out_features + TILE_SIZE_2 - 1) / TILE_SIZE_2, (in_batch + TILE_SIZE_2 - 1) / TILE_SIZE_2, part);
+    dim3 block_dim(tile_size, tile_size);
+    dim3 grid_dim((out_features + tile_size - 1) / tile_size, 
+                  (in_batch + tile_size - 1) / tile_size, part);
 
-    if(sum_type == "quant"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_quant", ([&]{
-            ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    }else if (sum_type == "kahan"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    }else if (sum_type == "2sum"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_2sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    }else if (sum_type == "fast2sum"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_fast2sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    }else if (sum_type == "neumaier"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_neumaier_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    }else if (sum_type == "klein"){
-        AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_klein_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
-                input_flat.data_ptr<scalar_t>(),
-                weight_tpose_flat.data_ptr<scalar_t>(),
-                scale_input_flat.data_ptr<float>(),
-                scale_weight_tpose_flat.data_ptr<float>(),
-                output.data_ptr<float>(),
-                in_batch,
-                in_features,
-                out_features,
-                man_width,
-                exp_width
-            );
-        }));
-    } else {
-        throw std::invalid_argument("sum_type has an invalid value");
-    }
+    AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, 
+        input_flat.scalar_type(), "matmul_chunk_scaled", ([&]{
+        dispatch_tile_size<scalar_t>(
+            tile_size, sum_type, grid_dim, block_dim,
+            input_flat.data_ptr<scalar_t>(),
+            weight_tpose_flat.data_ptr<scalar_t>(),
+            scale_input_flat.data_ptr<float>(),
+            scale_weight_tpose_flat.data_ptr<float>(),
+            output.data_ptr<float>(),
+            in_batch, in_features, out_features,
+            man_width, exp_width
+        );
+    }));
+
     cudaDeviceSynchronize();
 
     return output.view(target_shape);

@@ -26,22 +26,40 @@ __global__ void ordacc_chunk_comp_sum_scaled_kernel(
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     float sum_outer = 0;
-    float c_comp_sum = 0;
-    float y_comp_sum;
-    float t_comp_sum;
+    float value_outer;
+    float c_outer = 0;
+    float y_outer;
+    float t_outer;
+    float sum_inner = 0;
+    float value_inner;
+    float c_inner = 0;
+    float y_inner;
+    float t_inner;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        float scaled_product = val * scale;
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+        value_inner = scaled_product;
 
-        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        y_comp_sum = round_rne_fp_full(scaled_product - c_comp_sum, man_width, exp_width);
-        t_comp_sum = round_rne_fp_full(sum_outer + y_comp_sum, man_width, exp_width);
-        c_comp_sum = round_rne_fp_full(t_comp_sum - sum_outer, man_width, exp_width) - y_comp_sum;
-        c_comp_sum = round_rne_fp_full(c_comp_sum, man_width, exp_width);
-        sum_outer = round_rne_fp_full(t_comp_sum, man_width, exp_width);
+        y_inner = round_rne_fp_full(value_inner - c_inner, man_width, exp_width);
+        t_inner = round_rne_fp_full(sum_inner + y_inner, man_width, exp_width);
+        c_inner = round_rne_fp_full(t_inner - sum_inner, man_width, exp_width) - y_inner;
+        c_inner = round_rne_fp_full(c_inner, man_width, exp_width);
+        sum_inner = round_rne_fp_full(t_inner, man_width, exp_width);
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            value_outer = sum_inner;
+            sum_inner = 0;
+            c_inner = 0;
+
+            y_outer = round_rne_fp_full(value_outer - c_outer, man_width, exp_width);
+            t_outer = round_rne_fp_full(sum_outer + y_outer, man_width, exp_width);
+            c_outer = round_rne_fp_full(t_outer - sum_outer, man_width, exp_width) - y_outer;
+            c_outer = round_rne_fp_full(c_outer, man_width, exp_width);
+            sum_outer = round_rne_fp_full(t_outer, man_width, exp_width);
+        }
     }
     
     output[prt * batch_size + idx] = sum_outer;
@@ -63,32 +81,57 @@ __global__ void ordacc_chunk_2sum_scaled_kernel(
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     float sum_outer = 0;
-    float error = 0;
-    float s;
-    float d_sum;
-    float d_value;
-    float sum_p;
-    float value_p;
-    float d_added;
+    float value_outer;
+    float error_outer = 0;
+    float s_outer;
+    float d_sum_outer;
+    float d_value_outer;
+    float sum_p_outer;
+    float value_p_outer;
+    float d_added_outer;
+    float sum_inner = 0;
+    float value_inner;
+    float error_inner = 0;
+    float s_inner;
+    float d_sum_inner;
+    float d_value_inner;
+    float sum_p_inner;
+    float value_p_inner;
+    float d_added_inner;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        float scaled_product = val * scale;
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+        value_inner = scaled_product;
 
-        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
-        sum_p = round_rne_fp_full(s - scaled_product, man_width, exp_width);
-        value_p = round_rne_fp_full(s - sum_p, man_width, exp_width);
-        d_sum = round_rne_fp_full(sum_outer - sum_p, man_width, exp_width);
-        d_value = round_rne_fp_full(scaled_product - value_p, man_width, exp_width);
-        d_added = round_rne_fp_full(d_sum + d_value, man_width, exp_width);
-        error = round_rne_fp_full(error + d_added, man_width, exp_width);
-        sum_outer = s;
+        s_inner = round_rne_fp_full(sum_inner + value_inner, man_width, exp_width);
+        sum_p_inner = round_rne_fp_full(s_inner - value_inner, man_width, exp_width);
+        value_p_inner = round_rne_fp_full(s_inner - sum_p_inner, man_width, exp_width);
+        d_sum_inner = round_rne_fp_full(sum_inner - sum_p_inner, man_width, exp_width);
+        d_value_inner = round_rne_fp_full(value_inner - value_p_inner, man_width, exp_width);
+        d_added_inner = round_rne_fp_full(d_sum_inner + d_value_inner, man_width, exp_width);
+        error_inner = round_rne_fp_full(error_inner + d_added_inner, man_width, exp_width);
+        sum_inner = s_inner;
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            value_outer = round_rne_fp_full(sum_inner + error_inner, man_width, exp_width);
+            sum_inner = 0;
+            error_inner = 0;
+
+            s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+            sum_p_outer = round_rne_fp_full(s_outer - value_outer, man_width, exp_width);
+            value_p_outer = round_rne_fp_full(s_outer - sum_p_outer, man_width, exp_width);
+            d_sum_outer = round_rne_fp_full(sum_outer - sum_p_outer, man_width, exp_width);
+            d_value_outer = round_rne_fp_full(value_outer - value_p_outer, man_width, exp_width);
+            d_added_outer = round_rne_fp_full(d_sum_outer + d_value_outer, man_width, exp_width);
+            error_outer = round_rne_fp_full(error_outer + d_added_outer, man_width, exp_width);
+            sum_outer = s_outer;
+        }
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -107,26 +150,45 @@ __global__ void ordacc_chunk_fast2sum_scaled_kernel(
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     float sum_outer = 0;
-    float error = 0;
-    float s;
-    float z;
-    float val_z_sub;
+    float value_outer;
+    float error_outer = 0;
+    float s_outer;
+    float z_outer;
+    float val_z_sub_outer;
+    float sum_inner = 0;
+    float value_inner;
+    float error_inner = 0;
+    float s_inner;
+    float z_inner;
+    float val_z_sub_inner;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        float scaled_product = val * scale;
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+        value_inner = scaled_product;
 
-        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
-        z = round_rne_fp_full(s - sum_outer, man_width, exp_width);
-        val_z_sub = round_rne_fp_full(scaled_product - z, man_width, exp_width);
-        error = round_rne_fp_full(error + val_z_sub, man_width, exp_width);
-        sum_outer = s;
+        s_inner = round_rne_fp_full(sum_inner + value_inner, man_width, exp_width);
+        z_inner = round_rne_fp_full(s_inner - sum_inner, man_width, exp_width);
+        val_z_sub_inner = round_rne_fp_full(value_inner - z_inner, man_width, exp_width);
+        error_inner = round_rne_fp_full(error_inner + val_z_sub_inner, man_width, exp_width);
+        sum_inner = s_inner;
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            value_outer = round_rne_fp_full(sum_inner + error_inner, man_width, exp_width);
+            sum_inner = 0;
+            error_inner = 0;
+
+            s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+            z_outer = round_rne_fp_full(s_outer - sum_outer, man_width, exp_width);
+            val_z_sub_outer = round_rne_fp_full(value_outer - z_outer, man_width, exp_width);
+            error_outer = round_rne_fp_full(error_outer + val_z_sub_outer, man_width, exp_width);
+            sum_outer = s_outer;
+        }
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -145,25 +207,43 @@ __global__ void ordacc_chunk_neumaier_scaled_kernel(
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     float sum_outer = 0;
-    float c = 0;
-    float s;
+    float value_outer;
+    float c_outer = 0;
+    float s_outer;
+    float sum_inner = 0;
+    float value_inner;
+    float c_inner = 0;
+    float s_inner;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        float scaled_product = val * scale;
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+        value_inner = scaled_product;
 
-        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
-        c += (fabsf(sum_outer) >= fabsf(scaled_product)) ?
-            round_rne_fp_full(round_rne_fp_full(sum_outer - s, man_width, exp_width) + scaled_product, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + sum_outer, man_width, exp_width);
-        c = round_rne_fp_full(c, man_width, exp_width);
-        sum_outer = s;
+        s_inner = round_rne_fp_full(sum_inner + value_inner, man_width, exp_width);
+        c_inner += (fabsf(sum_inner) >= fabsf(value_inner)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_inner - s_inner, man_width, exp_width) + value_inner, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(value_inner - s_inner, man_width, exp_width) + sum_inner, man_width, exp_width);
+        c_inner = round_rne_fp_full(c_inner, man_width, exp_width);
+        sum_inner = s_inner;
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            value_outer = round_rne_fp_full(sum_inner + c_inner, man_width, exp_width);
+            sum_inner = 0;
+            c_inner = 0;
+
+            s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+            c_outer += (fabsf(sum_outer) >= fabsf(value_outer)) ?
+                round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
+            c_outer = round_rne_fp_full(c_outer, man_width, exp_width);
+            sum_outer = s_outer;
+        }
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + c, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + c_outer, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -182,34 +262,62 @@ __global__ void ordacc_chunk_klein_scaled_kernel(
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     float sum_outer = 0;
-    float cs = 0;
-    float ccs = 0;
-    float s;
-    float t;
-    float c;
-    float cc;
+    float value_outer;
+    float cs_outer = 0;
+    float ccs_outer = 0;
+    float s_outer;
+    float t_outer;
+    float c_outer;
+    float cc_outer;
+    float sum_inner = 0;
+    float value_inner;
+    float cs_inner = 0;
+    float ccs_inner = 0;
+    float s_inner;
+    float t_inner;
+    float c_inner;
+    float cc_inner;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        float scaled_product = val * scale;
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+        value_inner = scaled_product;
 
-        scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
-        c = (fabsf(sum_outer) >= fabsf(scaled_product)) ?
-            round_rne_fp_full(round_rne_fp_full(sum_outer - s, man_width, exp_width) + scaled_product, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + sum_outer, man_width, exp_width);
-        sum_outer = s;
-        t = round_rne_fp_full(cs + c, man_width, exp_width);
-        cc = (fabsf(cs) >= fabsf(c)) ?
-            round_rne_fp_full(round_rne_fp_full(cs - t, man_width, exp_width) + c, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(c - t, man_width, exp_width) + cs, man_width, exp_width);
-        cs = t;
-        ccs = round_rne_fp_full(ccs + cc, man_width, exp_width);
+        s_inner = round_rne_fp_full(sum_inner + value_inner, man_width, exp_width);
+        c_inner = (fabsf(sum_inner) >= fabsf(value_inner)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_inner - s_inner, man_width, exp_width) + value_inner, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(value_inner - s_inner, man_width, exp_width) + sum_inner, man_width, exp_width);
+        sum_inner = s_inner;
+        t_inner = round_rne_fp_full(cs_inner + c_inner, man_width, exp_width);
+        cc_inner = (fabsf(cs_inner) >= fabsf(c_inner)) ?
+            round_rne_fp_full(round_rne_fp_full(cs_inner - t_inner, man_width, exp_width) + c_inner, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(c_inner - t_inner, man_width, exp_width) + cs_inner, man_width, exp_width);
+        cs_inner = t_inner;
+        ccs_inner = round_rne_fp_full(ccs_inner + cc_inner, man_width, exp_width);
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            value_outer = round_rne_fp_full(sum_inner + round_rne_fp_full(cs_inner + ccs_inner, man_width, exp_width), man_width, exp_width);
+            sum_inner = 0;
+            cs_inner = 0;
+            ccs_inner = 0;
+
+            s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+            c_outer = (fabsf(sum_outer) >= fabsf(value_outer)) ?
+                round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
+            sum_outer = s_outer;
+            t_outer = round_rne_fp_full(cs_outer + c_outer, man_width, exp_width);
+            cc_outer = (fabsf(cs_outer) >= fabsf(c_outer)) ?
+                round_rne_fp_full(round_rne_fp_full(cs_outer - t_outer, man_width, exp_width) + c_outer, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(c_outer - t_outer, man_width, exp_width) + cs_outer, man_width, exp_width);
+            cs_outer = t_outer;
+            ccs_outer = round_rne_fp_full(ccs_outer + cc_outer, man_width, exp_width);
+            }
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + round_rne_fp_full(cs + ccs, man_width, exp_width), man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + round_rne_fp_full(cs_outer + ccs_outer, man_width, exp_width), man_width, exp_width);
 }
 
 template <typename scalar_t>

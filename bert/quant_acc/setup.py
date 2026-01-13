@@ -12,7 +12,6 @@ setup(
             "ordmm",
             ["ordmm.cu"],
             depends=[
-                "ordmm_chunk_bcast.cuh",
                 "ordmm_chunk_bcast_scaled.cuh",
                 "ordacc_chunk.cuh",
             ],
