@@ -1,6 +1,6 @@
 #!/bin/bash
 
-man_values=(6)
+man_values=(2)
 exp_values=(4)
 
 
@@ -17,7 +17,7 @@ for v in "${exp_values[@]}"; do
                     --config "s_quantizer=$q_config" \
                     --config "v_quantizer=$v_config" \
                     --config "use_kulisch=false" \
-                    --config "use_comp_sum=true"
+                    --config "sum_type=\"quant\""
         echo "Completed man_w=$c, exp_w=$v"
         echo "---"
     done

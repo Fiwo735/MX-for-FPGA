@@ -42,9 +42,9 @@ class QuantLlamaAttention(nn.Module):
         self.use_kulisch = True
         if 'use_kulisch' in q_config.keys():
             self.use_kulisch = q_config['use_kulisch']
-        self.use_comp_sum = False
-        if 'use_comp_sum' in q_config.keys():
-            self.use_comp_sum = q_config['use_comp_sum']
+        self.sum_type = 'quant'
+        if 'sum_type' in q_config.keys():
+            self.sum_type = q_config['sum_type']
 
     def init_quantizers(self, q_config):
         ''' Make quantizers from CLI config. '''
@@ -134,7 +134,7 @@ class QuantLlamaAttention(nn.Module):
             k_quant = key_states / k_scale
             q_quant = query_states / q_scale
 
-            attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, self.k_quantizer.man_w, self.k_quantizer.exp_w, self.use_comp_sum) / math.sqrt(self.head_dim)
+            attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, self.k_quantizer.man_w, self.k_quantizer.exp_w, self.sum_type) / math.sqrt(self.head_dim)
             if attn_weights.isnan().any():
                 import pdb; pdb.set_trace()
         else:
@@ -162,7 +162,7 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "v_quantizer") and not self.use_kulisch:
             e_scale = self.v_quantizer.dynamic_scale(exp_x) if not self.v_quantizer.static_scale else self.v_quantizer.scale_calib
             e_quant = exp_x / e_scale
-            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, self.v_quantizer.man_w, self.v_quantizer.exp_w, self.use_comp_sum).unsqueeze(-1)
+            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, self.v_quantizer.man_w, self.v_quantizer.exp_w, self.sum_type).unsqueeze(-1)
         else:
             sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
         # Step 4: normalize
