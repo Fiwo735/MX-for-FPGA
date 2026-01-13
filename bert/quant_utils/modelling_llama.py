@@ -52,9 +52,6 @@ class QuantLlamaAttention(nn.Module):
         if 'k_quantizer' in q_config.keys():
             quant_type = q_config['k_quantizer'].pop('quant')
             self.k_quantizer = q_reg[quant_type](**q_config['k_quantizer'])
-        if 'q_quantizer' in q_config.keys():
-            quant_type = q_config['q_quantizer'].pop('quant')
-            self.q_quantizer = q_reg[quant_type](**q_config['q_quantizer'])
         if 's_quantizer' in q_config.keys():
             quant_type = q_config['s_quantizer'].pop('quant')
             self.s_quantizer = q_reg[quant_type](**q_config['s_quantizer'])
@@ -125,18 +122,16 @@ class QuantLlamaAttention(nn.Module):
         # Quantize keys and queries
         # if self.k_thresh.calibration == False: import pdb; pdb.set_trace()
         if hasattr(self, "k_quantizer"): key_states = self.k_quantizer(key_states)
-        if hasattr(self, "q_quantizer"): query_states = self.q_quantizer(query_states)
+        if hasattr(self, "k_quantizer"): query_states = self.k_quantizer(query_states)
 
-        if hasattr(self, "k_quantizer") and hasattr(self, "q_quantizer") and not self.use_kulisch:
-            k_scale = self.k_quantizer.dynamic_scale(key_states) if not self.k_quantizer.static_scale else self.k_quantizer.scale_calib
-            q_scale = self.q_quantizer.dynamic_scale(query_states) if not self.q_quantizer.static_scale else self.q_quantizer.scale_calib
+        if hasattr(self, "k_quantizer") and not self.use_kulisch:
+            k_scale = self.k_quantizer.dynamic_scale(key_states)
+            q_scale = self.k_quantizer.dynamic_scale(query_states)
 
             k_quant = key_states / k_scale
             q_quant = query_states / q_scale
 
             attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, self.k_quantizer.man_w, self.k_quantizer.exp_w, self.sum_type) / math.sqrt(self.head_dim)
-            if attn_weights.isnan().any():
-                import pdb; pdb.set_trace()
         else:
             attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
 
@@ -160,9 +155,9 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "v_quantizer"): exp_x = self.v_quantizer(exp_x)
         # Step 3: sum
         if hasattr(self, "v_quantizer") and not self.use_kulisch:
-            e_scale = self.v_quantizer.dynamic_scale(exp_x) if not self.v_quantizer.static_scale else self.v_quantizer.scale_calib
+            e_scale = self.v_quantizer.dynamic_scale(exp_x)
             e_quant = exp_x / e_scale
-            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, self.v_quantizer.man_w, self.v_quantizer.exp_w, self.sum_type).unsqueeze(-1)
+            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, self.v_quantizer.man_w, self.v_quantizer.exp_w, self.v_quantizer.group_size, self.sum_type).unsqueeze(-1)
         else:
             sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
         # Step 4: normalize

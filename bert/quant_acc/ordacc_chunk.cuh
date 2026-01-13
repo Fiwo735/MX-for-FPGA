@@ -16,18 +16,19 @@ __global__ void ordacc_chunk_comp_sum_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
     
-    float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
+    
+    float sum_outer = 0;
     float c_comp_sum = 0;
     float y_comp_sum;
     float t_comp_sum;
-    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
@@ -37,13 +38,13 @@ __global__ void ordacc_chunk_comp_sum_scaled_kernel(
 
         scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
         y_comp_sum = round_rne_fp_full(scaled_product - c_comp_sum, man_width, exp_width);
-        t_comp_sum = round_rne_fp_full(acc + y_comp_sum, man_width, exp_width);
-        c_comp_sum = round_rne_fp_full(t_comp_sum - acc, man_width, exp_width) - y_comp_sum;
+        t_comp_sum = round_rne_fp_full(sum_outer + y_comp_sum, man_width, exp_width);
+        c_comp_sum = round_rne_fp_full(t_comp_sum - sum_outer, man_width, exp_width) - y_comp_sum;
         c_comp_sum = round_rne_fp_full(c_comp_sum, man_width, exp_width);
-        acc = round_rne_fp_full(t_comp_sum, man_width, exp_width);
+        sum_outer = round_rne_fp_full(t_comp_sum, man_width, exp_width);
     }
     
-    output[prt * batch_size + idx] = acc;
+    output[prt * batch_size + idx] = sum_outer;
 }
 
 template <typename scalar_t>
@@ -52,14 +53,16 @@ __global__ void ordacc_chunk_2sum_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
     
-    float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
+    
+    float sum_outer = 0;
     float error = 0;
     float s;
     float d_sum;
@@ -67,7 +70,6 @@ __global__ void ordacc_chunk_2sum_scaled_kernel(
     float sum_p;
     float value_p;
     float d_added;
-    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
@@ -76,17 +78,17 @@ __global__ void ordacc_chunk_2sum_scaled_kernel(
         float scaled_product = val * scale;
 
         scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
+        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
         sum_p = round_rne_fp_full(s - scaled_product, man_width, exp_width);
         value_p = round_rne_fp_full(s - sum_p, man_width, exp_width);
-        d_sum = round_rne_fp_full(acc - sum_p, man_width, exp_width);
+        d_sum = round_rne_fp_full(sum_outer - sum_p, man_width, exp_width);
         d_value = round_rne_fp_full(scaled_product - value_p, man_width, exp_width);
         d_added = round_rne_fp_full(d_sum + d_value, man_width, exp_width);
         error = round_rne_fp_full(error + d_added, man_width, exp_width);
-        acc = s;
+        sum_outer = s;
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(acc + error, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -95,19 +97,20 @@ __global__ void ordacc_chunk_fast2sum_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
     
-    float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
+    
+    float sum_outer = 0;
     float error = 0;
     float s;
     float z;
     float val_z_sub;
-    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
@@ -116,14 +119,14 @@ __global__ void ordacc_chunk_fast2sum_scaled_kernel(
         float scaled_product = val * scale;
 
         scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
-        z = round_rne_fp_full(s - acc, man_width, exp_width);
+        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
+        z = round_rne_fp_full(s - sum_outer, man_width, exp_width);
         val_z_sub = round_rne_fp_full(scaled_product - z, man_width, exp_width);
         error = round_rne_fp_full(error + val_z_sub, man_width, exp_width);
-        acc = s;
+        sum_outer = s;
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(acc + error, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + error, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -132,17 +135,18 @@ __global__ void ordacc_chunk_neumaier_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
     
-    float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
+    
+    float sum_outer = 0;
     float c = 0;
     float s;
-    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
@@ -151,15 +155,15 @@ __global__ void ordacc_chunk_neumaier_scaled_kernel(
         float scaled_product = val * scale;
 
         scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
-        c += (fabsf(acc) >= fabsf(scaled_product)) ?
-            round_rne_fp_full(round_rne_fp_full(acc - s, man_width, exp_width) + scaled_product, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + acc, man_width, exp_width);
+        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
+        c += (fabsf(sum_outer) >= fabsf(scaled_product)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_outer - s, man_width, exp_width) + scaled_product, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + sum_outer, man_width, exp_width);
         c = round_rne_fp_full(c, man_width, exp_width);
-        acc = s;
+        sum_outer = s;
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(acc + c, man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + c, man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -168,21 +172,22 @@ __global__ void ordacc_chunk_klein_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
     
-    float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
+    
+    float sum_outer = 0;
     float cs = 0;
     float ccs = 0;
     float s;
     float t;
     float c;
     float cc;
-    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
     // Apply rounding after every single addition
     for (int k = 0; k < reduce_dim; ++k){
@@ -191,11 +196,11 @@ __global__ void ordacc_chunk_klein_scaled_kernel(
         float scaled_product = val * scale;
 
         scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
-        s = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
-        c = (fabsf(acc) >= fabsf(scaled_product)) ?
-            round_rne_fp_full(round_rne_fp_full(acc - s, man_width, exp_width) + scaled_product, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + acc, man_width, exp_width);
-        acc = s;
+        s = round_rne_fp_full(sum_outer + scaled_product, man_width, exp_width);
+        c = (fabsf(sum_outer) >= fabsf(scaled_product)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_outer - s, man_width, exp_width) + scaled_product, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(scaled_product - s, man_width, exp_width) + sum_outer, man_width, exp_width);
+        sum_outer = s;
         t = round_rne_fp_full(cs + c, man_width, exp_width);
         cc = (fabsf(cs) >= fabsf(c)) ?
             round_rne_fp_full(round_rne_fp_full(cs - t, man_width, exp_width) + c, man_width, exp_width):
@@ -204,7 +209,7 @@ __global__ void ordacc_chunk_klein_scaled_kernel(
         ccs = round_rne_fp_full(ccs + cc, man_width, exp_width);
     }
     
-    output[prt * batch_size + idx] = round_rne_fp_full(acc + round_rne_fp_full(cs + ccs, man_width, exp_width), man_width, exp_width);
+    output[prt * batch_size + idx] = round_rne_fp_full(sum_outer + round_rne_fp_full(cs + ccs, man_width, exp_width), man_width, exp_width);
 }
 
 template <typename scalar_t>
@@ -213,25 +218,32 @@ __global__ void ordacc_chunk_full_quant_scaled_kernel(
     const float* __restrict__ scale_input,
     float* __restrict__ output,
     int batch_size, int reduce_dim,
-    int man_width, int exp_width
+    int man_width, int exp_width, int group_size
 ){
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
     int prt = blockIdx.y;
     
     if (idx >= batch_size) return;
-    
-    float acc = 0;
+
     int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
-    
-    // Apply rounding after every single addition
+
+    float sum_outer = 0;
+    float sum_inner = 0;
+
     for (int k = 0; k < reduce_dim; ++k){
         float val = static_cast<float>(input[base_offset + k]);
         float scale = scale_input[base_offset + k];
-        acc += val * scale;
-        acc = round_rne_fp_full(acc, man_width, exp_width);
+        float scaled_product = round_rne_fp_full(val * scale, man_width, exp_width);
+
+        sum_inner = round_rne_fp_full(sum_inner + scaled_product, man_width, exp_width);
+
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            sum_outer = round_rne_fp_full(sum_outer + sum_inner, man_width, exp_width);
+            sum_inner = 0;
+        }
     }
     
-    output[prt * batch_size + idx] = acc;
+    output[prt * batch_size + idx] = sum_outer;
 }
 
 
@@ -239,7 +251,7 @@ __global__ void ordacc_chunk_full_quant_scaled_kernel(
 torch::Tensor ordacc_chunk_scaled(
     torch::Tensor input,
     torch::Tensor scale_input,
-    int man_width, int exp_width,
+    int man_width, int exp_width, int group_size,
     std::string sum_type="quant"
 ){
     // Input shape: [..., batch_size, reduce_dim]
@@ -278,7 +290,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else if (sum_type == "kahan"){
@@ -290,7 +303,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else if (sum_type == "2sum"){
@@ -302,7 +316,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else if (sum_type == "fast2sum"){
@@ -314,7 +329,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else if (sum_type == "neumaier"){
@@ -326,7 +342,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else if (sum_type == "klein"){
@@ -338,7 +355,8 @@ torch::Tensor ordacc_chunk_scaled(
                 rows,
                 reduce_dim,
                 man_width,
-                exp_width
+                exp_width,
+                group_size
             );
         }));
     } else {

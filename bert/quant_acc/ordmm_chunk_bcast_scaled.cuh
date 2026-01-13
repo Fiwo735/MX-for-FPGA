@@ -7,7 +7,7 @@
 
 #define TILE_SIZE 16
 #define NUM_BINS 16
-#define TILE_SIZE_2 32
+#define TILE_SIZE_2 32  // Also the block size k in MX
 
 
 
@@ -99,6 +99,416 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
 
         if (row < in_batch && col < out_features){
             output[prt * in_batch * out_features + row * out_features + col] = sum_outer;
+        }
+
+        __syncthreads();
+    }
+}
+
+template <typename scalar_t>
+__global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
+    const scalar_t* __restrict__ input,
+    const scalar_t* __restrict__ weight,
+    const float* __restrict__ scale_input,
+    const float* __restrict__ scale_weight,
+    float* __restrict__ output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+
+    int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
+    int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
+    int prt = blockIdx.z;
+
+    // Shared memory for tiles of input and weight
+    __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
+
+    // Quantized accumulation for outer loop.
+    float sum_outer;
+    float value_outer;
+    float error_outer = 0;
+    float s_outer;
+    float d_sum_outer;
+    float d_value_outer;
+    float sum_p_outer;
+    float value_p_outer;
+    float d_added_outer;
+
+    // Loop over the tiles of the input in steps of TILE_SIZE_2
+    for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
+        // Collaborative loading of tiles into shared memory
+        const int input_col = t * TILE_SIZE_2 + threadIdx.x;
+        const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
+
+        if (row < in_batch && input_col < in_features){
+            shared_A[threadIdx.y][threadIdx.x] = input[prt * in_batch * in_features + row * in_features + input_col];
+            shared_A_scale[threadIdx.y][threadIdx.x] = scale_input[prt * in_batch * in_features + row * in_features + input_col];
+        } else {
+            shared_A[threadIdx.y][threadIdx.x] = 0;
+            shared_A_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (col < out_features && weight_row < in_features){
+            shared_B[threadIdx.y][threadIdx.x] = weight[prt * out_features * in_features + col * in_features + weight_row];
+            shared_B_scale[threadIdx.y][threadIdx.x] = scale_weight[prt * out_features * in_features + col * in_features + weight_row];
+        } else {
+            shared_B[threadIdx.y][threadIdx.x] = 0;
+            shared_B_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (row < in_batch && col < out_features){
+            shared_C[threadIdx.y][threadIdx.x] = output[prt * in_batch * out_features + row * out_features + col];
+        } else {
+            shared_C[threadIdx.y][threadIdx.x] = 0;
+        }
+
+        __syncthreads();
+
+        // Quantized accumulation for inner loop.
+        float acc = 0;
+        float error_inner = 0;
+        float s_inner;
+        float d_sum_inner;
+        float d_value_inner;
+        float sum_p_inner;
+        float value_p_inner;
+        float d_added_inner;
+
+        // Perform the multiplication for this tile
+        for (int k=0; k < TILE_SIZE_2; ++k){
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
+                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+
+            scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+            s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
+            sum_p_inner = round_rne_fp_full(s_inner - scaled_product, man_width, exp_width);
+            value_p_inner = round_rne_fp_full(s_inner - sum_p_inner, man_width, exp_width);
+            d_sum_inner = round_rne_fp_full(acc - sum_p_inner, man_width, exp_width);
+            d_value_inner = round_rne_fp_full(scaled_product - value_p_inner, man_width, exp_width);
+            d_added_inner = round_rne_fp_full(d_sum_inner + d_value_inner, man_width, exp_width);
+            error_inner = round_rne_fp_full(error_inner + d_added_inner, man_width, exp_width);
+            acc = s_inner;
+        }
+
+        // Load sum and value for outer loop
+        sum_outer = shared_C[threadIdx.y][threadIdx.x];
+        value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
+
+        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+        sum_p_outer = round_rne_fp_full(s_outer - value_outer, man_width, exp_width);
+        value_p_outer = round_rne_fp_full(s_outer - sum_p_outer, man_width, exp_width);
+        d_sum_outer = round_rne_fp_full(sum_outer - sum_p_outer, man_width, exp_width);
+        d_value_outer = round_rne_fp_full(value_outer - value_p_outer, man_width, exp_width);
+        d_added_outer = round_rne_fp_full(d_sum_outer + d_value_outer, man_width, exp_width);
+        error_outer = round_rne_fp_full(error_outer + d_added_outer, man_width, exp_width);
+        sum_outer = s_outer;
+
+        if (row < in_batch && col < out_features){
+            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
+        }
+
+        __syncthreads();
+    }
+}
+
+template <typename scalar_t>
+__global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
+    const scalar_t* __restrict__ input,
+    const scalar_t* __restrict__ weight,
+    const float* __restrict__ scale_input,
+    const float* __restrict__ scale_weight,
+    float* __restrict__ output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+
+    int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
+    int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
+    int prt = blockIdx.z;
+
+    // Shared memory for tiles of input and weight
+    __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
+
+    // Quantized accumulation for outer loop.
+    float sum_outer;
+    float value_outer;
+    float error_outer = 0;
+    float s_outer;
+    float z_outer;
+    float val_z_sub_outer;
+
+    // Loop over the tiles of the input in steps of TILE_SIZE_2
+    for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
+        // Collaborative loading of tiles into shared memory
+        const int input_col = t * TILE_SIZE_2 + threadIdx.x;
+        const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
+
+        if (row < in_batch && input_col < in_features){
+            shared_A[threadIdx.y][threadIdx.x] = input[prt * in_batch * in_features + row * in_features + input_col];
+            shared_A_scale[threadIdx.y][threadIdx.x] = scale_input[prt * in_batch * in_features + row * in_features + input_col];
+        } else {
+            shared_A[threadIdx.y][threadIdx.x] = 0;
+            shared_A_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (col < out_features && weight_row < in_features){
+            shared_B[threadIdx.y][threadIdx.x] = weight[prt * out_features * in_features + col * in_features + weight_row];
+            shared_B_scale[threadIdx.y][threadIdx.x] = scale_weight[prt * out_features * in_features + col * in_features + weight_row];
+        } else {
+            shared_B[threadIdx.y][threadIdx.x] = 0;
+            shared_B_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (row < in_batch && col < out_features){
+            shared_C[threadIdx.y][threadIdx.x] = output[prt * in_batch * out_features + row * out_features + col];
+        } else {
+            shared_C[threadIdx.y][threadIdx.x] = 0;
+        }
+
+        __syncthreads();
+
+        // Quantized accumulation for inner loop.
+        float acc = 0;
+        float error_inner = 0;
+        float s_inner;
+        float z_inner;
+        float val_z_sub_inner;
+
+        // Perform the multiplication for this tile
+        for (int k=0; k < TILE_SIZE_2; ++k){
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
+                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+
+            scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+            s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
+            z_inner = round_rne_fp_full(s_inner - acc, man_width, exp_width);
+            val_z_sub_inner = round_rne_fp_full(scaled_product - z_inner, man_width, exp_width);
+            error_inner = round_rne_fp_full(error_inner + val_z_sub_inner, man_width, exp_width);
+            acc = s_inner;
+        }
+
+        // Load sum and value for outer loop
+        sum_outer = shared_C[threadIdx.y][threadIdx.x];
+        value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
+
+        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+        z_outer = round_rne_fp_full(s_outer - sum_outer, man_width, exp_width);
+        val_z_sub_outer = round_rne_fp_full(value_outer - z_outer, man_width, exp_width);
+        error_outer = round_rne_fp_full(error_outer + val_z_sub_outer, man_width, exp_width);
+        sum_outer = s_outer;
+
+        if (row < in_batch && col < out_features){
+            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
+        }
+
+        __syncthreads();
+    }
+}
+
+template <typename scalar_t>
+__global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
+    const scalar_t* __restrict__ input,
+    const scalar_t* __restrict__ weight,
+    const float* __restrict__ scale_input,
+    const float* __restrict__ scale_weight,
+    float* __restrict__ output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+
+    int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
+    int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
+    int prt = blockIdx.z;
+
+    // Shared memory for tiles of input and weight
+    __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
+
+    // Quantized accumulation for outer loop.
+    float sum_outer;
+    float value_outer;
+    float c_outer = 0;
+    float s_outer;
+
+    // Loop over the tiles of the input in steps of TILE_SIZE_2
+    for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
+        // Collaborative loading of tiles into shared memory
+        const int input_col = t * TILE_SIZE_2 + threadIdx.x;
+        const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
+
+        if (row < in_batch && input_col < in_features){
+            shared_A[threadIdx.y][threadIdx.x] = input[prt * in_batch * in_features + row * in_features + input_col];
+            shared_A_scale[threadIdx.y][threadIdx.x] = scale_input[prt * in_batch * in_features + row * in_features + input_col];
+        } else {
+            shared_A[threadIdx.y][threadIdx.x] = 0;
+            shared_A_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (col < out_features && weight_row < in_features){
+            shared_B[threadIdx.y][threadIdx.x] = weight[prt * out_features * in_features + col * in_features + weight_row];
+            shared_B_scale[threadIdx.y][threadIdx.x] = scale_weight[prt * out_features * in_features + col * in_features + weight_row];
+        } else {
+            shared_B[threadIdx.y][threadIdx.x] = 0;
+            shared_B_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (row < in_batch && col < out_features){
+            shared_C[threadIdx.y][threadIdx.x] = output[prt * in_batch * out_features + row * out_features + col];
+        } else {
+            shared_C[threadIdx.y][threadIdx.x] = 0;
+        }
+
+        __syncthreads();
+
+        // Quantized accumulation for inner loop.
+        float acc = 0;
+        float c_inner = 0;
+        float s_inner;
+
+        // Perform the multiplication for this tile
+        for (int k=0; k < TILE_SIZE_2; ++k){
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
+                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+
+            scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+            s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
+            c_inner += (fabsf(acc) >= fabsf(scaled_product)) ?
+                round_rne_fp_full(round_rne_fp_full(acc - s_inner, man_width, exp_width) + scaled_product, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(scaled_product - s_inner, man_width, exp_width) + acc, man_width, exp_width);
+            c_inner = round_rne_fp_full(c_inner, man_width, exp_width);
+            acc = s_inner;
+        }
+
+        // Load sum and value for outer loop
+        sum_outer = shared_C[threadIdx.y][threadIdx.x];
+        value_outer = round_rne_fp_full(acc + c_inner, man_width, exp_width);
+
+        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+        c_outer += (fabsf(sum_outer) >= fabsf(value_outer)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
+        c_outer = round_rne_fp_full(c_outer, man_width, exp_width);
+        sum_outer = s_outer;
+
+        if (row < in_batch && col < out_features){
+            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + c_outer, man_width, exp_width);
+        }
+
+        __syncthreads();
+    }
+}
+
+template <typename scalar_t>
+__global__ void ordmm_chunk_klein_bcast_scaled_kernel(
+    const scalar_t* __restrict__ input,
+    const scalar_t* __restrict__ weight,
+    const float* __restrict__ scale_input,
+    const float* __restrict__ scale_weight,
+    float* __restrict__ output,
+    int in_batch, int in_features, int out_features,
+    int man_width, int exp_width
+){
+
+    int col = blockIdx.x * TILE_SIZE_2 + threadIdx.x;
+    int row = blockIdx.y * TILE_SIZE_2 + threadIdx.y;
+    int prt = blockIdx.z;
+
+    // Shared memory for tiles of input and weight
+    __shared__ scalar_t shared_A[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ scalar_t shared_B[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_A_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_B_scale[TILE_SIZE_2][TILE_SIZE_2];
+    __shared__ float shared_C[TILE_SIZE_2][TILE_SIZE_2];
+
+    // Quantized accumulation for outer loop.
+    float sum_outer;
+    float value_outer;
+    float cs_outer = 0;
+    float ccs_outer = 0;
+    float s_outer;
+    float t_outer;
+    float c_outer;
+    float cc_outer;
+
+    // Loop over the tiles of the input in steps of TILE_SIZE_2
+    for (int t=0; t < (in_features + TILE_SIZE_2 - 1) / TILE_SIZE_2; ++t){
+        // Collaborative loading of tiles into shared memory
+        const int input_col = t * TILE_SIZE_2 + threadIdx.x;
+        const int weight_row = t * TILE_SIZE_2 + threadIdx.y;
+
+        if (row < in_batch && input_col < in_features){
+            shared_A[threadIdx.y][threadIdx.x] = input[prt * in_batch * in_features + row * in_features + input_col];
+            shared_A_scale[threadIdx.y][threadIdx.x] = scale_input[prt * in_batch * in_features + row * in_features + input_col];
+        } else {
+            shared_A[threadIdx.y][threadIdx.x] = 0;
+            shared_A_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (col < out_features && weight_row < in_features){
+            shared_B[threadIdx.y][threadIdx.x] = weight[prt * out_features * in_features + col * in_features + weight_row];
+            shared_B_scale[threadIdx.y][threadIdx.x] = scale_weight[prt * out_features * in_features + col * in_features + weight_row];
+        } else {
+            shared_B[threadIdx.y][threadIdx.x] = 0;
+            shared_B_scale[threadIdx.y][threadIdx.x] = 0;
+        }
+        if (row < in_batch && col < out_features){
+            shared_C[threadIdx.y][threadIdx.x] = output[prt * in_batch * out_features + row * out_features + col];
+        } else {
+            shared_C[threadIdx.y][threadIdx.x] = 0;
+        }
+
+        __syncthreads();
+
+        // Quantized accumulation for inner loop.
+        float acc = 0;
+        float cs_inner = 0;
+        float ccs_inner = 0;
+        float s_inner;
+        float t_inner;
+        float c_inner;
+        float cc_inner;
+
+        // Perform the multiplication for this tile
+        for (int k=0; k < TILE_SIZE_2; ++k){
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
+                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+
+            scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
+            s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
+            c_inner = (fabsf(acc) >= fabsf(scaled_product)) ?
+                round_rne_fp_full(round_rne_fp_full(acc - s_inner, man_width, exp_width) + scaled_product, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(scaled_product - s_inner, man_width, exp_width) + acc, man_width, exp_width);
+            acc = s_inner;
+            t_inner = round_rne_fp_full(cs_inner + c_inner, man_width, exp_width);
+            cc_inner = (fabsf(cs_inner) >= fabsf(c_inner)) ?
+                round_rne_fp_full(round_rne_fp_full(cs_inner - t_inner, man_width, exp_width) + c_inner, man_width, exp_width):
+                round_rne_fp_full(round_rne_fp_full(c_inner - t_inner, man_width, exp_width) + cs_inner, man_width, exp_width);
+            cs_inner = t_inner;
+            ccs_inner = round_rne_fp_full(ccs_inner + cc_inner, man_width, exp_width);
+        }
+
+        // Load sum and value for outer loop
+        sum_outer = shared_C[threadIdx.y][threadIdx.x];
+        value_outer = round_rne_fp_full(acc + round_rne_fp_full(cs_inner + ccs_inner, man_width, exp_width), man_width, exp_width);
+
+        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
+        c_outer = (fabsf(sum_outer) >= fabsf(value_outer)) ?
+            round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
+        sum_outer = s_outer;
+        t_outer = round_rne_fp_full(cs_outer + c_outer, man_width, exp_width);
+        cc_outer = (fabsf(cs_outer) >= fabsf(c_outer)) ?
+            round_rne_fp_full(round_rne_fp_full(cs_outer - t_outer, man_width, exp_width) + c_outer, man_width, exp_width):
+            round_rne_fp_full(round_rne_fp_full(c_outer - t_outer, man_width, exp_width) + cs_outer, man_width, exp_width);
+        cs_outer = t_outer;
+        ccs_outer = round_rne_fp_full(ccs_outer + cc_outer, man_width, exp_width);
+
+        if (row < in_batch && col < out_features){
+            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + round_rne_fp_full(cs_outer + ccs_outer, man_width, exp_width), man_width, exp_width);
         }
 
         __syncthreads();
@@ -258,7 +668,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
         }));
     }else if (sum_type == "2sum"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_2sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
@@ -273,7 +683,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
         }));
     }else if (sum_type == "fast2sum"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_fast2sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
@@ -288,7 +698,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
         }));
     }else if (sum_type == "neumaier"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_neumaier_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
@@ -303,7 +713,7 @@ torch::Tensor ordmm_chunk_bcast_scaled(
         }));
     }else if (sum_type == "klein"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "matmul_chunk_scaled_kahan", ([&]{
-            ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
+            ordmm_chunk_klein_bcast_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
                 weight_tpose_flat.data_ptr<scalar_t>(),
                 scale_input_flat.data_ptr<float>(),
