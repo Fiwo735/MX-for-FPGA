@@ -131,7 +131,7 @@ class QuantLlamaAttention(nn.Module):
             k_quant = key_states / k_scale
             q_quant = query_states / q_scale
 
-            attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, 23, 8, True) / math.sqrt(self.head_dim)
+            attn_weights = ordmm_chunk_bcast_scaled(q_quant, k_quant, q_scale, k_scale, self.k_quantizer.man_w, self.k_quantizer.exp_w, True) / math.sqrt(self.head_dim)
         else:
             attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
 
@@ -157,10 +157,9 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "v_quantizer") and not self.use_kulisch:
             e_scale = self.v_quantizer.dynamic_scale(exp_x) if not self.v_quantizer.static_scale else self.v_quantizer.scale_calib
             e_quant = exp_x / e_scale
-            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, 23, 8, True).unsqueeze(-1)
+            sum_exp_x = ordacc_chunk_scaled(e_quant, e_scale, self.v_quantizer.man_w, self.v_quantizer.exp_w, True).unsqueeze(-1)
         else:
             sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
-        import pdb; pdb.set_trace()
         # Step 4: normalize
         softmax_x = exp_x / sum_exp_x
         # Step 5: cast back

@@ -6,6 +6,7 @@
 #include "round_fp.cuh"
 
 #define TILE_SIZE_SUM 256
+#define ROUND_INTERVAL 32
 
 
 
@@ -22,36 +23,19 @@ __global__ void ordacc_chunk_scaled_kernel(
     
     if (idx >= batch_size) return;
     
-    __shared__ scalar_t shared_data[TILE_SIZE_SUM];
-    __shared__ float shared_scale[TILE_SIZE_SUM];
-    
     float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
-    // Process elements in chunks
-    for (int t = 0; t < (reduce_dim + TILE_SIZE_SUM - 1) / TILE_SIZE_SUM; ++t){
-        int elem_idx = t * TILE_SIZE_SUM + threadIdx.x;
+    // Process elements and apply rounding every ROUND_INTERVAL elements
+    for (int k = 0; k < reduce_dim; ++k){
+        float val = static_cast<float>(input[base_offset + k]);
+        float scale = scale_input[base_offset + k];
+        acc += val * scale;
         
-        if (elem_idx < reduce_dim && threadIdx.x < TILE_SIZE_SUM){
-            shared_data[threadIdx.x] = input[prt * batch_size * reduce_dim + idx * reduce_dim + elem_idx];
-            shared_scale[threadIdx.x] = scale_input[prt * batch_size * reduce_dim + idx * reduce_dim + elem_idx];
-        } else {
-            shared_data[threadIdx.x] = 0;
-            shared_scale[threadIdx.x] = 0;
+        // Apply rounding every 32 elements or at the end
+        if ((k + 1) % ROUND_INTERVAL == 0 || k == reduce_dim - 1){
+            acc = round_rne_fp_full(acc, man_width, exp_width);
         }
-        
-        __syncthreads();
-        
-        float local_acc = 0;
-        
-        // Sum scaled elements in this chunk
-        for (int k = 0; k < TILE_SIZE_SUM && (t * TILE_SIZE_SUM + k) < reduce_dim; ++k){
-            local_acc += shared_data[k] * shared_scale[k];
-        }
-        
-        acc += local_acc;
-        acc = round_rne_fp_full(acc, man_width, exp_width);
-        
-        __syncthreads();
     }
     
     output[prt * batch_size + idx] = acc;
@@ -70,32 +54,15 @@ __global__ void ordacc_chunk_full_quant_scaled_kernel(
     
     if (idx >= batch_size) return;
     
-    __shared__ scalar_t shared_data[TILE_SIZE_SUM];
-    __shared__ float shared_scale[TILE_SIZE_SUM];
-    
     float acc = 0;
+    int base_offset = prt * batch_size * reduce_dim + idx * reduce_dim;
     
-    // Process elements in chunks
-    for (int t = 0; t < (reduce_dim + TILE_SIZE_SUM - 1) / TILE_SIZE_SUM; ++t){
-        int elem_idx = t * TILE_SIZE_SUM + threadIdx.x;
-        
-        if (elem_idx < reduce_dim && threadIdx.x < TILE_SIZE_SUM){
-            shared_data[threadIdx.x] = input[prt * batch_size * reduce_dim + idx * reduce_dim + elem_idx];
-            shared_scale[threadIdx.x] = scale_input[prt * batch_size * reduce_dim + idx * reduce_dim + elem_idx];
-        } else {
-            shared_data[threadIdx.x] = 0;
-            shared_scale[threadIdx.x] = 0;
-        }
-        
-        __syncthreads();
-        
-        // Sum scaled elements in this chunk with quantization after each addition
-        for (int k = 0; k < TILE_SIZE_SUM && (t * TILE_SIZE_SUM + k) < reduce_dim; ++k){
-            acc += shared_data[k] * shared_scale[k];
-            acc = round_rne_fp_full(acc, man_width, exp_width);
-        }
-        
-        __syncthreads();
+    // Apply rounding after every single addition
+    for (int k = 0; k < reduce_dim; ++k){
+        float val = static_cast<float>(input[base_offset + k]);
+        float scale = scale_input[base_offset + k];
+        acc += val * scale;
+        acc = round_rne_fp_full(acc, man_width, exp_width);
     }
     
     output[prt * batch_size + idx] = acc;
