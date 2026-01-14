@@ -11,6 +11,7 @@ import numpy as np
 from enum import Enum
 from datetime import datetime
 from argparse import ArgumentParser
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 class MXFPBits:
   def __init__(self, exp_bits, mant_bits):
@@ -88,7 +89,24 @@ class DesignConfig:
     return s
     
   def get_vivado_tclargs(self):
-    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
+    if self.name == "attention_fp":
+      tclargs = f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
+    elif self.name == "matmul_fp":
+      raise NotImplementedError("Vivado TCL args generation for matmul_fp not implemented yet.")
+    elif self.name == "mxint_softmax":
+      raise NotImplementedError("Vivado TCL args generation for mxint_softmax not implemented yet.")
+    
+    return tclargs
+  
+  def get_tcl_filename(self):
+    if self.name == "attention_fp":
+      return "run_synth_fp.tcl"
+    elif self.name == "matmul_fp":
+      return "run_synth_matmul_fp.tcl"
+    elif self.name == "mxint_softmax":
+      return "run_synth_softmax.tcl"
+    
+    raise ValueError(f"Unsupported design name: {self.name}")
   
   @staticmethod
   def get_filename_regex():
@@ -278,6 +296,24 @@ class SynthesisHandler:
       return True
     
     return False
+  
+  @staticmethod
+  def run_synthesis_on_design(design, synthesis_cmd, verbose):
+    if verbose:
+      print(f"Results for {design!r} not found, running synthesis command: {synthesis_cmd}")
+      
+    start_time = time.perf_counter()
+    try:
+      _ = subprocess.run(synthesis_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
+    except subprocess.CalledProcessError as e:
+      print(f"Synthesis failed for {design} with return code: {e.returncode}")
+    except Exception as e:
+      print(f"An unknown error occurred while running synthesis for {design}: {e}")
+        
+    end_time = time.perf_counter()
+    
+    if verbose:
+      print(f"Synthesis for {design!r} completed in {end_time - start_time:.2f} seconds.")
     
   def run_synthesis(self, dry_run=False, verbose=False):
     if not self.designs_to_synthesise:
@@ -287,40 +323,39 @@ class SynthesisHandler:
     if verbose:
       print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
     
-    for design in self.designs_to_synthesise:
-      if self.check_if_design_is_invalid(design):
-        if verbose:
-          print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
-        continue
-      
-      if self.check_if_results_exist(design, ["_power.rpt", "_timing.rpt", "_util.rpt"]):
-        if verbose:
-          print(f"Skipping synthesis for {design!r} as results already exist.")
-        continue
-      
-      run_synth_path = os.path.join(self.hdl_dir, "run_synth_fp.tcl")
-      # synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
-      synthesis_cmd = f"/mnt/applications/Xilinx/24.2/Vivado/2024.2/bin/vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
-      if verbose:
-        print(f"Results for {design!r} not found, running synthesis command: {synthesis_cmd}")
-      
-      if dry_run:
-        if verbose:
-          print(f"Dry run mode enabled, skipping actual synthesis, cmd supposed to run:\n{synthesis_cmd}")
-        continue
-      
-      try:
-          start_time = time.perf_counter()
-          completed_process = subprocess.run(synthesis_cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
-      except subprocess.CalledProcessError as e:
-          print(f"Synthesis failed for {design} with return code: {e.returncode}")
-      except Exception as e:
-          print(f"An unknown error occurred while running synthesis for {design}: {e}")
-          
-      end_time = time.perf_counter()
-      
-      if verbose:
-        print(f"Synthesis for {design!r} completed in {end_time - start_time:.2f} seconds.")
+    jobs = []
+    with ProcessPoolExecutor() as executor:
+      for design in self.designs_to_synthesise:
+        if self.check_if_design_is_invalid(design):
+          if verbose:
+            print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
+          continue
+        
+        if self.check_if_results_exist(design, ["_power.rpt", "_timing.rpt", "_util.rpt"]):
+          if verbose:
+            print(f"Skipping synthesis for {design!r} as results already exist.")
+          continue
+        
+        run_synth_path = os.path.join(self.hdl_dir, design.get_tcl_filename())
+        # synthesis_cmd = f"vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
+        synthesis_cmd = f"/mnt/applications/Xilinx/24.2/Vivado/2024.2/bin/vivado -mode batch -source {run_synth_path} -tclargs {design.get_vivado_tclargs()}"
+        
+        if dry_run:
+          if verbose:
+            print(f"Dry run mode enabled, skipping actual synthesis, cmd supposed to run:\n{synthesis_cmd}")
+          continue
+        
+        # Submit parallel task
+        future = executor.submit(SynthesisResult.run_synthesis_on_design, design, synthesis_cmd, verbose)
+        jobs.append(future)
+        # self.run_synthesis_on_design(design, synthesis_cmd, verbose=verbose)
+        
+      # Wait for all futures to complete
+      for future in as_completed(jobs):
+        try:
+          future.result()
+        except Exception as e:
+          print(f"Synthesis subprocess failed with: {e}")
           
     if verbose:
       print("Synthesis completed for all designs.")
