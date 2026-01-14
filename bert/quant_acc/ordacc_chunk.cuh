@@ -389,7 +389,7 @@ torch::Tensor ordacc_chunk_scaled(
     dim3 block_dim(TILE_SIZE_SUM);
     dim3 grid_dim((rows + TILE_SIZE_SUM - 1) / TILE_SIZE_SUM, part);
     
-    if (sum_type == "quant"){
+    if (sum_type == "QUANT"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_quant", ([&]{
             ordacc_chunk_full_quant_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
@@ -402,7 +402,7 @@ torch::Tensor ordacc_chunk_scaled(
                 group_size
             );
         }));
-    } else if (sum_type == "kahan"){
+    } else if (sum_type == "KAHAN"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_kahan", ([&]{
             ordacc_chunk_comp_sum_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
@@ -415,7 +415,7 @@ torch::Tensor ordacc_chunk_scaled(
                 group_size
             );
         }));
-    } else if (sum_type == "2sum"){
+    } else if (sum_type == "TWOSUM"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_2sum", ([&]{
             ordacc_chunk_2sum_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
@@ -428,7 +428,7 @@ torch::Tensor ordacc_chunk_scaled(
                 group_size
             );
         }));
-    } else if (sum_type == "fast2sum"){
+    } else if (sum_type == "FASTTWOSUM"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_fast2sum", ([&]{
             ordacc_chunk_fast2sum_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
@@ -441,7 +441,7 @@ torch::Tensor ordacc_chunk_scaled(
                 group_size
             );
         }));
-    } else if (sum_type == "neumaier"){
+    } else if (sum_type == "NEUMAIER"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_neumaier", ([&]{
             ordacc_chunk_neumaier_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),
@@ -454,7 +454,7 @@ torch::Tensor ordacc_chunk_scaled(
                 group_size
             );
         }));
-    } else if (sum_type == "klein"){
+    } else if (sum_type == "KLEIN"){
         AT_DISPATCH_FLOATING_TYPES_AND2(at::ScalarType::Half, at::ScalarType::BFloat16, input_flat.scalar_type(), "ordacc_chunk_scaled_klein", ([&]{
             ordacc_chunk_klein_scaled_kernel<scalar_t><<<grid_dim, block_dim>>>(
                 input_flat.data_ptr<scalar_t>(),

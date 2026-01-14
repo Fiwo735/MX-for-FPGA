@@ -53,9 +53,9 @@ class DesignConfig:
       f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k}}}\' '
       f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k}}}\' '
       f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'sum_type_attn_s="{self.accum_method1}"\' '
-      f'--config \'sum_type_smax="{self.accum_method2}"\' '
-      f'--config \'sum_type_attn_o="{self.accum_method3}"\' '
+      f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
+      f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
+      f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
     )
 
   def __repr__(self):
@@ -388,13 +388,13 @@ class SynthesisHandler:
     with open(file_path, 'r') as file:
       text = file.read()
       
-    accuracy_match = re.search(r"Validation accuracy:\s*(\d+\.\d+)%", text)
+    accuracy_match = re.search(r"Perplexity:\s*(\d+\.\d+)", text)
     accuracy = float(accuracy_match.group(1))
 
     return accuracy
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
-    accuracy_cmd = f"python bert/bert_sst2.py --silent {design.get_bert_flags()}"
+    accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
     
     # TODO early return for now
     return

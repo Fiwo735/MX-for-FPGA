@@ -40,13 +40,13 @@ class QuantLlamaAttention(nn.Module):
         self.init_quantizers(q_config)
 
         # Get summation method types
-        self.sum_type_attn_s = 'quant'
+        self.sum_type_attn_s = 'QUANT'
         if 'sum_type_attn_s' in q_config.keys():
             self.sum_type_attn_s = q_config['sum_type_attn_s']
-        self.sum_type_smax = 'quant'
+        self.sum_type_smax = 'QUANT'
         if 'sum_type_smax' in q_config.keys():
             self.sum_type_smax = q_config['sum_type_smax']
-        self.sum_type_attn_o = 'quant'
+        self.sum_type_attn_o = 'QUANT'
         if 'sum_type_attn_o' in q_config.keys():
             self.sum_type_attn_o = q_config['sum_type_attn_o']
 
@@ -128,7 +128,7 @@ class QuantLlamaAttention(nn.Module):
             key_states = self.k_quantizer(key_states)
             query_states = self.k_quantizer(query_states)
 
-            if self.sum_type_attn_s == 'kulisch':
+            if self.sum_type_attn_s == 'KULISCH':
                 attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
             else:
                 k_scale = self.k_quantizer.dynamic_scale(key_states)
@@ -165,7 +165,7 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "v_quantizer"):
             exp_x = self.v_quantizer(exp_x)
 
-            if self.sum_type_smax == 'kulisch':
+            if self.sum_type_smax == 'KULISCH':
                 sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
             else:
                 e_scale = self.v_quantizer.dynamic_scale(exp_x)
@@ -190,7 +190,7 @@ class QuantLlamaAttention(nn.Module):
             attn_weights = self.v_quantizer(attn_weights)
             value_states = self.v_quantizer(value_states.transpose(-1,-2)).transpose(-1,-2)
 
-            if self.sum_type_attn_o == 'kulisch':
+            if self.sum_type_attn_o == 'KULISCH':
                 attn_output = torch.matmul(attn_weights, value_states)
             else:
                 p_scale = self.v_quantizer.dynamic_scale(attn_weights)
