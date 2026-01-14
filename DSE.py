@@ -422,8 +422,6 @@ class SynthesisHandler:
     return results
   
   def _read_accuracy_report(self, file_path):
-    # TODO early return for now
-    return 75.0
     with open(file_path, 'r') as file:
       text = file.read()
       
@@ -434,10 +432,7 @@ class SynthesisHandler:
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
     accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
-    
-    # TODO early return for now
-    return
-      
+
     try:
         completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
     except subprocess.CalledProcessError as e:
