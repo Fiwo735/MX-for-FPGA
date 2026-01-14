@@ -65,52 +65,54 @@ module dot_general_fp #(
     // We reuse the existing tree structure from dot_general_int
     // because add_nrm is generic enough to handle (Value, Scale) + (Value, Scale)
     // regardless of whether Value came from Int or FP dot product.
-    
-    for(genvar i=0; i<tree_depth; i++) begin : tree_add
-        // Declare adders.
-        logic signed [dp_width-1:0] p0_add0   [block_count>>(1+i)];
-        logic signed [dp_width-1:0] p0_add1   [block_count>>(1+i)];
-        logic signed [dp_width-1:0] p0_sum    [block_count>>(1+i)];
-        logic signed     [scale_width-1:0] p0_scale0 [block_count>>(1+i)];
-        logic signed     [scale_width-1:0] p0_scale1 [block_count>>(1+i)];
-        logic signed     [scale_width-1:0] p0_scale  [block_count>>(1+i)];
+    generate
+        if (tree_depth > 0) begin
+            for(genvar i=0; i<tree_depth; i++) begin : tree_add
+                // Declare adders.
+                logic signed [dp_width-1:0] p0_add0   [block_count>>(1+i)];
+                logic signed [dp_width-1:0] p0_add1   [block_count>>(1+i)];
+                logic signed [dp_width-1:0] p0_sum    [block_count>>(1+i)];
+                logic signed     [scale_width-1:0] p0_scale0 [block_count>>(1+i)];
+                logic signed     [scale_width-1:0] p0_scale1 [block_count>>(1+i)];
+                logic signed     [scale_width-1:0] p0_scale  [block_count>>(1+i)];
 
-        for(genvar j=0; j<block_count>>(1+i); j++) begin
-            add_nrm #(
-                .int_w(dp_width)
-            ) u_add_nrm (
-                .i_op0(p0_add0[j]),
-                .i_op1(p0_add1[j]),
-                .i_scale0(p0_scale0[j]),
-                .i_scale1(p0_scale1[j]),
-                .out(p0_sum[j]),
-                .o_scale(p0_scale[j])
-            );
-        end
+                for(genvar j=0; j<block_count>>(1+i); j++) begin
+                    add_nrm #(
+                        .int_w(dp_width)
+                    ) u_add_nrm (
+                        .i_op0(p0_add0[j]),
+                        .i_op1(p0_add1[j]),
+                        .i_scale0(p0_scale0[j]),
+                        .i_scale1(p0_scale1[j]),
+                        .out(p0_sum[j]),
+                        .o_scale(p0_scale[j])
+                    );
+                end
 
-        // Connections to previous layers.
-        if(i != 0) begin
-            for(genvar j=0; j<(block_count>>(1+i)); j++) begin
-                assign p0_add0[j] = tree_add[i-1].p0_sum[2*j];
-                assign p0_add1[j] = tree_add[i-1].p0_sum[2*j+1];
-                assign p0_scale0[j] = tree_add[i-1].p0_scale[2*j];
-                assign p0_scale1[j] = tree_add[i-1].p0_scale[2*j+1];
+                // Connections to previous layers.
+                if(i != 0) begin
+                    for(genvar j=0; j<(block_count>>(1+i)); j++) begin
+                        assign p0_add0[j] = tree_add[i-1].p0_sum[2*j];
+                        assign p0_add1[j] = tree_add[i-1].p0_sum[2*j+1];
+                        assign p0_scale0[j] = tree_add[i-1].p0_scale[2*j];
+                        assign p0_scale1[j] = tree_add[i-1].p0_scale[2*j+1];
+                    end
+                end else begin
+                    for(genvar j=0; j<(block_count>>(1+i)); j++) begin
+                        assign p0_add0[j] = dot_out[2*j];
+                        assign p0_add1[j] = dot_out[2*j+1];
+                        assign p0_scale0[j] = dot_scales[2*j];
+                        assign p0_scale1[j] = dot_scales[2*j+1];
+                    end
+                end
             end
+            assign o_dp = tree_add[tree_depth-1].p0_sum[0][out_width-1:0]; // Truncate to out_width
+            assign o_scale = tree_add[tree_depth-1].p0_scale[0];
         end else begin
-            for(genvar j=0; j<(block_count>>(1+i)); j++) begin
-                assign p0_add0[j] = dot_out[2*j];
-                assign p0_add1[j] = dot_out[2*j+1];
-                assign p0_scale0[j] = dot_scales[2*j];
-                assign p0_scale1[j] = dot_scales[2*j+1];
-            end
+            assign o_dp = dot_out[0][out_width-1:0];
+            assign o_scale = dot_scales[0];
         end
-    end
-
-
-    // Form output
-    // assign o_dp = tree_add[tree_depth-1].p0_sum[0];
-    assign o_dp = tree_add[tree_depth-1].p0_sum[0][out_width-1:0]; // Truncate to out_width
-    assign o_scale = tree_add[tree_depth-1].p0_scale[0];
+    endgenerate
 
 endmodule
 
