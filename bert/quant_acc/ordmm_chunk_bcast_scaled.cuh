@@ -550,27 +550,27 @@ void launch_kernel(
     int in_batch, int in_features, int out_features,
     int man_width, int exp_width
 ){
-    if(sum_type == "quant"){
+    if(sum_type == "QUANT"){
         ordmm_chunk_full_quant_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
-    }else if(sum_type == "kahan"){
+    }else if(sum_type == "KAHAN"){
         ordmm_chunk_comp_sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
-    }else if(sum_type == "2sum"){
+    }else if(sum_type == "TWOSUM"){
         ordmm_chunk_2sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
-    }else if(sum_type == "fast2sum"){
+    }else if(sum_type == "FASTTWOSUM"){
         ordmm_chunk_fast2sum_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
-    }else if(sum_type == "neumaier"){
+    }else if(sum_type == "NEUMAIER"){
         ordmm_chunk_neumaier_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
-    }else if(sum_type == "klein"){
+    }else if(sum_type == "KLEIN"){
         ordmm_chunk_klein_bcast_scaled_kernel<scalar_t, TILE_SIZE_2><<<grid_dim, block_dim>>>(
             input, weight, scale_input, scale_weight, output,
             in_batch, in_features, out_features, man_width, exp_width);
