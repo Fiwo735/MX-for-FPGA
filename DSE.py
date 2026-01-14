@@ -23,6 +23,10 @@ class MXFPBits:
 class AccumMethod(Enum):
   Kulisch = "KULISCH"
   Kahan = "KAHAN"
+  Neumaier = "NEUMAIER"
+  Klein = "KLEIN"
+  TwoSum = "TWOSUM"
+  FastTwoSum = "FASTTWOSUM"
 
 class DesignConfig:
   def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
@@ -755,43 +759,63 @@ if __name__ == "__main__":
 
   designs_to_synthesise = []
   
-  # INT Sweep (2-16)
-  designs_to_synthesise += [
-    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-    for name in ["attention_fp"] # Reverted to standard name
-    for S_q in [4]
-    for S_kv in [4]
-    for d_kq in [4]
-    for d_v in [4]
-    for k in [2]
-    for scale_width in [8]
-    for width in range(2, 17) # INT 2-16
-    for M1_E, M1_M in [(0, width-1)]
-    for M2_E, M2_M in [(0, width-1)]
-    for M3_E, M3_M in [(0, width-1)]
-    for accum_method_1 in [AccumMethod.Kulisch]
-    for accum_method_2 in [AccumMethod.Kulisch]
-    for accum_method_3 in [AccumMethod.Kulisch]
-    for m1_dsp in ["auto"]
-    for m2_dsp in ["auto"]
-    for m3_dsp in ["auto"]
-  ]
+  # # INT Sweep (2-16)
+  # designs_to_synthesise += [
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   for name in ["attention_fp"] # Reverted to standard name
+  #   for S_q in [4]
+  #   for S_kv in [4]
+  #   for d_kq in [4]
+  #   for d_v in [4]
+  #   for k in [2]
+  #   for scale_width in [8]
+  #   for width in range(2, 17) # INT 2-16
+  #   for M1_E, M1_M in [(0, width-1)]
+  #   for M2_E, M2_M in [(0, width-1)]
+  #   for M3_E, M3_M in [(0, width-1)]
+  #   for accum_method_1 in [AccumMethod.Kulisch]
+  #   for accum_method_2 in [AccumMethod.Kulisch]
+  #   for accum_method_3 in [AccumMethod.Kulisch]
+  #   for m1_dsp in ["auto"]
+  #   for m2_dsp in ["auto"]
+  #   for m3_dsp in ["auto"]
+  # ]
 
-  # FP Sweep (2-16)
+  # # FP Sweep (2-16)
+  # designs_to_synthesise += [
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   for name in ["attention_fp"] # Reverted to standard name
+  #   for S_q in [4]
+  #   for S_kv in [4]
+  #   for d_kq in [4]
+  #   for d_v in [4]
+  #   for k in [2]
+  #   for scale_width in [8]
+  #   for width in range(2, 17) # FP 2-16
+  #   for exp_width, man_width in [get_fp_config(width)] 
+  #   for M1_E, M1_M in [(exp_width, man_width)]
+  #   for M2_E, M2_M in [(exp_width, man_width)]
+  #   for M3_E, M3_M in [(exp_width, man_width)]
+  #   for accum_method_1 in [AccumMethod.Kulisch]
+  #   for accum_method_2 in [AccumMethod.Kulisch]
+  #   for accum_method_3 in [AccumMethod.Kulisch]
+  #   for m1_dsp in ["auto"]
+  #   for m2_dsp in ["auto"]
+  #   for m3_dsp in ["auto"]
+  # ]
+
+  # SDK Baseline
+
   designs_to_synthesise += [
-    DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+    DesignConfig(name, S, S, d, d, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
     for name in ["attention_fp"] # Reverted to standard name
-    for S_q in [4]
-    for S_kv in [4]
-    for d_kq in [4]
-    for d_v in [4]
-    for k in [2]
+    for S in [4, 8, 16]
+    for d in [4, 8, 16]
+    for k in [4, 8, 16]
     for scale_width in [8]
-    for width in range(2, 17) # FP 2-16
-    for exp_width, man_width in [get_fp_config(width)] 
-    for M1_E, M1_M in [(exp_width, man_width)]
-    for M2_E, M2_M in [(exp_width, man_width)]
-    for M3_E, M3_M in [(exp_width, man_width)]
+    for M1_E, M1_M in [(5, 2)]
+    for M2_E, M2_M in [(5, 2)]
+    for M3_E, M3_M in [(5, 2)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for accum_method_2 in [AccumMethod.Kulisch]
     for accum_method_3 in [AccumMethod.Kulisch]

@@ -1,1 +1,800 @@
 nohup: ignoring input
+
+****** Vivado v2024.2 (64-bit)
+  **** SW Build 5239630 on Fri Nov 08 22:34:34 MST 2024
+  **** IP Build 5239520 on Sun Nov 10 16:12:51 MST 2024
+  **** SharedData Build 5239561 on Fri Nov 08 14:39:27 MST 2024
+  **** Start of session at: Wed Jan 14 01:25:58 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source ./src/attention/run_synth_fp.tcl
+# set part        xcv80-lsva4737-2MHP-e-S
+# set top         attention_fp
+# set outputDir   ./src/attention/synth_output
+# file mkdir $outputDir
+# set S_q           [expr {[llength $argv] > 0 ? [lindex $argv 0] : 4}]
+# set S_kv          [expr {[llength $argv] > 1 ? [lindex $argv 1] : 4}]
+# set d_kq          [expr {[llength $argv] > 2 ? [lindex $argv 2] : 8}]
+# set d_v           [expr {[llength $argv] > 3 ? [lindex $argv 3] : 8}]
+# set k             [expr {[llength $argv] > 4 ? [lindex $argv 4] : 2}]
+# set scale_width   [expr {[llength $argv] > 5 ? [lindex $argv 5] : 8}]
+# set m1_exp        [expr {[llength $argv] > 6 ? [lindex $argv 6] : 0}] 
+# set m1_man        [expr {[llength $argv] > 7 ? [lindex $argv 7] : 8}]
+# set m2_exp        [expr {[llength $argv] > 8 ? [lindex $argv 8] : 0}]
+# set m2_man        [expr {[llength $argv] > 9 ? [lindex $argv 9] : 8}]
+# set m3_exp        [expr {[llength $argv] > 10 ? [lindex $argv 10] : 0}]
+# set m3_man        [expr {[llength $argv] > 11 ? [lindex $argv 11] : 8}]
+# set accum_method1 [expr {[llength $argv] > 12 ? [lindex $argv 12] : "KULISCH"}]
+# set accum_method2 [expr {[llength $argv] > 13 ? [lindex $argv 13] : "KULISCH"}]
+# set accum_method3 [expr {[llength $argv] > 14 ? [lindex $argv 14] : "KULISCH"}]
+# set m1_dsp        [expr {[llength $argv] > 15 ? [lindex $argv 15] : "yes"}]
+# set m2_dsp        [expr {[llength $argv] > 16 ? [lindex $argv 16] : "yes"}]
+# set m3_dsp        [expr {[llength $argv] > 17 ? [lindex $argv 17] : "yes"}]
+# set prefix_name   [expr {[llength $argv] > 18 ? [lindex $argv 18] : "attention_fp"}]
+# set generics "S_q=$S_q S_kv=$S_kv d_kq=$d_kq d_v=$d_v k=$k scale_width=$scale_width M1_EXP_WIDTH=$m1_exp M1_MAN_WIDTH=$m1_man M2_EXP_WIDTH=$m2_exp M2_MAN_WIDTH=$m2_man M3_EXP_WIDTH=$m3_exp M3_MAN_WIDTH=$m3_man ACCUM_METHOD1=$accum_method1 ACCUM_METHOD2=$accum_method2 ACCUM_METHOD3=$accum_method3 M1_USE_DSP=\"$m1_dsp\" M2_USE_DSP=\"$m2_dsp\" M3_USE_DSP=\"$m3_dsp\" "
+# set_param general.maxThreads 12
+# set timestamp [clock format [clock seconds] -format "%Y%m%d_%H%M"]
+# set prefix "${outputDir}/${prefix_name}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_k_${k}_scale_width_${scale_width}_M1_E_${m1_exp}_M1_M_${m1_man}_M2_E_${m2_exp}_M2_M_${m2_man}_M3_E_${m3_exp}_M3_M_${m3_man}_ACCUM_METHOD_${accum_method1}_${accum_method2}_${accum_method3}_DSP_${m1_dsp}_${m2_dsp}_${m3_dsp}_time_${timestamp}"
+# read_verilog    [glob ./src/attention/attention_fp.sv]
+read_verilog: Time (s): cpu = 00:00:05 ; elapsed = 00:00:08 . Memory (MB): peak = 1495.652 ; gain = 129.914 ; free physical = 61636 ; free virtual = 84010
+# read_verilog    [glob ./src/attention/matmul_fp.sv]
+# read_verilog    [glob ./src/dot/dot_general_fp.sv]
+# read_verilog    [glob ./src/dot/dot_fp.sv]
+# read_verilog    [glob ./src/util/arith/mul_fp.sv]
+# read_verilog    [glob ./src/util/arith/vec_mul_fp.sv]
+# read_verilog    [glob ./src/util/arith/vec_sum_int.sv]
+# read_verilog    [glob ./src/util/arith/add_nrm.sv]
+# read_verilog    [glob ./src/util/accum/kahan/*.sv]
+# read_verilog    [glob ./src/util/accum/twosum/*.sv]
+# read_verilog    [glob ./src/util/accum/fasttwosum/*.sv]
+# read_verilog    [glob ./src/util/accum/neumaier/*.sv]
+# read_verilog    [glob ./src/util/accum/klein/*.sv]
+# read_verilog    [glob ./src/attention/mxoperators/*.sv]## read_verilog    [glob ./src/attention/mxoperators/lib/*.sv]## read_xdc        [ glob ./src/*.xdc ]
+# set_msg_config -id {Synth 8-7129} -suppress
+# set t1 [clock milliseconds]
+# synth_design -top $top -part $part -flatten rebuilt -retiming -generic $generics -include_dirs {./src/attention}
+WARNING: [Common 17-576] 'retiming' is deprecated. Please use -global_retiming optionCommand: synth_design -top attention_fp -part xcv80-lsva4737-2MHP-e-S -flatten rebuilt -retiming -generic {S_q=128 S_kv=128 d_kq=32 d_v=32 k=32 scale_width=8 M1_EXP_WIDTH=4 M1_MAN_WIDTH=3 M2_EXP_WIDTH=4 M2_MAN_WIDTH=3 M3_EXP_WIDTH=4 M3_MAN_WIDTH=3 ACCUM_METHOD1=NEUMAIER ACCUM_METHOD2=TWOSUM ACCUM_METHOD3=KLEIN M1_USE_DSP="yes" M2_USE_DSP="yes" M3_USE_DSP="yes" } -include_dirs ./src/attention
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xcv80'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xcv80'
+INFO: [Device 21-403] Loading part xcv80-lsva4737-2MHP-e-S
+IINFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processesINFO: [Synth 8-7075] Helper process launched with PID 3331685
+---------------------------------------------------------------------------------
+SStarting RTL Elaboration : Time (s): cpu = 00:00:04 ; elapsed = 00:00:04 . Memory (MB): peak = 3501.922 ; gain = 7.945 ; free physical = 42113 ; free virtual = 64471
+---------------------------------------------------------------------------------IINFO: [Synth 8-6157] synthesizing module 'attention_fp' [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:7]
+	Parameter S_q bound to: 128 - type: integer 
+	Parameter S_kv bound to: 128 - type: integer 
+	Parameter d_kq bound to: 32 - type: integer 
+	Parameter d_v bound to: 32 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter scale_width bound to: 8 - type: integer 
+	Parameter M1_MAN_WIDTH bound to: 3 - type: integer 
+	Parameter M1_EXP_WIDTH bound to: 4 - type: integer 
+	Parameter M2_MAN_WIDTH bound to: 3 - type: integer 
+	Parameter M2_EXP_WIDTH bound to: 4 - type: integer 
+	Parameter M3_MAN_WIDTH bound to: 3 - type: integer 
+	Parameter M3_EXP_WIDTH bound to: 4 - type: integer 
+	Parameter M1_USE_DSP bound to: yes - type: string 
+	Parameter M2_USE_DSP bound to: yes - type: string 
+	Parameter M3_USE_DSP bound to: yes - type: string 
+	Parameter ACCUM_METHOD1 bound to: NEUMAIER - type: string 
+	Parameter ACCUM_METHOD2 bound to: TWOSUM - type: string 
+	Parameter ACCUM_METHOD3 bound to: KLEIN - type: string IINFO: [Synth 8-6157] synthesizing module 'mxint_softmax' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_softmax.sv:6]
+	Parameter DATA_IN_0_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_IN_0_PRECISION_1 bound to: 8 - type: integer 
+	Parameter DATA_IN_0_DIM bound to: 8 - type: integer 
+	Parameter DATA_IN_0_PARALLELISM bound to: 32 - type: integer 
+	Parameter DATA_OUT_0_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_OUT_0_PRECISION_1 bound to: 8 - type: integer 
+	Parameter DATA_OUT_0_DIM bound to: 8 - type: integer 
+	Parameter DATA_OUT_0_PARALLELISM bound to: 32 - type: integer 
+	Parameter use_dsp bound to: auto - type: string 
+	Parameter ACCUM_METHOD bound to: TWOSUM - type: string 
+INFO: [Synth 8-6157] synthesizing module 'twosum_adder_tree' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:8]
+	Parameter EXP_WIDTH_I bound to: 0 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+	Parameter ELEMS_COUNT bound to: 32 - type: integer 
+	Parameter SUM_WIDTH_O bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_merge' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 0 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_step' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+	Parameter EXP_WIDTH_I bound to: 0 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_step' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_merge' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'twosum_start' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_start.sv:6]
+	Parameter EXP_WIDTH_I bound to: 0 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_start' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_start.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'twosum_merge__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 1 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_step__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+	Parameter EXP_WIDTH_I bound to: 1 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_step__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_merge__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'twosum_merge__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 2 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_step__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+	Parameter EXP_WIDTH_I bound to: 2 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_step__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_merge__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'twosum_merge__parameterized2' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 3 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_step__parameterized2' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+	Parameter EXP_WIDTH_I bound to: 3 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_step__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_merge__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'twosum_merge__parameterized3' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'twosum_step__parameterized3' [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'twosum_step__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_step.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_merge__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_merge.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'twosum_adder_tree' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:8]
+INFO: [Synth 8-6157] synthesizing module 'mxint_exp' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_exp.sv:7]
+	Parameter DATA_IN_MAN_WIDTH bound to: 8 - type: integer 
+	Parameter DATA_IN_EXP_WIDTH bound to: 8 - type: integer 
+	Parameter BLOCK_SIZE bound to: 32 - type: integer 
+	Parameter DATA_OUT_MAN_WIDTH bound to: 8 - type: integer 
+	Parameter DATA_OUT_EXP_WIDTH bound to: 8 - type: integer 
+	Parameter DATA_R_WIDTH bound to: 2 - type: integer 
+	Parameter use_dsp bound to: auto - type: string 
+INFO: [Synth 8-6157] synthesizing module 'power2_lut' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/power2_lut.sv:3]
+	Parameter DATA_IN_0_PRECISION_0 bound to: 2 - type: integer 
+	Parameter DATA_IN_0_PRECISION_1 bound to: 32'sb00000000000000000000000000000001 
+	Parameter DATA_OUT_0_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_OUT_0_PRECISION_1 bound to: 32'sb00000000000000000000000000000110 
+INFO: [Synth 8-6155] done synthesizing module 'power2_lut' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/power2_lut.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'optimized_right_shift' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/optimized_right_shift.sv:10]
+	Parameter IN_WIDTH bound to: 16 - type: integer 
+	Parameter BLOCK_SIZE bound to: 32 - type: integer 
+	Parameter SHIFT_WIDTH bound to: 6 - type: integer 
+	Parameter OUT_WIDTH bound to: 10 - type: integer IINFO: [Synth 8-6157] synthesizing module 'signed_clamp' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+	Parameter IN_WIDTH bound to: 25 - type: integer 
+	Parameter OUT_WIDTH bound to: 10 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'signed_clamp' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'optimized_right_shift' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/optimized_right_shift.sv:10]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_exp' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_exp.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'mxint_cast' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_cast.sv:6]
+	Parameter IN_MAN_WIDTH bound to: 8 - type: integer 
+	Parameter IN_MAN_FRAC_WIDTH bound to: 6 - type: integer 
+	Parameter IN_EXP_WIDTH bound to: 8 - type: integer 
+	Parameter OUT_MAN_WIDTH bound to: 8 - type: integer 
+	Parameter OUT_EXP_WIDTH bound to: 8 - type: integer 
+	Parameter ROUND_BITS bound to: 4 - type: integer 
+	Parameter BLOCK_SIZE bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'unpacked_mx_split2_with_data' [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+	Parameter DEPTH bound to: 6 - type: integer 
+	Parameter MAN_WIDTH bound to: 8 - type: integer 
+	Parameter EXP_WIDTH bound to: 8 - type: integer 
+	Parameter IN_SIZE bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'split2_with_data' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter FIFO_DEPTH bound to: 6 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'split2' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'split2' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'fifo' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter DEPTH bound to: 6 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'simple_dual_port_ram' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter ADDR_WIDTH bound to: 3 - type: integer 
+	Parameter SIZE bound to: 6 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'simple_dual_port_ram' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'fifo' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'split2_with_data' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'mxint_skid_buffer' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_skid_buffer.sv:8]
+	Parameter DATA_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_PRECISION_1 bound to: 8 - type: integer 
+	Parameter IN_NUM bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'skid_buffer' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'skid_buffer' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_skid_buffer' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_skid_buffer.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'unpacked_mx_split2_with_data' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'log2_max_abs' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:7]
+	Parameter IN_SIZE bound to: 32 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:77]
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:77]
+INFO: [Synth 8-6157] synthesizing module 'or_tree' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree.sv:7]
+	Parameter IN_SIZE bound to: 32 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 32 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'register_slice' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 128 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 16 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'register_slice__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 64 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 8 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'register_slice__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer__parameterized2' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 4 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'register_slice__parameterized2' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 16 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer__parameterized3' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 2 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'register_slice__parameterized3' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'or_tree_layer__parameterized4' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+	Parameter IN_SIZE bound to: 1 - type: integer 
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'or_tree_layer__parameterized4' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree_layer.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'or_tree' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/or_tree.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'log2_value' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:55]
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'log2_value' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:55]
+INFO: [Synth 8-6155] done synthesizing module 'log2_max_abs' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/log2_max_abs.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'skid_buffer__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+	Parameter DATA_WIDTH bound to: 4 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'skid_buffer__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'join2' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/join2.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'join2' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/join2.sv:3]
+INFO: [Synth 8-6157] synthesizing module 'signed_clamp__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+	Parameter IN_WIDTH bound to: 10 - type: integer 
+	Parameter OUT_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'signed_clamp__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+INFO: [Synth 8-6157] synthesizing module 'optimized_right_shift__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/optimized_right_shift.sv:10]
+	Parameter IN_WIDTH bound to: 8 - type: integer 
+	Parameter BLOCK_SIZE bound to: 32 - type: integer 
+	Parameter SHIFT_WIDTH bound to: 9 - type: integer 
+	Parameter OUT_WIDTH bound to: 12 - type: integer IINFO: [Synth 8-6157] synthesizing module 'signed_clamp__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+	Parameter IN_WIDTH bound to: 19 - type: integer 
+	Parameter OUT_WIDTH bound to: 12 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'signed_clamp__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'optimized_right_shift__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/optimized_right_shift.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'fixed_rounding' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fixed_rounding.sv:3]
+	Parameter IN_SIZE bound to: 32 - type: integer 
+	Parameter IN_WIDTH bound to: 12 - type: integer 
+	Parameter IN_FRAC_WIDTH bound to: 11 - type: integer 
+	Parameter OUT_WIDTH bound to: 8 - type: integer 
+	Parameter OUT_FRAC_WIDTH bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'fixed_round' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fixed_round.sv:3]
+	Parameter IN_WIDTH bound to: 12 - type: integer 
+	Parameter IN_FRAC_WIDTH bound to: 11 - type: integer 
+	Parameter OUT_WIDTH bound to: 8 - type: integer 
+	Parameter OUT_FRAC_WIDTH bound to: 7 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'signed_clamp__parameterized2' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+	Parameter IN_WIDTH bound to: 9 - type: integer 
+	Parameter OUT_WIDTH bound to: 8 - type: integer 
+	Parameter SYMMETRIC bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'signed_clamp__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/signed_clamp.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'fixed_round' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fixed_round.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'fixed_rounding' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fixed_rounding.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_cast' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_cast.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'unpacked_mx_split2_with_data__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+	Parameter DEPTH bound to: 16 - type: integer 
+	Parameter MAN_WIDTH bound to: 8 - type: integer 
+	Parameter EXP_WIDTH bound to: 8 - type: integer 
+	Parameter IN_SIZE bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'split2_with_data__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter FIFO_DEPTH bound to: 16 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'fifo__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter DEPTH bound to: 16 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'simple_dual_port_ram__parameterized0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter ADDR_WIDTH bound to: 4 - type: integer 
+	Parameter SIZE bound to: 16 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'simple_dual_port_ram__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'fifo__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'split2_with_data__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'unpacked_mx_split2_with_data__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'mxint_circular' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_circular.sv:7]
+	Parameter DATA_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_PRECISION_1 bound to: 8 - type: integer 
+	Parameter IN_NUM bound to: 32 - type: integer 
+	Parameter REPEAT bound to: 8 - type: integer 
+	Parameter BUFFER_SIZE bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'input_buffer' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/input_buffer.sv:2]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter IN_NUM bound to: 1 - type: integer 
+	Parameter BUFFER_SIZE bound to: 1 - type: integer 
+	Parameter REPEAT bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'blk_mem_gen_0' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/blk_mem_gen_0.sv:2]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter MEM_SIZE bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'blk_mem_gen_0' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/blk_mem_gen_0.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'unpacked_register_slice' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/unpacked_register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter IN_SIZE bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'register_slice__parameterized4' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'register_slice__parameterized4' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/register_slice.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'unpacked_register_slice' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/unpacked_register_slice.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'input_buffer' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/input_buffer.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_circular' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_circular.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'mxint_div' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_div.sv:2]
+	Parameter DATA_DIVIDEND_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_DIVIDEND_PRECISION_1 bound to: 8 - type: integer 
+	Parameter DATA_DIVISOR_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_DIVISOR_PRECISION_1 bound to: 8 - type: integer 
+	Parameter DATA_QUOTIENT_PRECISION_0 bound to: 8 - type: integer 
+	Parameter DATA_QUOTIENT_PRECISION_1 bound to: 9 - type: integer 
+	Parameter BLOCK_SIZE bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'unpacked_mx_split2_with_data__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+	Parameter DEPTH bound to: 8 - type: integer 
+	Parameter MAN_WIDTH bound to: 8 - type: integer 
+	Parameter EXP_WIDTH bound to: 8 - type: integer 
+	Parameter IN_SIZE bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'split2_with_data__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter FIFO_DEPTH bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'fifo__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter DEPTH bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'simple_dual_port_ram__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+	Parameter DATA_WIDTH bound to: 264 - type: integer 
+	Parameter ADDR_WIDTH bound to: 3 - type: integer 
+	Parameter SIZE bound to: 8 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'simple_dual_port_ram__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/simple_dual_port_ram.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'fifo__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/fifo.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'split2_with_data__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/split2_with_data.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'unpacked_mx_split2_with_data__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/unpacked_mx_split2_with_data.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'int_div' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/int_div.sv:2]
+	Parameter IN_NUM bound to: 32 - type: integer 
+	Parameter DIVIDEND_WIDTH bound to: 8 - type: integer 
+	Parameter DIVISOR_WIDTH bound to: 8 - type: integer 
+	Parameter QUOTIENT_WIDTH bound to: 8 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'unpacked_skid_buffer' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/unpacked_skid_buffer.sv:2]
+	Parameter DATA_WIDTH bound to: 8 - type: integer 
+	Parameter IN_NUM bound to: 32 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'skid_buffer__parameterized1' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+	Parameter DATA_WIDTH bound to: 256 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'skid_buffer__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/skid_buffer.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'unpacked_skid_buffer' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/unpacked_skid_buffer.sv:2]
+INFO: [Synth 8-6155] done synthesizing module 'int_div' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/int_div.sv:2]
+INFO: [Synth 8-6157] synthesizing module 'join_n' [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/join_n.sv:3]
+	Parameter NUM_HANDSHAKES bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'join_n' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/lib/join_n.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_div' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_div.sv:2]
+WARNING: [Synth 8-689] width (8) of port connection 'equotient_data' does not match port width (9) of module 'mxint_div' [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_softmax.sv:360]
+INFO: [Synth 8-6155] done synthesizing module 'mxint_softmax' (0#1) [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_softmax.sv:6]IINFO: [Synth 8-6157] synthesizing module 'matmul_fp' [/home/os717/MX-for-FPGA/src/attention/matmul_fp.sv:11]
+	Parameter x_rows bound to: 128 - type: integer 
+	Parameter vec_elem_count bound to: 32 - type: integer 
+	Parameter y_cols bound to: 128 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter out_width bound to: 8 - type: integer 
+	Parameter scale_width bound to: 8 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: NEUMAIER - type: string 
+INFO: [Synth 8-6157] synthesizing module 'dot_general_fp' [/home/os717/MX-for-FPGA/src/dot/dot_general_fp.sv:8]
+	Parameter C bound to: 32 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter out_width bound to: 8 - type: integer 
+	Parameter scale_width bound to: 8 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: NEUMAIER - type: string 
+INFO: [Synth 8-6157] synthesizing module 'dot_fp' [/home/os717/MX-for-FPGA/src/dot/dot_fp.sv:6]
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter out_width bound to: 21 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: NEUMAIER - type: string 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_adder_tree' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:8]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+	Parameter ELEMS_COUNT bound to: 32 - type: integer 
+	Parameter SUM_WIDTH_O bound to: 21 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_merge' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_step' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs_bigger_equal' [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs_bigger_equal' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_step' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_merge' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'neumaier_start' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_start.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_start' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_start.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'neumaier_merge__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 5 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_step__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 5 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs_bigger_equal__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+	Parameter EXP_WIDTH_I bound to: 5 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs_bigger_equal__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_step__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_merge__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'neumaier_merge__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 6 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_step__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 6 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs_bigger_equal__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+	Parameter EXP_WIDTH_I bound to: 6 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs_bigger_equal__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_step__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_merge__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'neumaier_merge__parameterized2' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 7 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_step__parameterized2' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 7 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs_bigger_equal__parameterized2' [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+	Parameter EXP_WIDTH_I bound to: 7 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs_bigger_equal__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_step__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_merge__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'neumaier_merge__parameterized3' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 8 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'neumaier_step__parameterized3' [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 8 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'abs_bigger_equal__parameterized3' [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+	Parameter EXP_WIDTH_I bound to: 8 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'abs_bigger_equal__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/common/abs_bigger_equal.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_step__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_merge__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_merge.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'neumaier_adder_tree' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:8]
+INFO: [Synth 8-6157] synthesizing module 'vec_mul_fp' [/home/os717/MX-for-FPGA/src/util/arith/vec_mul_fp.sv:6]
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter length bound to: 32 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+INFO: [Synth 8-6157] synthesizing module 'mul_fp' [/home/os717/MX-for-FPGA/src/util/arith/mul_fp.sv:6]
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+INFO: [Synth 8-6157] synthesizing module 'mul_int' [/home/os717/MX-for-FPGA/src/util/arith/mul_int.sv:4]
+	Parameter bit_width bound to: 5 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'mul_int' (0#1) [/home/os717/MX-for-FPGA/src/util/arith/mul_int.sv:4]
+INFO: [Synth 8-6155] done synthesizing module 'mul_fp' (0#1) [/home/os717/MX-for-FPGA/src/util/arith/mul_fp.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'vec_mul_fp' (0#1) [/home/os717/MX-for-FPGA/src/util/arith/vec_mul_fp.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'dot_fp' (0#1) [/home/os717/MX-for-FPGA/src/dot/dot_fp.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'dot_general_fp' (0#1) [/home/os717/MX-for-FPGA/src/dot/dot_general_fp.sv:8]INFO: [Synth 8-6155] done synthesizing module 'matmul_fp' (0#1) [/home/os717/MX-for-FPGA/src/attention/matmul_fp.sv:11]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+WARNING: [Synth 8-693] zero replication count - replication ignored [/home/os717/MX-for-FPGA/src/attention/attention_fp.sv:127]
+INFO: [Common 17-14] Message 'Synth 8-693' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-6157] synthesizing module 'matmul_fp__parameterized0' [/home/os717/MX-for-FPGA/src/attention/matmul_fp.sv:11]
+	Parameter x_rows bound to: 128 - type: integer 
+	Parameter vec_elem_count bound to: 128 - type: integer 
+	Parameter y_cols bound to: 32 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter out_width bound to: 8 - type: integer 
+	Parameter scale_width bound to: 8 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: KLEIN - type: string 
+INFO: [Synth 8-6157] synthesizing module 'dot_general_fp__parameterized0' [/home/os717/MX-for-FPGA/src/dot/dot_general_fp.sv:8]
+	Parameter C bound to: 128 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter out_width bound to: 8 - type: integer 
+	Parameter scale_width bound to: 8 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: KLEIN - type: string 
+INFO: [Synth 8-6157] synthesizing module 'dot_fp__parameterized0' [/home/os717/MX-for-FPGA/src/dot/dot_fp.sv:6]
+	Parameter exp_width bound to: 4 - type: integer 
+	Parameter man_width bound to: 3 - type: integer 
+	Parameter k bound to: 32 - type: integer 
+	Parameter bit_width bound to: 8 - type: integer 
+	Parameter out_width bound to: 21 - type: integer 
+	Parameter use_dsp bound to: yes - type: string 
+	Parameter ACCUM_METHOD bound to: KLEIN - type: string 
+INFO: [Synth 8-6157] synthesizing module 'klein_adder_tree' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:8]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+	Parameter ELEMS_COUNT bound to: 32 - type: integer 
+	Parameter SUM_WIDTH_O bound to: 21 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'klein_merge' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'klein_step' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_step' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'klein_merge' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'klein_start' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_start.sv:6]
+	Parameter EXP_WIDTH_I bound to: 4 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_start' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_start.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'klein_merge__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 5 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'klein_step__parameterized0' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+	Parameter EXP_WIDTH_I bound to: 5 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_step__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'klein_merge__parameterized0' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'klein_merge__parameterized1' [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+INFO: [Common 17-14] Message 'Synth 8-6157' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+	Parameter EXP_WIDTH_I bound to: 6 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+	Parameter EXP_WIDTH_I bound to: 6 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_step__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'klein_merge__parameterized1' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 7 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+	Parameter EXP_WIDTH_I bound to: 7 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_step__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'klein_merge__parameterized2' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+	Parameter EXP_WIDTH_I bound to: 8 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+	Parameter EXP_WIDTH_I bound to: 8 - type: integer 
+	Parameter MANT_WIDTH_I bound to: 3 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'klein_step__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_step.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'klein_merge__parameterized3' (0#1) [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_merge.sv:6]
+INFO: [Common 17-14] Message 'Synth 8-6155' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+	Parameter int_w bound to: 21 - type: integer 
+	Parameter width_i bound to: 25 - type: integer 
+WWARNING: [Synth 8-3848] Net top_tree[0].sum_a[8] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[8] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[8] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[8] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[9] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[9] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[9] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[9] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[10] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[10] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[10] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[10] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[11] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[11] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[11] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[11] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[12] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[12] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[12] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[12] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[13] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[13] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[13] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[13] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[14] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[14] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[14] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[14] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[15] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].error_a[15] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[15] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].error_b[15] in module/entity twosum_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/twosum/twosum_adder_tree.sv:41]
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  shift_data_list_reg with 20000 registers
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  shift_data_list_reg with 11552 registers
+WARNING: [Synth 8-4767] Trying to implement RAM 'ram_reg' in registers. Block RAM or DRAM implementation is not possible; see log for reasons.
+Reason is one or more of the following :
+	1: Only 1 word in RAM 
+RAM "ram_reg" dissolved into registers
+WARNING: [Synth 8-3848] Net straight_exp_data_out_ready in module/entity mxint_softmax does not have driver. [/home/os717/MX-for-FPGA/src/attention/mxoperators/mxint_softmax.sv:88]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[8] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[8] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[8] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[8] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[9] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[9] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[9] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[9] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[10] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[10] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[10] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[10] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[11] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[11] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[11] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[11] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[12] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[12] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[12] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[12] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[13] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[13] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[13] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[13] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[14] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[14] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[14] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[14] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[15] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_a[15] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[15] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].comp_b[15] in module/entity neumaier_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/neumaier/neumaier_adder_tree.sv:41]WARNING: [Synth 8-3848] Net top_tree[0].sum_a[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_b[8] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:43]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_b[9] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:43]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_b[10] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:43]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_b[11] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:43]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_b[12] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:43]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_a[13] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:38]
+WARNING: [Synth 8-3848] Net top_tree[0].sum_b[13] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:39]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_a[13] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:40]
+WARNING: [Synth 8-3848] Net top_tree[0].cs_b[13] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:41]
+WARNING: [Synth 8-3848] Net top_tree[0].ccs_a[13] in module/entity klein_adder_tree does not have driver. [/home/os717/MX-for-FPGA/src/util/accum/klein/klein_adder_tree.sv:42]
+INFO: [Common 17-14] Message 'Synth 8-3848' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-11357] Potential Runtime issue for 3D-RAM or RAM from Record/Structs for RAM  QKt_2_reg with 131072 registers
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:08:23 ; elapsed = 00:08:40 . Memory (MB): peak = 9711.656 ; gain = 6216.891 ; free physical = 51365 ; free virtual = 73665
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:09:27 ; elapsed = 00:09:45 . Memory (MB): peak = 10789.656 ; gain = 7294.891 ; free physical = 49401 ; free virtual = 71697
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:09:27 ; elapsed = 00:09:45 . Memory (MB): peak = 10789.656 ; gain = 7294.891 ; free physical = 49401 ; free virtual = 71697
+---------------------------------------------------------------------------------
+TTerminated
+Parent process (pid 3324317) has died. This helper process will now exit
