@@ -4,12 +4,12 @@ v_values=(2)
 c_values=(32)
 
 sum_types=(
-    # '"quant"'
-    # '"kahan"'
+    '"quant"'
+    '"kahan"'
     # '"2sum"'
     # '"fast2sum"'
     # '"neumaier"'
-    '"klein"'
+    # '"klein"'
 )
 
 
@@ -26,8 +26,9 @@ for v in "${v_values[@]}"; do
                         --config "k_quantizer=$k_config" \
                         --config "s_quantizer=$s_config" \
                         --config "v_quantizer=$v_config" \
-                        --config "use_kulisch=false" \
-                        --config "sum_type=$sum_type"
+                        --config "sum_type_attn_s=$sum_type" \
+                        --config "sum_type_smax=$sum_type" \
+                        --config "sum_type_attn_o=$sum_type"
             echo "----------------------------------------------------------"
         done
     done

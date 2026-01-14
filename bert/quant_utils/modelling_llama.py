@@ -39,12 +39,16 @@ class QuantLlamaAttention(nn.Module):
         # Use CLI quantizer configs if available
         self.init_quantizers(q_config)
 
-        self.use_kulisch = True
-        if 'use_kulisch' in q_config.keys():
-            self.use_kulisch = q_config['use_kulisch']
-        self.sum_type = 'quant'
-        if 'sum_type' in q_config.keys():
-            self.sum_type = q_config['sum_type']
+        # Get summation method types
+        self.sum_type_attn_s = 'quant'
+        if 'sum_type_attn_s' in q_config.keys():
+            self.sum_type_attn_s = q_config['sum_type_attn_s']
+        self.sum_type_smax = 'quant'
+        if 'sum_type_smax' in q_config.keys():
+            self.sum_type_smax = q_config['sum_type_smax']
+        self.sum_type_attn_o = 'quant'
+        if 'sum_type_attn_o' in q_config.keys():
+            self.sum_type_attn_o = q_config['sum_type_attn_o']
 
     def init_quantizers(self, q_config):
         ''' Make quantizers from CLI config. '''
@@ -120,28 +124,26 @@ class QuantLlamaAttention(nn.Module):
         value_states = repeat_kv(value_states, self.num_key_value_groups)
 
         # Quantize keys and queries
-        # if self.k_thresh.calibration == False: import pdb; pdb.set_trace()
-        if hasattr(self, "k_quantizer"): key_states = self.k_quantizer(key_states)
-        if hasattr(self, "k_quantizer"): query_states = self.k_quantizer(query_states)
+        if hasattr(self, "k_quantizer"):
+            key_states = self.k_quantizer(key_states)
+            query_states = self.k_quantizer(query_states)
 
-        if hasattr(self, "k_quantizer") and not self.use_kulisch:
-            k_scale = self.k_quantizer.dynamic_scale(key_states)
-            q_scale = self.k_quantizer.dynamic_scale(query_states)
-
-            k_quant = key_states / k_scale
-            q_quant = query_states / q_scale
-
-            attn_weights = ordmm_chunk_bcast_scaled(q_quant,
-                                                    k_quant,
-                                                    q_scale,
-                                                    k_scale,
-                                                    self.k_quantizer.man_w,
-                                                    self.k_quantizer.exp_w,
-                                                    self.v_quantizer.group_size,
-                                                    self.sum_type
-                                                ) / math.sqrt(self.head_dim)
-        else:
-            attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+            if self.sum_type_attn_s == 'kulisch':
+                attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+            else:
+                k_scale = self.k_quantizer.dynamic_scale(key_states)
+                q_scale = self.k_quantizer.dynamic_scale(query_states)
+                k_quant = key_states / k_scale
+                q_quant = query_states / q_scale
+                attn_weights = ordmm_chunk_bcast_scaled(q_quant,
+                    k_quant,
+                    q_scale,
+                    k_scale,
+                    self.k_quantizer.man_w,
+                    self.k_quantizer.exp_w,
+                    self.k_quantizer.group_size,
+                    self.sum_type_attn_s
+                ) / math.sqrt(self.head_dim)
 
         # Quantize attention scores to arbitrary FP, no scales
         if hasattr(self, "s_quantizer"):
@@ -159,34 +161,52 @@ class QuantLlamaAttention(nn.Module):
         x = x - x.max(dim=-1, keepdim=True).values
         # Step 2: exponentiate
         exp_x = torch.exp(x)
-        # Quantize exp output
-        if hasattr(self, "v_quantizer"): exp_x = self.v_quantizer(exp_x)
         # Step 3: sum
-        if hasattr(self, "v_quantizer") and not self.use_kulisch:
-            e_scale = self.v_quantizer.dynamic_scale(exp_x)
-            e_quant = exp_x / e_scale
-            sum_exp_x = ordacc_chunk_scaled(e_quant,
-                                            e_scale,
-                                            self.v_quantizer.man_w,
-                                            self.v_quantizer.exp_w,
-                                            self.v_quantizer.group_size,
-                                            self.sum_type
-                                        ).unsqueeze(-1)
-        else:
-            sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
+        if hasattr(self, "v_quantizer"):
+            exp_x = self.v_quantizer(exp_x)
+
+            if self.sum_type_smax == 'kulisch':
+                sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
+            else:
+                e_scale = self.v_quantizer.dynamic_scale(exp_x)
+                e_quant = exp_x / e_scale
+                sum_exp_x = ordacc_chunk_scaled(e_quant,
+                    e_scale,
+                    self.v_quantizer.man_w,
+                    self.v_quantizer.exp_w,
+                    self.v_quantizer.group_size,
+                    self.sum_type_smax
+                ).unsqueeze(-1)
         # Step 4: normalize
         softmax_x = exp_x / sum_exp_x
         # Step 5: cast back
         attn_weights = softmax_x.to(query_states.dtype)
 
         # upcast attention to fp32
-        # attn_weights = nn.functional.softmax(attn_weights, dim=-1, dtype=torch.float32).to(query_states.dtype)
         attn_weights = nn.functional.dropout(attn_weights, p=self.attention_dropout, training=self.training)
 
         # Quantize values
-        if hasattr(self, "v_quantizer"): value_states = self.v_quantizer(value_states.transpose(-1,-2)).transpose(-1,-2)
+        if hasattr(self, "v_quantizer"):
+            attn_weights = self.v_quantizer(attn_weights)
+            value_states = self.v_quantizer(value_states.transpose(-1,-2)).transpose(-1,-2)
 
-        attn_output = torch.matmul(attn_weights, value_states)
+            if self.sum_type_attn_o == 'kulisch':
+                attn_output = torch.matmul(attn_weights, value_states)
+            else:
+                p_scale = self.v_quantizer.dynamic_scale(attn_weights)
+                v_scale = self.v_quantizer.dynamic_scale(value_states)
+                p_quant = attn_weights / p_scale
+                v_quant = value_states / v_scale
+                attn_output = ordmm_chunk_bcast_scaled(
+                    p_quant,
+                    v_quant.transpose(-1,-2),
+                    p_scale,
+                    v_scale.transpose(-1,-2),
+                    self.v_quantizer.man_w,
+                    self.v_quantizer.exp_w,
+                    self.v_quantizer.group_size,
+                    self.sum_type_attn_o
+                ).to(attn_weights.dtype)
 
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
             raise ValueError(
