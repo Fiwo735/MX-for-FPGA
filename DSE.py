@@ -294,6 +294,10 @@ class SynthesisHandler:
     # d_kq and d_v must be divisible by k
     if design.d_kq % design.k != 0 or design.d_v % design.k != 0:
       return True
+      
+    # S_kq and S_v must be divisible by k
+    if design.S_q % design.k != 0 or design.S_kv % design.k != 0:
+      return True
     
     return False
   
@@ -346,7 +350,7 @@ class SynthesisHandler:
           continue
         
         # Submit parallel task
-        future = executor.submit(SynthesisResult.run_synthesis_on_design, design, synthesis_cmd, verbose)
+        future = executor.submit(self.run_synthesis_on_design, design, synthesis_cmd, verbose)
         jobs.append(future)
         # self.run_synthesis_on_design(design, synthesis_cmd, verbose=verbose)
         
