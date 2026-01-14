@@ -50,10 +50,12 @@ class DesignConfig:
   def get_bert_flags(self):
     return (
       "--model_id 'meta-llama/Llama-3.2-1B' "
-      f"--config 'k_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
-      f"--config 'q_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M1_bits.mant_bits},'exp_w':{self.M1_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
-      # f"--config 's_quantizer={{'quant':'MXFPQuantizer','man_w':{},'exp_w':{},'group_size':{self.k},'static_scale':True}}' "
-      f"--config 'v_quantizer={{'quant':'MXFPQuantizer','man_w':{self.M3_bits.mant_bits},'exp_w':{self.M3_bits.exp_bits},'group_size':{self.k},'static_scale':False}}' "
+      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'sum_type_attn_s="{self.accum_method1}"\' '
+      f'--config \'sum_type_smax="{self.accum_method2}"\' '
+      f'--config \'sum_type_attn_o="{self.accum_method3}"\' '
     )
 
   def __repr__(self):
@@ -797,7 +799,7 @@ if __name__ == "__main__":
     for m2_dsp in ["auto"]
     for m3_dsp in ["auto"]
   ]
-  
+
   synthesis_handler = SynthesisHandler(designs_to_synthesise)
   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
 
