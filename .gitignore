@@ -19,6 +19,7 @@ src/attention/attention_int/synth_output
 *.dcp
 *.str
 *.lpr
+.gen/
 
 # Synthesis Outputs
 src/attention/synth_logs/
