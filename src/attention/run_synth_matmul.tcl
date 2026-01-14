@@ -1,0 +1,106 @@
+# Using Alveo V80 part directly
+set part        xcv80-lsva4737-2MHP-e-S
+set top         matmul_fp
+set outputDir   ./src/attention/synth_output_matmul
+file mkdir $outputDir
+
+# Set parameters based on command line arguments or defaults
+set S_q           [expr {[llength $argv] > 0 ? [lindex $argv 0] : 4}]
+set S_kv          [expr {[llength $argv] > 1 ? [lindex $argv 1] : 4}]
+set d_kq          [expr {[llength $argv] > 2 ? [lindex $argv 2] : 8}]
+set d_v           [expr {[llength $argv] > 3 ? [lindex $argv 3] : 8}]
+set k             [expr {[llength $argv] > 4 ? [lindex $argv 4] : 2}]
+set scale_width   [expr {[llength $argv] > 5 ? [lindex $argv 5] : 8}]
+
+# Mixed Precision Config
+set m1_exp        [expr {[llength $argv] > 6 ? [lindex $argv 6] : 0}] 
+set m1_man        [expr {[llength $argv] > 7 ? [lindex $argv 7] : 8}]
+set m2_exp        [expr {[llength $argv] > 8 ? [lindex $argv 8] : 0}]
+set m2_man        [expr {[llength $argv] > 9 ? [lindex $argv 9] : 8}]
+set m3_exp        [expr {[llength $argv] > 10 ? [lindex $argv 10] : 0}]
+set m3_man        [expr {[llength $argv] > 11 ? [lindex $argv 11] : 8}]
+
+# Accumulation method parameters
+set accum_method1 [expr {[llength $argv] > 12 ? [lindex $argv 12] : "KULISCH"}]
+set accum_method2 [expr {[llength $argv] > 13 ? [lindex $argv 13] : "KULISCH"}]
+set accum_method3 [expr {[llength $argv] > 14 ? [lindex $argv 14] : "KULISCH"}]
+# DSP Control Params
+set m1_dsp        [expr {[llength $argv] > 15 ? [lindex $argv 15] : "yes"}]
+set m2_dsp        [expr {[llength $argv] > 16 ? [lindex $argv 16] : "yes"}]
+set m3_dsp        [expr {[llength $argv] > 17 ? [lindex $argv 17] : "yes"}]
+# Design Name suffix
+set prefix_name   [expr {[llength $argv] > 18 ? [lindex $argv 18] : "matmul"}]
+
+# Derived Params for MatMul
+# We need to decide WHICH MatMul we are synthesizing: QK^T or SV?
+# They differ in dimensions.
+# For generic DSE, we can stick to one configuration (e.g. QK^T) effectively by setting x_rows/y_cols/vec_elem_count.
+# Or we can synthesize a generic square-ish matmul as a representative.
+
+# Let's map the general DSE params to MatMul params:
+# matmul_fp parameters:
+# x_rows, vec_elem_count, y_cols
+# k, bit_width, exp_width, man_width, out_width, scale_width, USE_DSP, ACCUM_METHOD
+
+# We will synthesize the Q*K^T operation as the representative MatMul 1.
+# x_rows = S_q
+# y_cols = S_kv
+# vec_elem_count = d_kq
+# bit_width = BW_1 (M1 format)
+# exp/man = m1_exp/man
+# out_width = BW_1 (usually accumulation width is larger, but interface might be BW_1, let's check default usage)
+# In attention_fp: .out_width(BW_1)
+
+set BW_1 [expr {1 + $m1_exp + $m1_man}]
+
+set generics "x_rows=$S_q vec_elem_count=$d_kq y_cols=$S_kv k=$k bit_width=$BW_1 exp_width=$m1_exp man_width=$m1_man out_width=$BW_1 scale_width=$scale_width USE_DSP=\"$m1_dsp\" ACCUM_METHOD=$accum_method1"
+
+# Set the number of threads for Vivado
+set_param general.maxThreads 12
+
+# Generate timestamp
+set timestamp [clock format [clock seconds] -format "%Y%m%d_%H%M"]
+
+# Build common prefix
+set prefix "${outputDir}/${prefix_name}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v_${d_v}_k_${k}_scale_width_${scale_width}_M1_E_${m1_exp}_M1_M_${m1_man}_M2_E_${m2_exp}_M2_M_${m2_man}_M3_E_${m3_exp}_M3_M_${m3_man}_ACCUM_METHOD_${accum_method1}_${accum_method2}_${accum_method3}_DSP_${m1_dsp}_${m2_dsp}_${m3_dsp}_time_${timestamp}"
+
+# Read sources
+read_verilog    [glob ./src/attention/attention_fp.sv]
+read_verilog    [glob ./src/attention/matmul_fp.sv]
+read_verilog    [glob ./src/dot/dot_general_fp.sv]
+read_verilog    [glob ./src/dot/dot_fp.sv]
+read_verilog    [glob ./src/util/arith/mul_fp.sv]
+read_verilog    [glob ./src/util/arith/vec_mul_fp.sv]
+read_verilog    [glob ./src/util/arith/vec_sum_int.sv]
+read_verilog    [glob ./src/util/arith/add_nrm.sv]
+read_verilog    [glob ./src/util/accum/kahan/*.sv]
+read_verilog    [glob ./src/util/accum/twosum/*.sv]
+read_verilog    [glob ./src/util/accum/fasttwosum/*.sv]
+read_verilog    [glob ./src/util/accum/neumaier/*.sv]
+read_verilog    [glob ./src/util/accum/klein/*.sv]
+read_verilog    [glob ./src/attention/mxoperators/*.sv]
+read_verilog    [glob ./src/attention/mxoperators/lib/*.sv]
+read_xdc        [ glob ./src/*.xdc ]
+
+# Synthesis
+set_msg_config -id {Synth 8-7129} -suppress
+set t1 [clock milliseconds]
+synth_design -top $top -part $part -flatten rebuilt -retiming -generic $generics -include_dirs {./src/attention}
+set t2 [clock milliseconds]
+puts "Time for synth_design: [expr {($t2 - $t1) / 1000.0}] seconds"
+
+# Checkpoint after synthesis
+write_checkpoint -force ${prefix}_post_synth.dcp
+set t3 [clock milliseconds]
+puts "Time for write_checkpoint: [expr {($t3 - $t2) / 1000.0}] seconds"
+
+# Reports
+report_utilization      -file ${prefix}_util.rpt
+set t4 [clock milliseconds]
+puts "Time for report_utilization: [expr {($t4 - $t3) / 1000.0}] seconds"
+report_timing_summary   -datasheet -file ${prefix}_timing.rpt
+set t5 [clock milliseconds]
+puts "Time for report_timing_summary: [expr {($t5 - $t4) / 1000.0}] seconds"
+report_power            -file ${prefix}_power.rpt
+set t6 [clock milliseconds]
+puts "Time for report_power: [expr {($t6 - $t5) / 1000.0}] seconds"

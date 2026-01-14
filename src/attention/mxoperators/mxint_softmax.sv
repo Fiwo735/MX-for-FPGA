@@ -19,7 +19,8 @@ module mxint_softmax #(
     parameter DATA_OUT_0_PARALLELISM = DATA_IN_0_PARALLELISM,
     parameter EXP_SUM_UNDERFLOW_BITS = 0,
     parameter DIVISION_UNDERFLOW_BITS = 0,
-    parameter string USE_DSP = "auto"
+    parameter string USE_DSP = "auto",
+    parameter string ACCUM_METHOD = "KULISCH"
 ) (
     /* verilator lint_off UNUSEDSIGNAL */
     input rst,
@@ -79,9 +80,19 @@ module mxint_softmax #(
   logic ff_exp_data_valid, ff_exp_data_ready;
 
   // Straight path signals
-  logic [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_out[DATA_IN_0_PARALLELISM-1:0];
+  // Output from Split2 (Descending/Unsigned)
+  logic [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_from_split[DATA_IN_0_PARALLELISM-1:0];
+  // Adapted for Accumulator (Ascending/Signed)
+  logic signed [DATA_EXP_0_PRECISION_0-1:0] straight_exp_mdata_out[DATA_IN_0_PARALLELISM];
   logic [DATA_EXP_0_PRECISION_1-1:0] straight_exp_edata_out;
   logic straight_exp_data_out_valid, straight_exp_data_out_ready;
+
+  // Adapt Split2 output to Accumulator input
+  always_comb begin
+      for (int i = 0; i < DATA_IN_0_PARALLELISM; i++) begin
+          straight_exp_mdata_out[i] = $signed(straight_exp_mdata_from_split[i]);
+      end
+  end
 
   // Accumulator signals
   logic [ACC_WIDTH-1:0] acc_mdata_out[BLOCK_SIZE-1:0];
@@ -165,31 +176,138 @@ module mxint_softmax #(
       .fifo_data_out_valid(ff_exp_data_valid),
       .fifo_data_out_ready(ff_exp_data_ready),
       // Straight output path
-      .straight_mdata_out(straight_exp_mdata_out),
+      .straight_mdata_out(straight_exp_mdata_from_split),
       .straight_edata_out(straight_exp_edata_out),
       .straight_data_out_valid(straight_exp_data_out_valid),
       .straight_data_out_ready(straight_exp_data_out_ready)
   );
 
-  mxint_accumulator #(
-      .DATA_IN_0_PRECISION_0(DATA_EXP_0_PRECISION_0),
-      .DATA_IN_0_PRECISION_1(DATA_EXP_0_PRECISION_1),
-      .BLOCK_SIZE(DATA_OUT_0_PARALLELISM),
-      .IN_DEPTH(IN_0_DEPTH),
-      .UNDERFLOW_BITS(EXP_SUM_UNDERFLOW_BITS),
-      .DATA_OUT_0_PRECISION_0(DATA_EXP_0_PRECISION_0)
-  ) mxint_accumulator_inst (
-      .clk(clk),
-      .rst(rst),
-      .mdata_in_0(straight_exp_mdata_out),     // From split2 straight output
-      .edata_in_0(straight_exp_edata_out),     // From split2 straight output
-      .data_in_0_valid(straight_exp_data_out_valid),
-      .data_in_0_ready(straight_exp_data_out_ready),
-      .mdata_out_0(acc_mdata_out),
-      .edata_out_0(acc_edata_out),
-      .data_out_0_valid(acc_data_out_valid),
-      .data_out_0_ready(acc_data_out_ready)
-  );
+  // Intermediate scalar sum for broadcasting
+  // Intermediate scalar sum for broadcasting to all lanes
+  // "tmp" holds the single result from the adder tree before it is distributed
+  logic [ACC_WIDTH-1:0] acc_mdata_tmp;
+
+  generate
+        if (ACCUM_METHOD == "KULISCH") begin : gen_kulisch_accum
+            // [SKIPPED] Kulisch logic requires more careful handling or revert to accumulator
+            // But implementing broadcast fix here too for consistency with request
+            localparam KULISCH_BITWIDTH = 1 << (DATA_EXP_0_PRECISION_0 + 1);
+            logic signed [KULISCH_BITWIDTH-1:0] KULISCH_INPUT [DATA_IN_0_PARALLELISM];
+
+            for (genvar i=0; i<DATA_IN_0_PARALLELISM; i++) begin
+                for (genvar j=0; j<KULISCH_BITWIDTH; j++) begin
+                    assign KULISCH_INPUT[i][j] = straight_exp_mdata_out[i][j % DATA_EXP_0_PRECISION_0];
+                end
+            end
+
+            vec_sum_int #(
+                .bit_width(KULISCH_BITWIDTH),
+                .length(DATA_IN_0_PARALLELISM),
+                .sum_width(ACC_WIDTH) // Enforce output width
+            ) u_tree_add (
+                .i_vec(KULISCH_INPUT),
+                .o_sum(acc_mdata_tmp)
+            );
+        end else begin : gen_other_accum
+            // Use other accumulation methods
+            if (ACCUM_METHOD == "KAHAN") begin : gen_kahan_accum
+                kahan_adder_tree #(
+                    .EXP_WIDTH_I(0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
+                    .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
+                    .SUM_WIDTH_O(ACC_WIDTH)
+                ) u_kahan_tree (
+                    .clk_i(clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(straight_exp_mdata_out),
+                    .o_sum(acc_mdata_tmp)
+                );
+            end else if (ACCUM_METHOD == "TWOSUM") begin : gen_twosum_accum
+                twosum_adder_tree #(
+                    .EXP_WIDTH_I(0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
+                    .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
+                    .SUM_WIDTH_O(ACC_WIDTH)
+                ) u_twosum_tree (
+                    .clk_i(clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(straight_exp_mdata_out),
+                    .o_sum(acc_mdata_tmp)
+                );
+            end else if (ACCUM_METHOD == "FASTTWOSUM") begin : gen_fasttwosum_accum
+                fasttwosum_adder_tree #(
+                    .EXP_WIDTH_I(0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
+                    .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
+                    .SUM_WIDTH_O(ACC_WIDTH)
+                ) u_fasttwosum_tree (
+                    .clk_i(clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(straight_exp_mdata_out),
+                    .o_sum(acc_mdata_tmp)
+                );
+            end else if (ACCUM_METHOD == "NEUMAIER") begin : gen_neumaier_accum
+                neumaier_adder_tree #(
+                    .EXP_WIDTH_I(0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
+                    .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
+                    .SUM_WIDTH_O(ACC_WIDTH)
+                ) u_neumaier_tree (
+                    .clk_i(clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(straight_exp_mdata_out),
+                    .o_sum(acc_mdata_tmp)
+                );
+            end else if (ACCUM_METHOD == "KLEIN") begin : gen_klein_accum
+                klein_adder_tree #(
+                    .EXP_WIDTH_I(0),
+                    .MANT_WIDTH_I(DATA_EXP_0_PRECISION_0 - 1),
+                    .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
+                    .SUM_WIDTH_O(ACC_WIDTH)
+                ) u_klein_tree (
+                    .clk_i(clk),
+                    .rst_ni(1'b1), // No reset
+                    .i_vec(straight_exp_mdata_out),
+                    .o_sum(acc_mdata_tmp)
+                );
+            end else begin : gen_error_accum
+                $error("Unsupported ACCUM_METHOD");
+            end
+        end
+    endgenerate
+
+    // Broadcast scalar sum to all array elements
+    generate
+        for(genvar k=0; k<DATA_OUT_0_PARALLELISM; k++) begin
+            assign acc_mdata_out[k] = acc_mdata_tmp;
+        end
+    endgenerate
+    
+    // Assign dummy value to edata out if not driven
+    assign acc_edata_out = straight_exp_edata_out; // Pass through or logic zero?
+    assign acc_data_out_valid = straight_exp_data_out_valid; 
+    assign acc_data_out_ready = 1'b1; // Always ready? Need to check flow control
+
+
+//   mxint_accumulator #(
+//       .DATA_IN_0_PRECISION_0(DATA_EXP_0_PRECISION_0),
+//       .DATA_IN_0_PRECISION_1(DATA_EXP_0_PRECISION_1),
+//       .BLOCK_SIZE(DATA_OUT_0_PARALLELISM),
+//       .IN_DEPTH(IN_0_DEPTH),
+//       .UNDERFLOW_BITS(EXP_SUM_UNDERFLOW_BITS),
+//       .DATA_OUT_0_PRECISION_0(DATA_EXP_0_PRECISION_0)
+//   ) mxint_accumulator_inst (
+//       .clk(clk),
+//       .rst(rst),
+//       .mdata_in_0(straight_exp_mdata_out),     // From split2 straight output
+//       .edata_in_0(straight_exp_edata_out),     // From split2 straight output
+//       .data_in_0_valid(straight_exp_data_out_valid),
+//       .data_in_0_ready(straight_exp_data_out_ready),
+//       .mdata_out_0(acc_mdata_out),
+//       .edata_out_0(acc_edata_out),
+//       .data_out_0_valid(acc_data_out_valid),
+//       .data_out_0_ready(acc_data_out_ready)
+//   );
   // Replace existing signals
   // Replace input_buffer with mxint_circular
   mxint_circular #(

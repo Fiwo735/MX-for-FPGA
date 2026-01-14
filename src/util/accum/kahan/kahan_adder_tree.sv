@@ -128,7 +128,7 @@ module kahan_adder_tree #(
                 o_sum <= '0;
             end else begin
                 // [FIXED] removed problematic slice, implicit cast or explicit padding
-                o_sum <= top_tree[TREE_DEPTH-1].sum_res[0][SUM_WIDTH_O-1:0]; 
+                o_sum <= top_tree[TREE_DEPTH-1].sum_res[0]; 
             end
         end
     end

@@ -118,6 +118,38 @@ def evaluator(model, testenc, dev, batch_size):
     model.config.use_cache = use_cache
     return ppl.item()
 
+def get_attributes(model_id: str):
+    config = AutoConfig.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(model_id)
+
+    hidden_size = getattr(config, "hidden_size", None)
+    num_heads = getattr(config, "num_attention_heads", None)
+    num_layers = (
+        getattr(config, "num_hidden_layers", None) or
+        getattr(config, "n_layers", None)
+    )
+    intermediate_size = getattr(config, "intermediate_size", None)
+
+    head_size = (
+        hidden_size // num_heads
+        if hidden_size and num_heads
+        else None
+    )
+
+    num_key_value_heads = getattr(config, "num_key_value_heads", None)
+
+    param_count = sum(p.numel() for p in model.parameters())
+
+    return {
+        "model_id": model_id,
+        "hidden_size": hidden_size,
+        "num_attention_heads": num_heads,
+        "num_key_value_heads": num_key_value_heads,
+        "head_size": head_size,
+        "num_layers": num_layers,
+        "intermediate_size": intermediate_size,
+        "parameter_count": param_count,
+    }
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate BERT on validation set')
@@ -140,14 +172,14 @@ def main():
 
     tokenizer, model = get_model(args.model_id, args.max_length, device)
 
-    calib_loader = get_wikitext2(
-        nsamples=1,
-        seqlen=2048,
-        tokenizer=tokenizer,
-        eval_mode=False,
-    )
+    # calib_loader = get_wikitext2(
+    #     nsamples=1,
+    #     seqlen=args.max_length,
+    #     tokenizer=tokenizer,
+    #     eval_mode=False,
+    # )
     val_loader = get_wikitext2(
-        seqlen=2048,
+        seqlen=args.max_length,
         tokenizer=tokenizer,
         eval_mode=True,
     )

@@ -161,7 +161,8 @@ module attention_fp #(
                 .DATA_OUT_0_PRECISION_1(scale_width),
                 .DATA_OUT_0_DIM(BW_3),
                 .DATA_OUT_0_PARALLELISM(k),
-                .USE_DSP(SOFTMAX_USE_DSP)
+                .USE_DSP(SOFTMAX_USE_DSP),
+                .ACCUM_METHOD(ACCUM_METHOD2)
             ) u_curr_softmax (
                 .rst(i_rst),
                 .clk(i_clk),

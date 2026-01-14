@@ -142,7 +142,7 @@ module klein_adder_tree #(
     //     .invalid_operation_flag(res1_invalid_operation_flag)
     // );
     // Use + or - operator instead of floating_point_adder for better synthesis results
-    assign res1_sum = final_cs_res[SUM_WIDTH_O-1:0] + final_ccs_res[SUM_WIDTH_O-1:0];
+    assign res1_sum = final_cs_res + final_ccs_res;
 
     logic signed [SUM_WIDTH_O-1:0]   o_sum_reg;
     logic res2_underflow_flag, res2_overflow_flag, res2_invalid_operation_flag;
@@ -158,7 +158,7 @@ module klein_adder_tree #(
     //     .invalid_operation_flag(res2_invalid_operation_flag)
     // );
     // Use + or - operator instead of floating_point_adder for better synthesis results
-    assign o_sum_reg = final_sum_res[SUM_WIDTH_O-1:0] + res1_sum;
+    assign o_sum_reg = final_sum_res + res1_sum;
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
