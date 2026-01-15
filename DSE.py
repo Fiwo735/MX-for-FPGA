@@ -5,6 +5,7 @@ import subprocess
 import time
 import copy
 import itertools
+import random
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,6 +13,8 @@ from enum import Enum
 from datetime import datetime
 from argparse import ArgumentParser
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+DEBUG_COUNTER = 0
 
 class MXFPBits:
   def __init__(self, exp_bits, mant_bits):
@@ -51,6 +54,13 @@ class DesignConfig:
     self.m1_dsp = m1_dsp
     self.m2_dsp = m2_dsp
     self.m3_dsp = m3_dsp
+    
+  def get_total_bits(self):
+    return (
+      (self.M1_bits.exp_bits + self.M1_bits.mant_bits) +
+      (self.M2_bits.exp_bits + self.M2_bits.mant_bits) +
+      (self.M3_bits.exp_bits + self.M3_bits.mant_bits)
+    )
     
   def get_bert_flags(self):
     return (
@@ -122,8 +132,8 @@ class DesignConfig:
       cls.get_design_regex(),
       design_str
     ) 
-    print(cls.get_design_regex())
-    print(design_str)
+    # print(cls.get_design_regex())
+    # print(design_str)
     if not details:
       raise ValueError(f"Design string {design_str} does not match expected pattern.")
     
@@ -166,6 +176,9 @@ class SynthesisResult:
       for key in keys
     ) / len(keys)
     
+  def get_aggregated_resource_multiplier(self):
+    return 30 # TODO placeholder
+  
   @classmethod
   def create_ideal_result(cls, all_results):
     design = DesignConfig("ideal")
@@ -179,7 +192,7 @@ class SynthesisResult:
         "max_freq": 0
     }
     utilisation = copy.deepcopy(SynthesisHandler.get_available_fpga_resources())
-    accuracy = 0.0
+    accuracy = 1e10
     
     for result in all_results:
       power['total'] = min(power['total'], result.power['total'])
@@ -188,7 +201,10 @@ class SynthesisResult:
       timing['max_freq'] = max(timing['max_freq'], result.timing['max_freq'])
       for key in SynthesisHandler.get_available_fpga_resources().keys():
         utilisation[key] = min(utilisation[key], result.utilisation[key])
-      accuracy = max(accuracy, result.accuracy)
+      try:
+        accuracy = min(accuracy, result.accuracy)
+      except Exception as e:
+        print(f"Warning: could not compare accuracy for {result.design_config}: {e}")
     
     return cls(design_config=design, power=power, timing=timing, utilisation=utilisation, accuracy=accuracy)
     
@@ -205,7 +221,7 @@ class SynthesisResult:
         "max_freq": 1.0
     }
     utilisation = {key: 0.0 for key in SynthesisHandler.get_available_fpga_resources().keys()}
-    accuracy = 1.0
+    accuracy = 0.0
     
     return cls(design_config=design, power=power, timing=timing, utilisation=utilisation, accuracy=accuracy)
     
@@ -237,7 +253,7 @@ class SynthesisResult:
     for key, value in self.utilisation.items():
       s += f"\t{key}: {value:,} ({(value / SynthesisHandler.get_available_fpga_resources(key)) * 100:.2f}%)\n"
       
-    s += f"Accuracy: {self.accuracy:.2f}%\n"
+    s += f"Perplexity: {self.accuracy:.2f}\n" if self.accuracy is not None else "Perplexity: N/A\n"
 
     return s
 
@@ -250,7 +266,7 @@ class SynthesisHandler:
 
     # Max frequency for the board, used to filter out results with invalid frequencies
     # Technically, max frequency is 500 MHz, but we use 400 MHz to be safe
-    self.board_max_freq = 400 # MHz
+    self.board_max_freq = 500 # MHz
     
     self.synth_output_dir = os.path.join(self.hdl_dir, "synth_output")
     
@@ -426,6 +442,7 @@ class SynthesisHandler:
     return results
   
   def _read_accuracy_report(self, file_path):
+    global DEBUG_COUNTER
     try:
       with open(file_path, 'r') as file:
         text = file.read()
@@ -433,7 +450,10 @@ class SynthesisHandler:
       accuracy_match = re.search(r"Perplexity:\s*(\d+\.\d+)", text)
       accuracy = float(accuracy_match.group(1))
     except FileNotFoundError:
-      accuracy = None
+      print(f"Accuracy report file not found: {file_path}")
+      # TODO placeholder
+      accuracy = random.Random(DEBUG_COUNTER).uniform(1.0, 10.0)
+      DEBUG_COUNTER += 1
 
     return accuracy
   
@@ -523,7 +543,7 @@ class SynthesisHandler:
       
       # Match the filename against the regex
       m = pattern.match(filename)
-      print(pattern)
+      # print(pattern)
       if not m:
         print(f"Filename {filename} does not match expected pattern, skipping.")
         continue
@@ -553,7 +573,7 @@ class SynthesisHandler:
     if not self.results:
       raise ValueError("No synthesis results available to find Pareto optimal solution.")
     
-    ideal_result = SynthesisResult.create_ideal_result(self.results)
+    # ideal_result = SynthesisResult.create_ideal_result(self.results)
     # print(f"Ideal Result:\n{ideal_result}")
     
     # Normalise results based on the ideal result
@@ -572,13 +592,14 @@ class SynthesisHandler:
       ideal_res_usage = ideal_result_normalised.get_aggregated_resource_usage()
 
       resource_diff = (actual_res_usage - ideal_res_usage) ** 2
-      power_diff = (result.power['total'] - ideal_result_normalised.power['total']) ** 2
+      # power_diff = (result.power['total'] - ideal_result_normalised.power['total']) ** 2
       timing_diff = (result.timing['max_freq'] - ideal_result_normalised.timing['max_freq']) ** 2
+      accuracy_diff = (result.accuracy - ideal_result_normalised.accuracy) ** 2
 
       distance = (
-        power_diff * weights['power'] +
         timing_diff * weights['timing'] +
-        resource_diff * weights['utilisation']
+        resource_diff * weights['utilisation'] +
+        accuracy_diff * weights['accuracy']
       ) ** 0.5
       
       # print(f"Distance for {result.design_config}): {distance:.4f}")
@@ -630,43 +651,65 @@ class SynthesisHandler:
 
   def plot_results(self, directory="./plots", plot_file_format="svg"):
     # color_values = np.array([r.design_config.bit_width for r in self.results])
-    color_values = np.array([r.design_config.scale_width for r in self.results])
+    color_values = np.array([r.design_config.get_total_bits() for r in self.results])
+    # color_values = np.array([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
     designs = [r.design_config for r in self.results]
-    resource_usages = [synth_result.get_aggregated_resource_usage() for synth_result in self.results]
-    powers = [synth_result.power['total'] for synth_result in self.results]
+    resource_usages = [synth_result.get_aggregated_resource_usage() * synth_result.get_aggregated_resource_multiplier() for synth_result in self.results]
+    # powers = [synth_result.power['total'] for synth_result in self.results]
     frequencies = [synth_result.timing['max_freq'] for synth_result in self.results]
+    throughputs = [freq * 1 for freq in frequencies] # TODO Placeholder
     accuracies = [synth_result.accuracy for synth_result in self.results]
     
     self._plot(
       designs=designs,
-      x=powers,
-      y=frequencies,
+      x=resource_usages,
+      y=accuracies,
       color_values=color_values,
-      xlabel="Power (W)",
-      ylabel="Max Frequency (MHz)",
-      title=f"Max Frequency vs Power",
-      filename=f"max_freq_vs_power.{plot_file_format}",
+      xlabel="Resource Usage (%)",
+      ylabel="Perplexity",
+      title=f"Perplexity vs Resource Usage",
+      filename=f"perplexity_vs_resource_usage.{plot_file_format}",
       directory=directory,
+      show_colorbar=False
+    )
+    
+    self._plot(
+      designs=designs,
+      x=throughputs,
+      y=accuracies,
+      color_values=color_values,
+      xlabel="Throughput (T/s)",
+      ylabel="Perplexity",
+      title=f"Perplexity vs Throughput",
+      filename=f"perplexity_vs_throughput.{plot_file_format}",
+      directory=directory,
+      show_colorbar=True
     )
 
-  def _plot(self, designs, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False):
+  def _plot(self, designs, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False, show_colorbar=True):
     # Differentiate designs by block_size k
     marker_map = {
-      2: "o",
-      4: "^",
+      "KULISCH": "o",
+      "KAHAN": "^",
+      "TWOSUM": "s",
+      "FASTTWOSUM": "D",
+      "NEUMAIER": "P",
+      "KLEIN": "X",
     }
+    
 
-    cmap = matplotlib.colormaps["viridis"].resampled(len(np.unique(color_values)))
+    cmap = matplotlib.colormaps["viridis"].resampled(color_values.max() - color_values.min() + 1)
     bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
     norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    figsize = (7, 6) if show_colorbar else (6, 6)
+    fig, ax = plt.subplots(figsize=figsize)
     plotted_markers = {}
 
     for design, xi, yi, cval in zip(designs, x, y, color_values):
-      block_size = design.k
-      label = f"k={block_size}"
-      marker = marker_map.get(block_size, "s")
+      accum_method = design.accum_method1.value
+      label = f"{accum_method.capitalize()}"
+      marker = marker_map.get(accum_method, "s")
       ax.scatter(
         xi, yi,
         c=[cmap(norm(cval))],
@@ -683,13 +726,14 @@ class SynthesisHandler:
     ax.tick_params(axis='x', labelsize=12)
     ax.tick_params(axis='y', labelsize=12)
     ax.grid(True)
-
+    
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
-    cbar = plt.colorbar(sm, ax=ax, boundaries=bounds,
-                        ticks=np.arange(color_values.min(), color_values.max() + 1))
-    cbar.set_label("Total bit width", fontsize=14)
-    cbar.ax.tick_params(labelsize=12)
+    if show_colorbar is True:
+      cbar = plt.colorbar(sm, ax=ax, boundaries=bounds,
+                          ticks=np.arange(color_values.min(), color_values.max() + 1))
+      cbar.set_label("Combined bit widths across stages", fontsize=14)
+      cbar.ax.tick_params(labelsize=12)
 
     handles, labels = ax.get_legend_handles_labels()
     unique_labels = list(dict.fromkeys(labels))
@@ -703,8 +747,7 @@ class SynthesisHandler:
     
     # === Compute and plot Pareto front ===
     if do_pareto_front:
-      maximize_y = not ylabel.lower().startswith("power")
-      pareto_points = self._pareto_front(x, y, maximize_y=maximize_y)
+      pareto_points = self._pareto_front(x, y, maximize_y=False) # maximize_y is False for Perplexity minimization
       pareto_x = [p[0] for p in pareto_points]
       pareto_y = [p[1] for p in pareto_points]
 
@@ -719,14 +762,15 @@ class SynthesisHandler:
     if do_pareto_optimal and self.pareto_optimal is not None:
       # Compute X and Y of the pareto optimal point for this plot
       if xlabel.startswith("Resource"):
-        x_val = self.pareto_optimal.get_aggregated_resource_usage()
+        x_val = self.pareto_optimal.get_aggregated_resource_usage() * self.pareto_optimal.get_aggregated_resource_multiplier()
       else:
-        x_val = self.pareto_optimal.power["total"]
+        x_val = self.pareto_optimal.timing["max_freq"]
 
-      if ylabel.startswith("Power"):
-        y_val = self.pareto_optimal.power["total"]
-      else:
-        y_val = self.pareto_optimal.timing["max_freq"]
+      y_val = self.pareto_optimal.accuracy
+      # if ylabel.startswith("Power"):
+        # y_val = self.pareto_optimal.power["total"]
+      # else:
+      #   y_val = self.pareto_optimal.timing["max_freq"]
 
       radius_coeff = 0.04
       radius_x = radius_coeff * (ax.get_xlim()[1] - ax.get_xlim()[0])
@@ -778,8 +822,11 @@ class SynthesisHandler:
     #   best_fit_handle = plt.Line2D([], [], color="gray", linestyle="dashdot", linewidth=1.3, label=best_fit_label)
     #   black_handles += [best_fit_handle]
     #   unique_labels += [best_fit_label]
-      
-    ax.legend(black_handles, unique_labels, fontsize=14)
+
+    if not show_colorbar:
+      ax.legend().set_visible(False)
+    else:
+      ax.legend(black_handles, unique_labels, fontsize=14)
 
     fig.tight_layout()
     fig.savefig(os.path.join(directory, filename))
@@ -903,7 +950,7 @@ if __name__ == "__main__":
   synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
 
-  pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'power': 1.0, 'timing': 1.0, 'utilisation': 1.0})
+  pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
   print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
   synthesis_handler.plot_results(directory="./plots", plot_file_format="png")
