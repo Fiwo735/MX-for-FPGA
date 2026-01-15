@@ -12,7 +12,7 @@ if __name__ == "__main__":
             data[i, j] = 2 * (2 ** e + np.log2(n) - 2) + 3
 
     # Plot
-    fig, ax = plt.subplots(figsize=(8, 5))
+    fig, ax = plt.subplots(figsize=(8, 3))
     im = ax.imshow(data, cmap="viridis", aspect="auto")
 
     # Tick labels
@@ -30,7 +30,8 @@ if __name__ == "__main__":
     for i in range(len(element_counts)):
         for j in range(len(exponent_widths)):
             value = data[i, j]
-            ax.text(j, i, f"{value:.0f}", ha="center", va="center", color="white")
+            color = "black" if j > 6 else "white"
+            ax.text(j, i, f"{value:.0f}", ha="center", va="center", color=color)
 
     # Colorbar
     cbar = fig.colorbar(im, ax=ax)
