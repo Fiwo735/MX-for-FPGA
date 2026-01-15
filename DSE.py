@@ -943,7 +943,7 @@ if __name__ == "__main__":
     DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
     for S in [2, 4, 8, 16]
-    for d in [2, 4]#, 8, 16]
+    for d in [8, 16]
     # for k in [8]
     for scale_width in [8]
     for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8)]
