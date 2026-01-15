@@ -862,18 +862,32 @@ if __name__ == "__main__":
   #   for m3_dsp in ["auto"]
   # ]
 
-  # SDK Baseline
-
+  # int baseline
   designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+    DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
     for name in ["attention_fp"] # Reverted to standard name
-    for S in [4, 8, 16]
-    for d in [4, 8, 16]
-    for k in [4, 8, 16]
+    for S in [8]
+    for d in [8]
+    for k in [8]
     for scale_width in [8]
-    for M1_E, M1_M in [(5, 2)]
-    for M2_E, M2_M in [(5, 2)]
-    for M3_E, M3_M in [(5, 2)]
+    for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for accum_method_2 in [AccumMethod.Kulisch]
+    for accum_method_3 in [AccumMethod.Kulisch]
+    for m1_dsp in ["auto"]
+    for m2_dsp in ["auto"]
+    for m3_dsp in ["auto"]
+  ]
+
+  # fp baseline (the standard)
+  designs_to_synthesise += [
+    DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+    for name in ["attention_fp"] # Reverted to standard name
+    for S in [8]
+    for d in [8]
+    for k in [8]
+    for scale_width in [8]
+    for M_E, M_M in [(5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for accum_method_2 in [AccumMethod.Kulisch]
     for accum_method_3 in [AccumMethod.Kulisch]
