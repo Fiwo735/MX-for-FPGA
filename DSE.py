@@ -6,6 +6,7 @@ import time
 import copy
 import itertools
 import random
+import time
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -345,7 +346,8 @@ class SynthesisHandler:
     
     jobs = []
     with ProcessPoolExecutor() as executor:
-      for design in self.designs_to_synthesise:
+      for design_id, design in enumerate(self.designs_to_synthesise):
+        time.sleep(design_id)
         if self.check_if_design_is_invalid(design):
           if verbose:
             print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
