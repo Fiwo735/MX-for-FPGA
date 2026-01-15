@@ -426,13 +426,37 @@ class SynthesisHandler:
     return results
   
   def _read_accuracy_report(self, file_path):
-    with open(file_path, 'r') as file:
-      text = file.read()
-      
-    accuracy_match = re.search(r"Perplexity:\s*(\d+\.\d+)", text)
-    accuracy = float(accuracy_match.group(1))
+    try:
+      with open(file_path, 'r') as file:
+        text = file.read()
+        
+      accuracy_match = re.search(r"Perplexity:\s*(\d+\.\d+)", text)
+      accuracy = float(accuracy_match.group(1))
+    except FileNotFoundError:
+      accuracy = None
 
     return accuracy
+  
+  def run_accuracy_measurement(self, dry_run=False, verbose=False):
+    if not self.designs_to_synthesise:
+      print("No designs to measure accuracy for specified.")
+      return
+    
+    for design in self.designs_to_synthesise:
+      if self.check_if_result_exist(design, "_accuracy.txt"):
+        if verbose:
+          print(f"Skipping accuracy measurement for {design!r} as accuracy report already exists.")
+        continue
+      
+      date_time_str = datetime.now().strftime(self._time_format)
+      accuracy_report_path = os.path.join(self.synth_output_dir, f"{design!r}_time_{date_time_str}_accuracy.txt")
+      
+      if verbose:
+        print(f"Running accuracy measurement for {design!r}, saving report to {accuracy_report_path}...")
+      
+      if not dry_run:
+        self._generate_accuracy_report(design, accuracy_report_path)
+      
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
     accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
@@ -453,10 +477,10 @@ class SynthesisHandler:
     utilisation_report_path = f"{file_path}_util.rpt"
     accuracy_report_path = f"{file_path}_accuracy.txt"
     
-    # Generate missing accuracy report on the fly
-    if not self.check_if_result_exist(design, "_accuracy.txt"):
-      print(f"Accuracy report not found for {design!r}, generating on the fly...")
-      self._generate_accuracy_report(design, accuracy_report_path)
+    # # Generate missing accuracy report on the fly
+    # if not self.check_if_result_exist(design, "_accuracy.txt"):
+    #   print(f"Accuracy report not found for {design!r}, generating on the fly...")
+    #   self._generate_accuracy_report(design, accuracy_report_path)
       
     try:
       dynamic_power, static_power = self._read_power_report(power_report_path)
@@ -860,6 +884,7 @@ if __name__ == "__main__":
 
   synthesis_handler = SynthesisHandler(designs_to_synthesise)
   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
