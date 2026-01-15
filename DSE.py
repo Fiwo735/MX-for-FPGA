@@ -100,20 +100,13 @@ class DesignConfig:
     return s
     
   def get_vivado_tclargs(self):
-    if self.name == "attention_fp":
-      tclargs = f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
-    elif self.name == "matmul_fp":
-      raise NotImplementedError("Vivado TCL args generation for matmul_fp not implemented yet.")
-    elif self.name == "mxint_softmax":
-      raise NotImplementedError("Vivado TCL args generation for mxint_softmax not implemented yet.")
-    
-    return tclargs
+    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
   
   def get_tcl_filename(self):
     if self.name == "attention_fp":
       return "run_synth_fp.tcl"
     elif self.name == "matmul_fp":
-      return "run_synth_matmul_fp.tcl"
+      return "run_synth_matmul.tcl"
     elif self.name == "mxint_softmax":
       return "run_synth_softmax.tcl"
     
@@ -911,48 +904,61 @@ if __name__ == "__main__":
   #   for m3_dsp in ["auto"]
   # ]
 
-  # int baseline
-  designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-    for name in ["attention_fp"] # Reverted to standard name
-    for S in [8]
-    for d in [8]
-    for k in [8]
-    for scale_width in [8]
-    for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
-    for accum_method_1 in [AccumMethod.Kulisch]
-    for accum_method_2 in [AccumMethod.Kulisch]
-    for accum_method_3 in [AccumMethod.Kulisch]
-    for m1_dsp in ["auto"]
-    for m2_dsp in ["auto"]
-    for m3_dsp in ["auto"]
-  ]
+  # # int baseline
+  # designs_to_synthesise += [
+  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   for name in ["attention_fp"] # Reverted to standard name
+  #   for S in [8]
+  #   for d in [8]
+  #   for k in [8]
+  #   for scale_width in [8]
+  #   for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
+  #   for accum_method_1 in [AccumMethod.Kulisch]
+  #   for accum_method_2 in [AccumMethod.Kulisch]
+  #   for accum_method_3 in [AccumMethod.Kulisch]
+  #   for m1_dsp in ["auto"]
+  #   for m2_dsp in ["auto"]
+  #   for m3_dsp in ["auto"]
+  # ]
 
-  # fp baseline (the standard)
+  # # fp baseline (the standard)
+  # designs_to_synthesise += [
+  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   for name in ["attention_fp"] # Reverted to standard name
+  #   for S in [8]
+  #   for d in [8]
+  #   for k in [8]
+  #   for scale_width in [8]
+  #   for M_E, M_M in [(5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+  #   for accum_method_1 in [AccumMethod.Kulisch]
+  #   for accum_method_2 in [AccumMethod.Kulisch]
+  #   for accum_method_3 in [AccumMethod.Kulisch]
+  #   for m1_dsp in ["auto"]
+  #   for m2_dsp in ["auto"]
+  #   for m3_dsp in ["auto"]
+  # ]
+  
+  # Analatical model: 
   designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-    for name in ["attention_fp"] # Reverted to standard name
-    for S in [8]
-    for d in [8]
-    for k in [8]
+    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["matmul_fp"]
+    for S in [2, 4, 8, 16]
+    for d in [2, 4]#, 8, 16]
+    # for k in [8]
     for scale_width in [8]
-    for M_E, M_M in [(5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8)]
     for accum_method_1 in [AccumMethod.Kulisch]
-    for accum_method_2 in [AccumMethod.Kulisch]
-    for accum_method_3 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
-    for m2_dsp in ["auto"]
-    for m3_dsp in ["auto"]
   ]
 
   synthesis_handler = SynthesisHandler(designs_to_synthesise)
   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
-  synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
+  # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
-  # print(synthesis_handler)
+  print(synthesis_handler)
 
-  pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
-  print(f"\nPareto Optimal Result:\n{pareto_optimal}")
+  # pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
+  # print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  synthesis_handler.plot_results(directory="./plots", plot_file_format="png")
+  # synthesis_handler.plot_results(directory="./plots", plot_file_format="png")
