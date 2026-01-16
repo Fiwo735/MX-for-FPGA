@@ -205,6 +205,7 @@ module mxint_softmax #(
                 .length(DATA_IN_0_PARALLELISM),
                 .sum_width(ACC_WIDTH) // Enforce output width
             ) u_tree_add (
+                .i_clk(clk),            // FIX: Connected clock 
                 .i_vec(KULISCH_INPUT),
                 .o_sum(acc_mdata_tmp)
             );
@@ -283,9 +284,41 @@ module mxint_softmax #(
         end
     endgenerate
     
-    // Assign dummy value to edata out if not driven
-    assign acc_edata_out = straight_exp_edata_out; // Pass through or logic zero?
-    assign acc_data_out_valid = straight_exp_data_out_valid; 
+    // LATENCY COMPENSATION
+    // 1. Acc latency from vec_sum_int = $clog2(DATA_IN_0_PARALLELISM)
+    // 2. We use delay line to match valid/edata with the Acc latency
+    
+    localparam ACCUM_LATENCY = $clog2(DATA_IN_0_PARALLELISM);
+    
+    logic [ACCUM_LATENCY:0] valid_delay_line; // Width is depth
+    logic [DATA_EXP_0_PRECISION_1-1:0] edata_delay_line [ACCUM_LATENCY+1]; // Need Array for data
+    
+    always_ff @(posedge clk) begin
+        if (rst) begin
+             valid_delay_line <= '0;
+        end else begin
+             // Shift register for valid
+             valid_delay_line[0] <= straight_exp_data_out_valid;
+             if (ACCUM_LATENCY > 0) begin
+                 for(int l=1; l<=ACCUM_LATENCY; l++) begin
+                     valid_delay_line[l] <= valid_delay_line[l-1];
+                 end
+             end
+        end
+        
+        // Shift register for data
+        edata_delay_line[0] <= straight_exp_edata_out;
+        if (ACCUM_LATENCY > 0) begin
+             for(int l=1; l<=ACCUM_LATENCY; l++) begin
+                 edata_delay_line[l] <= edata_delay_line[l-1];
+             end
+        end
+    end
+
+    // Use delayed version
+    assign acc_edata_out = (ACCUM_LATENCY > 0) ? edata_delay_line[ACCUM_LATENCY] : straight_exp_edata_out;
+    assign acc_data_out_valid = (ACCUM_LATENCY > 0) ? valid_delay_line[ACCUM_LATENCY] : straight_exp_data_out_valid; 
+    
     assign acc_data_out_ready = 1'b1; // Always ready? Need to check flow control
 
 

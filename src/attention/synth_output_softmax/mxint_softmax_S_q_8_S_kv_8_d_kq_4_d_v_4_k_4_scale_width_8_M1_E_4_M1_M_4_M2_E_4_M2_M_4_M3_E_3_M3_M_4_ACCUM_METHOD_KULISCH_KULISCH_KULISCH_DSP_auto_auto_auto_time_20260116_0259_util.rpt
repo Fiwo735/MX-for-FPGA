@@ -1,14 +1,14 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
-| Date         : Thu Jan 15 23:01:20 2026
+| Date         : Fri Jan 16 03:01:38 2026
 | Host         : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
-| Command      : report_utilization -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_16_S_kv_16_d_kq_16_d_v_16_k_16_scale_width_8_M1_E_0_M1_M_3_M2_E_0_M2_M_3_M3_E_0_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_2259_util.rpt
+| Command      : report_utilization -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_8_S_kv_8_d_kq_4_d_v_4_k_4_scale_width_8_M1_E_4_M1_M_4_M2_E_4_M2_M_4_M3_E_3_M3_M_4_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260116_0259_util.rpt
 | Design       : mxint_softmax
 | Device       : xcv80-lsva4737-2MHP-e-S
 | Speed File   : -2MHP
 | Design State : Synthesized
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Utilization Design Information
 
@@ -35,17 +35,17 @@ Table of Contents
 +----------------------------+------+-------+------------+-----------+-------+
 |          Site Type         | Used | Fixed | Prohibited | Available | Util% |
 +----------------------------+------+-------+------------+-----------+-------+
-| Registers                  |  439 |     0 |          0 |   5148416 | <0.01 |
-|   Register as Flip Flop    |  439 |     0 |          0 |   5148416 | <0.01 |
+| Registers                  |  427 |     0 |          0 |   5148416 | <0.01 |
+|   Register as Flip Flop    |  427 |     0 |          0 |   5148416 | <0.01 |
 |   Register as Latch        |    0 |     0 |          0 |   5148416 |  0.00 |
-| CLB LUTs*                  | 1196 |     0 |          0 |   2574208 |  0.05 |
-|   LUT as Logic             | 1160 |     0 |          0 |   2574208 |  0.05 |
-|   LUT as Memory            |   36 |     0 |          0 |   1287104 | <0.01 |
-|     LUT as Distributed RAM |   36 |     0 |            |           |       |
-|     LUT as Shift Register  |    0 |     0 |            |           |       |
+| CLB LUTs*                  | 1334 |     0 |          0 |   2574208 |  0.05 |
+|   LUT as Logic             | 1294 |     0 |          0 |   2574208 |  0.05 |
+|   LUT as Memory            |   40 |     0 |          0 |   1287104 | <0.01 |
+|     LUT as Distributed RAM |   32 |     0 |            |           |       |
+|     LUT as Shift Register  |    8 |     0 |            |           |       |
 |       Variable Length SRL  |    0 |     0 |            |           |       |
-|       Fixed Length SRL     |    0 |     0 |            |           |       |
-| LOOKAHEAD8                 |    2 |     0 |          0 |    321776 | <0.01 |
+|       Fixed Length SRL     |    8 |     0 |            |           |       |
+| LOOKAHEAD8                 |   69 |     0 |          0 |    321776 |  0.02 |
 +----------------------------+------+-------+------------+-----------+-------+
 * Warning! The Final LUT count, after physical optimizations and full implementation, is typically lower. Run opt_design after synthesis, if not already completed, for a more realistic count.
 Warning! LUT value is adjusted to account for LUT combining.
@@ -92,7 +92,7 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------+------+-------+------------+-----------+-------+
 |  Site Type | Used | Fixed | Prohibited | Available | Util% |
 +------------+------+-------+------------+-----------+-------+
-| Bonded IOB |  147 |     0 |          0 |       702 | 20.94 |
+| Bonded IOB |   88 |     0 |          0 |       702 | 12.54 |
 |   XPIO IOB |    0 |     0 |          0 |       702 |  0.00 |
 +------------+------+-------+------------+-----------+-------+
 * Note: Refer to report_io for information on MIO pins.
@@ -180,21 +180,22 @@ Warning! For any ECO changes, please run place_design if there are unplaced inst
 +------------+------+---------------------+
 |  Ref Name  | Used | Functional Category |
 +------------+------+---------------------+
-| LUT6       |  663 |                 CLB |
-| FDRE       |  434 |            Register |
-| LUT5       |  323 |                 CLB |
-| LUT4       |  237 |                 CLB |
-| LUT3       |  124 |                 CLB |
-| LUT2       |   85 |                 CLB |
-| OBUF       |   74 |                 I/O |
-| IBUF       |   73 |                 I/O |
-| RAMD32     |   60 |                 CLB |
-| LUTCY2     |    9 |                 CLB |
-| LUTCY1     |    9 |                 CLB |
+| LUT6       |  612 |                 CLB |
+| FDRE       |  422 |            Register |
+| LUTCY2     |  349 |                 CLB |
+| LUTCY1     |  349 |                 CLB |
+| LUT5       |  219 |                 CLB |
+| LUT3       |  159 |                 CLB |
+| LUT4       |   89 |                 CLB |
+| LUT2       |   75 |                 CLB |
+| LOOKAHEAD8 |   69 |                 CLB |
+| RAMD32     |   56 |                 CLB |
+| IBUF       |   46 |                 I/O |
+| OBUF       |   42 |                 I/O |
+| SRL16E     |    8 |                 CLB |
 | RAMS32     |    8 |                 CLB |
 | FDSE       |    5 |            Register |
-| LUT1       |    4 |                 CLB |
-| LOOKAHEAD8 |    2 |                 CLB |
+| LUT1       |    3 |                 CLB |
 | BUFGCE     |    1 |               Clock |
 +------------+------+---------------------+
 

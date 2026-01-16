@@ -1,15 +1,15 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version      : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
-| Date              : Thu Jan 15 23:02:26 2026
+| Date              : Fri Jan 16 03:53:12 2026
 | Host              : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
-| Command           : report_timing_summary -datasheet -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_16_S_kv_16_d_kq_16_d_v_16_k_16_scale_width_8_M1_E_0_M1_M_3_M2_E_0_M2_M_3_M3_E_0_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_2259_timing.rpt
+| Command           : report_timing_summary -datasheet -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_8_S_kv_8_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_3_M1_M_4_M2_E_3_M2_M_4_M3_E_3_M3_M_4_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260116_0349_timing.rpt
 | Design            : mxint_softmax
 | Device            : xcv80-lsva4737
 | Speed File        : -2MHP  PRODUCTION 2.04 2024-08-06
 | Design State      : Synthesized
 | Temperature Grade : E
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Timing Summary Report
 
@@ -50,10 +50,10 @@ check_timing report
 
 Table of Contents
 -----------------
-1. checking no_clock (507)
+1. checking no_clock (641)
 2. checking constant_clock (0)
 3. checking pulse_width_clock (0)
-4. checking unconstrained_internal_endpoints (1464)
+4. checking unconstrained_internal_endpoints (1611)
 5. checking no_input_delay (72)
 6. checking no_output_delay (73)
 7. checking multiple_clock (0)
@@ -63,9 +63,9 @@ Table of Contents
 11. checking partial_output_delay (0)
 12. checking latch_loops (0)
 
-1. checking no_clock (507)
+1. checking no_clock (641)
 --------------------------
- There are 507 register/latch pins with no clock driven by root clock pin: clk (HIGH)
+ There are 641 register/latch pins with no clock driven by root clock pin: clk (HIGH)
 
 
 2. checking constant_clock (0)
@@ -78,9 +78,9 @@ Table of Contents
  There are 0 register/latch pins which need pulse_width check
 
 
-4. checking unconstrained_internal_endpoints (1464)
+4. checking unconstrained_internal_endpoints (1611)
 ---------------------------------------------------
- There are 1464 pins that are not constrained for maximum delay. (HIGH)
+ There are 1611 pins that are not constrained for maximum delay. (HIGH)
 
  There are 0 pins that are not constrained for maximum delay due to constant clock.
 
@@ -188,15 +188,5 @@ Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing 
 | Data sheet
 | ----------
 ------------------------------------------------------------------------------------------------
-
-Combinational Delays
-
-----------------+-----------------+-----------+---------+-----------+---------+
-From            | To              |   Max     | Process |   Min     | Process |
-Port            | Port            | Delay(ns) | Corner  | Delay(ns) | Corner  |
-----------------+-----------------+-----------+---------+-----------+---------+
-data_in_0_valid | data_in_0_ready |     4.250 | SLOW    |     2.199 | FAST    |
-----------------+-----------------+-----------+---------+-----------+---------+
-
 
 

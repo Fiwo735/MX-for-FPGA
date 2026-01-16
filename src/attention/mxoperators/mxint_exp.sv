@@ -50,6 +50,9 @@ module mxint_exp #(
 
   logic [DATA_N_WIDTH - 1:0] temp_data_out_n[BLOCK_SIZE - 1 : 0];
   logic [DATA_R_WIDTH - 1:0] temp_data_out_r[BLOCK_SIZE - 1 : 0];
+  
+  logic [DATA_OUT_MAN_WIDTH-1:0] mdata_out_0_comb[BLOCK_SIZE - 1 : 0];
+  logic [DATA_OUT_EXP_WIDTH-1:0] edata_out_0_comb[BLOCK_SIZE - 1 : 0];
 
   generate
     for (genvar i = 0; i < BLOCK_SIZE; i++) begin : gen_mult
@@ -106,10 +109,20 @@ module mxint_exp #(
         .data_in_0(temp_data_out_r[i]),
         .data_out_0(mexp[i])
     );
-    assign mdata_out_0[i] = mexp[i];
-    assign edata_out_0[i] = temp_data_out_n[i];
+    assign mdata_out_0_comb[i] = mexp[i];
+    assign edata_out_0_comb[i] = temp_data_out_n[i];
+    
+    always_ff @(posedge clk) begin
+        mdata_out_0[i] <= mdata_out_0_comb[i];
+        edata_out_0[i] <= edata_out_0_comb[i];
+    end
   end
-  assign data_out_0_valid = data_in_0_valid;
+  
+  always_ff @(posedge clk) begin
+      if (rst) data_out_0_valid <= 1'b0;
+      else data_out_0_valid <= data_in_0_valid;
+  end
+
   assign data_in_0_ready = data_out_0_ready;
 
 endmodule

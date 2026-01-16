@@ -1,0 +1,354 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version     : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
+| Date             : Fri Jan 16 03:53:23 2026
+| Host             : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
+| Command          : report_power -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_16_S_kv_16_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_4_M1_M_4_M2_E_4_M2_M_4_M3_E_2_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260116_0349_power.rpt
+| Design           : mxint_softmax
+| Device           : xcv80-lsva4737-2MHP-e-S
+| Design State     : synthesized
+| Grade            : extended
+| Process          : typical
+| Characterization : Production
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Power Report
+
+Table of Contents
+-----------------
+1. Summary
+1.1 On-Chip Components
+1.2 Power Supply Summary
+1.3 Confidence Level
+2. Settings
+2.1 Environment
+2.2 Clock Constraints
+3. Detailed Reports
+3.1 By Hierarchy
+
+1. Summary
+----------
+
++--------------------------+--------------+
+| Total On-Chip Power (W)  | 33.896       |
+|   FPGA Power (W)         | 32.795       |
+|   HBM Power (W)          | 1.101        |
+| Design Power Budget (W)  | Unspecified* |
+| Power Budget Margin (W)  | NA           |
+| Dynamic (W)              | 10.958       |
+| Device Static (W)        | 22.938**     |
+| Effective TJA (C/W)      | 2.2          |
+| Max Ambient (C)          | 25.0         |
+| Junction Temperature (C) | 100.0**      |
+| Confidence Level         | Low          |
+| Setting File             | ---          |
+| Simulation Activity File | ---          |
+| Design Nets Matched      | NA           |
++--------------------------+--------------+
+* Specify Design Power Budget using, set_operating_conditions -design_power_budget <value in Watts>
+** No environmental constraints detected, worst case junction temperature (Tj) will be used, this will not impact the dynamic power estimate but will impact the static power shown.
+To more accurately reflect the environmental and thermal operating condition of the application the following constraints should be applied, to reflect the applications specifications:
+   set_operating_conditions -ambient_temp 25
+   set_operating_conditions -thetaja 1.0
+
+Where Ambient Temperature is defined as degrees Celsius and Theta Ja is the effectiveness of the thermal solution described as C/W to represent the rise in junction temperature for every watt dissipated
+To set the junction temperature to a specific value the following constraint should be used:
+   set_operating_conditions -junction_temp 25
+
+For the Versal architecture, a default junction temperature of 100C is assumed when no environmental conditions are set (Ta/Tj/TJA).
+
+
+1.1 On-Chip Components
+----------------------
+
++--------------------------+-----------+----------+-----------+-----------------+
+| On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
++--------------------------+-----------+----------+-----------+-----------------+
+| Logic                    |     4.964 |     2787 |       --- |             --- |
+|   LUT as Logic           |     3.953 |     1473 |   2574208 |            0.06 |
+|   LUT as Distributed RAM |     0.865 |       56 |   1287104 |           <0.01 |
+|   CLE FF Register        |     0.136 |      588 |   5148416 |            0.01 |
+|   LOOKAHEAD8             |     0.008 |       23 |    321776 |           <0.01 |
+|   LUT as Shift Register  |     0.001 |        8 |   1287104 |           <0.01 |
+|   BUFG                   |    <0.001 |        1 |        88 |            1.14 |
+|   Others                 |     0.000 |       29 |       --- |             --- |
+| Signals                  |     5.995 |     2204 |       --- |             --- |
+| I/O                      |     0.000 |      140 |       --- |             --- |
+| Static Power             |    22.938 |          |           |                 |
+| Total                    |    33.896 |          |           |                 |
++--------------------------+-----------+----------+-----------+-----------------+
+
+
+1.2 Power Supply Summary
+------------------------
+
++---------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Source        | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
++---------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+| Vccint        |       0.800 |    31.457 |      13.697 |     17.760 |       NA    | Unspecified | NA         |
+| VCC_SOC       |       0.800 |     3.171 |       0.000 |      3.171 |       NA    | Unspecified | NA         |
+| VCC_IO        |       0.800 |     0.297 |       0.000 |      0.297 |       NA    | Unspecified | NA         |
+| VCC_RAM       |       0.800 |     1.497 |       0.001 |      1.497 |       NA    | Unspecified | NA         |
+| Vccaux        |       1.500 |     2.882 |       0.000 |      2.882 |       NA    | Unspecified | NA         |
+| VCCO_503      |       3.300 |     0.001 |       0.000 |      0.001 |       NA    | Unspecified | NA         |
+| VCCO_500      |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VCCO_501      |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VCCO_502      |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VCC_FUSE      |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VCC_BATT      |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco33        |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco25        |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco18        |       1.800 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco15        |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco135       |       1.350 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco12        |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco11        |       1.100 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| Vcco10        |       1.000 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VCC_PMC       |       0.880 |     0.124 |       0.000 |      0.124 |       NA    | Unspecified | NA         |
+| VCCAUX_PMC    |       1.500 |     0.005 |       0.000 |      0.005 |       NA    | Unspecified | NA         |
+| VCCAUX_SMON   |       1.500 |     0.001 |       0.000 |      0.001 |       NA    | Unspecified | NA         |
+| VCC_PSLP      |       0.880 |     0.119 |       0.000 |      0.119 |       NA    | Unspecified | NA         |
+| VCC_PSFP      |       0.880 |     0.117 |       0.000 |      0.117 |       NA    | Unspecified | NA         |
+| VCC_CPM5      |       0.880 |     0.472 |       0.000 |      0.472 |       NA    | Unspecified | NA         |
+| VCCO_HBM      |       1.200 |     0.287 |       0.000 |      0.287 |       NA    | Unspecified | NA         |
+| VCCINT_IO_HBM |       0.800 |     0.385 |       0.000 |      0.385 |       NA    | Unspecified | NA         |
+| VCC_HBM       |       1.200 |     0.552 |       0.000 |      0.552 |       NA    | Unspecified | NA         |
+| VCCAUX_HBM    |       2.500 |     0.041 |       0.000 |      0.041 |       NA    | Unspecified | NA         |
+| Vccint_gt     |       0.800 |     1.027 |       0.000 |      1.027 |       NA    | Unspecified | NA         |
+| VGTM_AVCC     |       0.920 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VGTM_AVTT     |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VGTM_AVCCAUX  |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VGTYP_AVCC    |       0.920 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VGTYP_AVTT    |       1.200 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
+| VGTYP_AVCCAUX |       1.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
++---------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
+
+
+1.3 Confidence Level
+--------------------
+
++-----------------------------+------------+--------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
+| User Input Data             | Confidence | Details                                                | Action                                                                                                             |
++-----------------------------+------------+--------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
+| Design implementation state | Low        | Design is synthesized                                  | Accuracy of the tool is not optimal until design is fully placed and routed                                        |
+| Clock nodes activity        | Low        | User specified less than 75% of clocks                 | Provide missing clock activity with a constraint file, simulation results or by editing the "By Clock Domain" view |
+| I/O nodes activity          | Low        | More than 75% of inputs are missing user specification | Provide missing input activity with simulation results or by editing the "By Resource Type -> I/Os" view           |
+| Internal nodes activity     | Medium     | User specified less than 25% of internal nodes         | Provide missing internal nodes activity with simulation results or by editing the "By Resource Type" views         |
+| Device models               | High       | Device models are Production                           |                                                                                                                    |
+|                             |            |                                                        |                                                                                                                    |
+| Overall confidence level    | Low        |                                                        |                                                                                                                    |
++-----------------------------+------------+--------------------------------------------------------+--------------------------------------------------------------------------------------------------------------------+
+
+
+2. Settings
+-----------
+
+2.1 Environment
+---------------
+
++------------------+------+
+| Ambient Temp (C) | 25.0 |
+| ThetaJA (C/W)    | 2.2  |
++------------------+------+
+
+
+2.2 Clock Constraints
+---------------------
+
++-------+--------+-----------------+
+| Clock | Domain | Constraint (ns) |
++-------+--------+-----------------+
+
+
+3. Detailed Reports
+-------------------
+
+3.1 By Hierarchy
+----------------
+
++---------------------------------------------------+-----------+
+| Name                                              | Power (W) |
++---------------------------------------------------+-----------+
+| mxint_softmax                                     |    10.958 |
+|   acc_circular                                    |     0.196 |
+|     mdata_in_0_buffer                             |     0.196 |
+|       genblk1[0].bram                             |     0.106 |
+|       reg_inst                                    |     0.052 |
+|   cast_exp_inst                                   |     2.471 |
+|     data_in_0_unpacked_mx_split2_with_data_i      |     2.326 |
+|       fifo_out_reg_slice                          |     0.343 |
+|       split2_with_data_i                          |     1.984 |
+|     log2_reg_slice                                |     0.056 |
+|       data_out_valid_i_1__0                       |     0.003 |
+|     max_bas_i                                     |     0.082 |
+|       or_tree_i                                   |     0.082 |
+|     output_skid_buffer                            |     0.007 |
+|       register_slice_i                            |     0.007 |
+|   div_inst                                        |     0.454 |
+|     div_inst                                      |     0.002 |
+|       divisor_skid                                |     0.002 |
+|     split2_divisor                                |     0.452 |
+|       fifo_out_reg_slice                          |     0.002 |
+|       split2_with_data_i                          |     0.450 |
+|   gen_kulisch_accum.u_tree_add                    |     0.119 |
+|     tree_add[0].genblk1[0].p0_sum_reg[0][4]_i_1   |     0.001 |
+|     tree_add[0].genblk1[1].p0_sum_reg[1][4]_i_1   |     0.001 |
+|     tree_add[0].genblk1[2].p0_sum_reg[2][4]_i_1   |     0.001 |
+|     tree_add[0].genblk1[3].p0_sum_reg[3][4]_i_1   |     0.001 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][2]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][3]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][4]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][5]_i_1   |     0.002 |
+|     tree_add[1].genblk1[1].p0_sum_reg[1][2]_i_1   |     0.002 |
+|     tree_add[1].genblk1[1].p0_sum_reg[1][3]_i_1   |     0.002 |
+|     tree_add[1].genblk1[1].p0_sum_reg[1][4]_i_1   |     0.002 |
+|     tree_add[1].genblk1[1].p0_sum_reg[1][5]_i_1   |     0.002 |
+|     tree_add[2].genblk1[0].p0_sum_reg[0][2]_i_1   |     0.005 |
+|     tree_add[2].genblk1[0].p0_sum_reg[0][3]_i_1   |     0.005 |
+|     tree_add[2].genblk1[0].p0_sum_reg[0][4]_i_1   |     0.005 |
+|     tree_add[2].genblk1[0].p0_sum_reg[0][5]_i_1   |     0.005 |
+|   mxint_exp_inst                                  |     6.639 |
+|     power2_lut_inst[0].edata_out_0[0][2]_i_10     |     0.007 |
+|     power2_lut_inst[0].edata_out_0[0][4]_i_7      |     0.007 |
+|     power2_lut_inst[0].edata_out_0[0][4]_i_9      |     0.006 |
+|     power2_lut_inst[0].mdata_out_0[0][1]_i_100    |     0.010 |
+|     power2_lut_inst[0].mdata_out_0[0][1]_i_102    |     0.006 |
+|     power2_lut_inst[0].mdata_out_0[0][1]_i_14     |     0.005 |
+|     power2_lut_inst[0].mdata_out_0[0][1]_i_95     |     0.009 |
+|     power2_lut_inst[0].mdata_out_0[0][1]_i_98     |     0.010 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][0]_i_11 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][0]_i_12 |     0.001 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_10 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_12 |     0.004 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_13 |     0.003 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_25 |     0.007 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_26 |     0.005 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_28 |     0.005 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_29 |     0.005 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_30 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_56 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_57 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_58 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][1]_i_59 |     0.003 |
+|     power2_lut_inst[1].mdata_out_0[1][6]_i_69     |     0.009 |
+|     power2_lut_inst[1].mdata_out_0[1][6]_i_96     |     0.010 |
+|     power2_lut_inst[1].mdata_out_0[1][6]_i_98     |     0.010 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_18 |     0.007 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_19 |     0.005 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_21 |     0.005 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_22 |     0.005 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_23 |     0.006 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_48 |     0.006 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_49 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_50 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_51 |     0.001 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_52 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_53 |     0.003 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_6  |     0.003 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_7  |     0.004 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_9  |     0.006 |
+|     power2_lut_inst[2].mdata_out_0[2][0]_i_69     |     0.009 |
+|     power2_lut_inst[2].mdata_out_0[2][0]_i_96     |     0.010 |
+|     power2_lut_inst[2].mdata_out_0[2][0]_i_98     |     0.010 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_18 |     0.007 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_19 |     0.005 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_21 |     0.005 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_22 |     0.005 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_23 |     0.006 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_48 |     0.006 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_49 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_50 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_51 |     0.001 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_52 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_53 |     0.003 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_6  |     0.003 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_7  |     0.004 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_9  |     0.006 |
+|     power2_lut_inst[3].mdata_out_0[3][6]_i_101    |     0.010 |
+|     power2_lut_inst[3].mdata_out_0[3][6]_i_103    |     0.010 |
+|     power2_lut_inst[3].mdata_out_0[3][6]_i_74     |     0.009 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_21 |     0.007 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_22 |     0.005 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_24 |     0.005 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_25 |     0.005 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_26 |     0.006 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_53 |     0.006 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_54 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_55 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_56 |     0.001 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_57 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_58 |     0.003 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_6  |     0.003 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_7  |     0.004 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][6]_i_9  |     0.006 |
+|     power2_lut_inst[4].mdata_out_0[4][6]_i_70     |     0.009 |
+|     power2_lut_inst[4].mdata_out_0[4][6]_i_97     |     0.010 |
+|     power2_lut_inst[4].mdata_out_0[4][6]_i_99     |     0.010 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_20 |     0.006 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_21 |     0.005 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_22 |     0.005 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_24 |     0.005 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_25 |     0.007 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_51 |     0.003 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_52 |     0.002 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_53 |     0.002 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_54 |     0.001 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_55 |     0.002 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_56 |     0.006 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_6  |     0.003 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_7  |     0.006 |
+|     power2_lut_inst[4].mdata_out_0_reg[4][6]_i_9  |     0.004 |
+|     power2_lut_inst[5].mdata_out_0[5][0]_i_70     |     0.009 |
+|     power2_lut_inst[5].mdata_out_0[5][0]_i_97     |     0.010 |
+|     power2_lut_inst[5].mdata_out_0[5][0]_i_99     |     0.010 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_20 |     0.006 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_21 |     0.005 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_22 |     0.005 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_24 |     0.005 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_25 |     0.007 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_51 |     0.003 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_52 |     0.002 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_53 |     0.001 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_54 |     0.002 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_55 |     0.002 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_56 |     0.006 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_6  |     0.003 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_7  |     0.006 |
+|     power2_lut_inst[5].mdata_out_0_reg[5][0]_i_9  |     0.004 |
+|     power2_lut_inst[6].mdata_out_0[6][6]_i_70     |     0.009 |
+|     power2_lut_inst[6].mdata_out_0[6][6]_i_97     |     0.010 |
+|     power2_lut_inst[6].mdata_out_0[6][6]_i_99     |     0.010 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_20 |     0.006 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_21 |     0.005 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_22 |     0.005 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_24 |     0.005 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_25 |     0.007 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_51 |     0.003 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_52 |     0.002 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_53 |     0.001 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_54 |     0.002 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_55 |     0.002 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_56 |     0.006 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_6  |     0.003 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_7  |     0.006 |
+|     power2_lut_inst[6].mdata_out_0_reg[6][6]_i_9  |     0.004 |
+|     power2_lut_inst[7].mdata_out_0[7][0]_i_101    |     0.010 |
+|     power2_lut_inst[7].mdata_out_0[7][0]_i_72     |     0.009 |
+|     power2_lut_inst[7].mdata_out_0[7][0]_i_99     |     0.010 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_11 |     0.004 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_22 |     0.006 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_23 |     0.005 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_24 |     0.005 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_26 |     0.005 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_27 |     0.007 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_53 |     0.003 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_54 |     0.002 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_55 |     0.001 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_56 |     0.002 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_57 |     0.002 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_58 |     0.006 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_8  |     0.003 |
+|     power2_lut_inst[7].mdata_out_0_reg[7][0]_i_9  |     0.006 |
++---------------------------------------------------+-----------+
+
+

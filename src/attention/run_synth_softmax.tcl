@@ -44,49 +44,6 @@ set BW_1 [expr {1 + $m1_exp + $m1_man}]
 set BW_2 [expr {1 + $m2_exp + $m2_man}]
 set BW_3 [expr {1 + $m3_exp + $m3_man}]
 
-# Map to mxint_softmax parameters
-# DATA_IN_0_PRECISION_0 = BW_1
-# DATA_IN_0_PRECISION_1 = scale_width
-# DATA_IN_0_DIM = BW_2 (Assuming output width guides internal precision or similar, checking attention_fp usage)
-# In attention_fp.sv:
-# .DATA_IN_0_DIM(BW_3) ??? No wait.
-# Let's check attention_fp.sv usage:
-# .DATA_IN_0_PRECISION_0(BW_2), // Treating as bits
-# .DATA_IN_0_DIM(BW_3),
-# We need to reflect how it's used.
-# If we simply synth 'mxint_softmax' top level, we need to set its Generics.
-
-# mxint_softmax Params:
-# parameter DATA_IN_0_PRECISION_0 = 8,
-# parameter DATA_IN_0_PRECISION_1 = 8,
-# parameter DATA_IN_0_DIM = 8,
-# parameter DATA_IN_0_PARALLELISM = 1,
-# parameter DATA_OUT_0_PRECISION_0 = 8,
-# parameter DATA_OUT_0_PRECISION_1 = 8,
-# parameter DATA_OUT_0_DIM = 8,
-# parameter DATA_OUT_0_PARALLELISM = 1,
-# parameter string USE_DSP = "yes",
-# parameter string ACCUM_METHOD = "KULISCH"
-
-# Mapping from our sweep params:
-# Input is QKt (M1 format -> cast to M2 input format in attention_fp, let's assume M2 input format to be safe or M1?)
-# In attention_fp.sv:
-# Input to softmax is `QKt_2` which is `BW_2` width.
-# So Softmax Input Precision = BW_2.
-# Softmax Output Precision = BW_3 (Result of softmax, input to V matmul).
-# Wait, let's re-verify attention_fp.sv logic. 
-# QKt (BW_1) -> QKt_2 (BW_2) -> Softmax -> soft_res (BW_3).
-# So:
-# DATA_IN_0_PRECISION_0 = BW_2
-# DATA_IN_0_DIM = BW_3 (This seems to be used for internal accumulation width or similar in mase? or just output dim?)
-# DATA_OUT_0_PRECISION_0 = BW_3
-
-# We will use:
-# IN_PREC = BW_2
-# OUT_PREC = BW_3
-# DIM = BW_3 (Matching attention_fp instantiation)
-# PARALLELISM = k
-
 set generics "DATA_IN_0_PRECISION_0=$BW_2 DATA_IN_0_PRECISION_1=$scale_width DATA_IN_0_DIM=$BW_3 DATA_IN_0_PARALLELISM=$k DATA_OUT_0_PRECISION_0=$BW_3 DATA_OUT_0_PRECISION_1=$scale_width DATA_OUT_0_DIM=$BW_3 DATA_OUT_0_PARALLELISM=$k USE_DSP=\"$m2_dsp\" ACCUM_METHOD=$accum_method2"
 
 # Set the number of threads for Vivado
