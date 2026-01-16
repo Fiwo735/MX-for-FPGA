@@ -97,7 +97,7 @@ class AccumMethod(Enum):
   FastTwoSum = "FASTTWOSUM"
 
 class DesignConfig:
-  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
+  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k1=-1, k2=-1, k3=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
     self.name = name
     
     self.S_q = S_q
@@ -105,7 +105,9 @@ class DesignConfig:
     self.d_kq = d_kq
     self.d_v = d_v
     
-    self.k = k
+    self.k1 = k1
+    self.k2 = k2
+    self.k3 = k3
     self.scale_width = scale_width
     
     self.M1_bits = MXFPBits(M1_E, M1_M)
@@ -129,9 +131,9 @@ class DesignConfig:
   def get_bert_flags(self):
     return (
       "--model_id 'meta-llama/Llama-3.2-1B' "
-      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k1}}}\' '
+      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k2}}}\' '
+      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k3}}}\' '
       f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
       f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
       f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
@@ -1105,7 +1107,7 @@ if __name__ == "__main__":
   
   # # INT Sweep (2-16)
   # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, k, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S_q in [4]
   #   for S_kv in [4]
@@ -1127,7 +1129,7 @@ if __name__ == "__main__":
 
   # # FP Sweep (2-16)
   # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, k, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S_q in [4]
   #   for S_kv in [4]
@@ -1150,7 +1152,7 @@ if __name__ == "__main__":
 
   # # int baseline
   # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S, S, d, d, k, k, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S in [8]
   #   for d in [8]
@@ -1167,7 +1169,7 @@ if __name__ == "__main__":
 
   # # fp baseline (the standard)
   # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S, S, d, d, k, k, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S in [8]
   #   for d in [8]
@@ -1189,7 +1191,7 @@ if __name__ == "__main__":
 
   # Analatical model: 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["mxint_softmax"]
     for S in [4, 8, 16]
     for d in [4, 8, 16]
@@ -1202,7 +1204,7 @@ if __name__ == "__main__":
   ]
 
   # designs_to_synthesise = [
-  #   DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #   DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
   #   for name in ["mxint_softmax"]
   #   for S in [4]
   #   for d in [4]
@@ -1226,7 +1228,7 @@ if __name__ == "__main__":
   
   # # Analatical model: 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
     for S in [2, 4, 8, 16]
     for d in [2, 4, 8, 16]
@@ -1238,7 +1240,7 @@ if __name__ == "__main__":
   ]
 
   # designs_to_synthesise = [
-  #     DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #     DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
   #     for name in ["matmul_fp"]
   #     for S in [4]
   #     for d in [4]
