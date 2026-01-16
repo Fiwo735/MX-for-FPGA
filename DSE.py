@@ -129,19 +129,32 @@ class DesignConfig:
     )
     
   def get_bert_flags(self):
-    return (
-      "--model_id 'meta-llama/Llama-3.2-1B' "
-      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k1}}}\' '
-      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k2}}}\' '
-      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k3}}}\' '
-      f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
-      f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
-      f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
-    )
+    out = "--model_id 'meta-llama/Llama-3.2-1B' "
+
+    if self.M1_bits.exp_bits == 0:
+      out += f'--config \'k_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M1_bits.mant_bits},"group_size":{self.k1}}}\' '
+    else:
+      out += f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k1}}}\' '
+
+    if self.M2_bits.exp_bits == 0:
+      out += f'--config \'s_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M2_bits.mant_bits},"group_size":{self.k2}}}\' '
+    else:
+      out += f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k2}}}\' '
+
+    if self.M3_bits.exp_bits == 0:
+      out += f'--config \'v_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M3_bits.mant_bits},"group_size":{self.k3}}}\' '
+    else:
+      out += f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k3}}}\' '
+    
+    out += f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
+    out += f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
+    out += f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
+
+    return out
 
   def __repr__(self):
     return (
-      f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k_{self.k}_"
+      f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k1_{self.k1}_k2_{self.k2}_k3_{self.k3}_"
       f"scale_width_{self.scale_width}_M1_E_{self.M1_bits.exp_bits}_M1_M_{self.M1_bits.mant_bits}_"
       f"M2_E_{self.M2_bits.exp_bits}_M2_M_{self.M2_bits.mant_bits}_M3_E_{self.M3_bits.exp_bits}_M3_M_{self.M3_bits.mant_bits}_"
       f"ACCUM_METHOD_{self.accum_method1.value}_{self.accum_method2.value}_{self.accum_method3.value}_"
@@ -154,7 +167,9 @@ class DesignConfig:
     s += f"  S_kv: {self.S_kv}\n"
     s += f"  d_kq: {self.d_kq}\n"
     s += f"  d_v: {self.d_v}\n"
-    s += f"  k: {self.k}\n"
+    s += f"  k1: {self.k1}\n"
+    s += f"  k2: {self.k2}\n"
+    s += f"  k3: {self.k3}\n"
     s += f"  scale_width: {self.scale_width}\n"
     s += f"  M1 bits: {self.M1_bits}\n"
     s += f"  M2 bits: {self.M2_bits}\n"
@@ -165,7 +180,7 @@ class DesignConfig:
     return s
     
   def get_vivado_tclargs(self):
-    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
+    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k1} {self.k2} {self.k3} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
   
   def get_tcl_filename(self):
     if self.name == "attention_fp":
@@ -201,22 +216,24 @@ class DesignConfig:
     S_kv = int(details.group(3))
     d_kq = int(details.group(4))
     d_v = int(details.group(5))
-    k = int(details.group(6))
-    scale_width = int(details.group(7))
-    M1_E = int(details.group(8))
-    M1_M = int(details.group(9))
-    M2_E = int(details.group(10))
-    M2_M = int(details.group(11))
-    M3_E = int(details.group(12))
-    M3_M = int(details.group(13))
-    accum_method1 = AccumMethod(details.group(14))
-    accum_method2 = AccumMethod(details.group(15))
-    accum_method3 = AccumMethod(details.group(16))
-    m1_dsp = details.group(17)
-    m2_dsp = details.group(18)
-    m3_dsp = details.group(19)
+    k1 = int(details.group(6))
+    k2 = int(details.group(7))
+    k3 = int(details.group(8))
+    scale_width = int(details.group(9))
+    M1_E = int(details.group(10))
+    M1_M = int(details.group(11))
+    M2_E = int(details.group(12))
+    M2_M = int(details.group(13))
+    M3_E = int(details.group(14))
+    M3_M = int(details.group(15))
+    accum_method1 = AccumMethod(details.group(16))
+    accum_method2 = AccumMethod(details.group(17))
+    accum_method3 = AccumMethod(details.group(18))
+    m1_dsp = details.group(19)
+    m2_dsp = details.group(20)
+    m3_dsp = details.group(21)
     
-    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
+    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k1=k1, k2=k2, k3=k3, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
 
 class SynthesisResult:
   def __init__(self, design_config, power, timing, utilisation, accuracy):
@@ -562,6 +579,7 @@ class SynthesisHandler:
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
     accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
+    print(accuracy_cmd)
 
     try:
         completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
@@ -1103,158 +1121,27 @@ if __name__ == "__main__":
       # For w >= 10, use E5 (converging to FP16)
       return (5, w - 6)
 
-  designs_to_synthesise = []
-  
-  # # INT Sweep (2-16)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, k, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S_q in [4]
-  #   for S_kv in [4]
-  #   for d_kq in [4]
-  #   for d_v in [4]
-  #   for k in [2]
-  #   for scale_width in [8]
-  #   for width in range(2, 17) # INT 2-16
-  #   for M1_E, M1_M in [(0, width-1)]
-  #   for M2_E, M2_M in [(0, width-1)]
-  #   for M3_E, M3_M in [(0, width-1)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-
-  # # FP Sweep (2-16)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, k, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S_q in [4]
-  #   for S_kv in [4]
-  #   for d_kq in [4]
-  #   for d_v in [4]
-  #   for k in [2]
-  #   for scale_width in [8]
-  #   for width in range(2, 17) # FP 2-16
-  #   for exp_width, man_width in [get_fp_config(width)] 
-  #   for M1_E, M1_M in [(exp_width, man_width)]
-  #   for M2_E, M2_M in [(exp_width, man_width)]
-  #   for M3_E, M3_M in [(exp_width, man_width)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-
-  # # int baseline
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, k, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S in [8]
-  #   for d in [8]
-  #   for k in [8]
-  #   for scale_width in [8]
-  #   for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-
-  # # fp baseline (the standard)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, k, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S in [8]
-  #   for d in [8]
-  #   for k in [8]
-  #   for scale_width in [8]
-  #   for M_E, M_M in [(5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-  
-
-
-
-
 
   # Analatical model: 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-    for name in ["mxint_softmax"]
-    for S in [4, 8, 16]
-    for d in [4, 8, 16]
-    # for k in [8]
+    DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M1_E, M1_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["attention_fp"]
+    for S in [2048]
+    for d in [64]
+    for k1 in [32]
+    for k2 in [32]
+    for k3 in [32]
     for scale_width in [8]
-    for M1_E, M1_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
-    for M2_E, M2_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
-    for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan]
+    for M1_E, M1_M in [(0, 8), (0, 6), (0, 4), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
 
-  # designs_to_synthesise = [
-  #   DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-  #   for name in ["mxint_softmax"]
-  #   for S in [4]
-  #   for d in [4]
-  #   # for k in [8]
-  #   for scale_width in [8]
-  #   for M1_E, M1_M in [(e, 2) for e in range(0, 10, 2)]
-  #   for M2_E, M2_M in [(e, 2) for e in range(0, 10, 2)]
-  #   for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
-  #   for m1_dsp in ["auto"]
-  # ]
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax", max_workers=args.max_workers)
-  for i in range(50):
-    synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
-    print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
-  
-  
-  
-  
-  
-  
-  # # Analatical model: 
-  designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-    for name in ["matmul_fp"]
-    for S in [2, 4, 8, 16]
-    for d in [2, 4, 8, 16]
-    # for k in [8]
-    for scale_width in [8]
-    for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
-    for accum_method_1 in [AccumMethod.Kahan]
-    for m1_dsp in ["auto"]
-  ]
-
-  # designs_to_synthesise = [
-  #     DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-  #     for name in ["matmul_fp"]
-  #     for S in [4]
-  #     for d in [4]
-  #     # for k in [8]
-  #     for scale_width in [8]
-  #     for M_E, M_M in [(e, 2) for e in range(0, 10, 2)]
-  #     for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
-  #     for m1_dsp in ["auto"]
-  #   ]
-
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul", max_workers=args.max_workers)
-  for i in range(50):
-    synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
-    print(f"========================================================\n========================================================\n========================================================\n MATMUL RUN {i}\n========================================================\n========================================================\n========================================================\n")
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output", max_workers=args.max_workers)
+  # for i in range(50):
+  #   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  #   print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
   
   
   
@@ -1264,7 +1151,7 @@ if __name__ == "__main__":
   
   
   
-  # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
+  synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   # synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
@@ -1274,8 +1161,8 @@ if __name__ == "__main__":
 
   # # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
   
-  for y_type in ["LUTs", "FFs", "throughput"]:
-    synthesis_handler.find_fit(y_type, degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+  # for y_type in ["LUTs", "FFs", "throughput"]:
+  #   synthesis_handler.find_fit(y_type, degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
     
   # synthesis_handler.find_fit_with_gplearn("LUTs",       population_size=5000, generations=20, parsimony_coefficient=0.0001)
-  synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)
+  # synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)

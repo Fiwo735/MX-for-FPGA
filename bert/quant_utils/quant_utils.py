@@ -79,6 +79,9 @@ class MXINTQuantizer(Quantizer):
         self.signed = signed
         self.symmetric = symmetric
 
+        # Set calibrated to true if no scale calibration required
+        self.calibrated = not self.static_scale
+
         # Other members
         self.register_buffer("scale_calib", torch.tensor(1))
 
@@ -273,6 +276,8 @@ class MXFPQuantizer(Quantizer):
 
         # Inferred parameters:
         self.exp_bias = 2**(exp_w-1)-1
+        # Set calibrated to true if no scale calibration required
+        self.calibrated = not self.static_scale
 
         # Other members
         self.register_buffer("scale_calib", torch.tensor(1))
@@ -645,6 +650,7 @@ class IntQuantizer(Quantizer):
 
 
 q_reg = {
+    "MXINTQuantizer": MXINTQuantizer,
     "MXFPQuantizer": MXFPQuantizer,
     "IntQuantizer": IntQuantizer,
 }
