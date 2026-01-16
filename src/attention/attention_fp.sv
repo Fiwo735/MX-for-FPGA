@@ -165,7 +165,7 @@ module attention_fp #(
                 .ACCUM_METHOD(ACCUM_METHOD2)
             ) u_curr_softmax (
                 .rst(i_rst),
-                .clk(i_clk),
+                .i_clk(i_clk),
                 .mdata_in_0(sm_in_slice), // Connected via temp variable
                 .edata_in_0(S_QKt_scaled[i][j]),
                 .data_in_0_valid(1'b1),
