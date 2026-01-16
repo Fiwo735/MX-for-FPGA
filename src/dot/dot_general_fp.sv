@@ -60,6 +60,26 @@ module dot_general_fp #(
     for(genvar i=0; i<(block_count); i++) begin
         assign dot_scales[i] = i_S[i] + i_T[i];
     end
+    
+    // Latency compensation for dot_fp pipeline
+    // dot_fp latency = 1 (mult reg) + $clog2(k) (vec_sum_int tree)
+    localparam DOT_FP_LATENCY = 1 + $clog2(k);
+    logic [scale_width-1:0] dot_scales_delayed [block_count];
+    
+    // Shift register to delay scales
+    if (DOT_FP_LATENCY > 0) begin : scale_delay
+        logic [scale_width-1:0] delay_line [DOT_FP_LATENCY][block_count];
+        
+        always_ff @(posedge i_clk) begin
+            delay_line[0] <= dot_scales;
+            for(int l=1; l<DOT_FP_LATENCY; l++) begin
+                delay_line[l] <= delay_line[l-1];
+            end
+        end
+        assign dot_scales_delayed = delay_line[DOT_FP_LATENCY-1];
+    end else begin
+        assign dot_scales_delayed = dot_scales;
+    end
 
     // Sum across blocks (Tree Reduction)
     // We reuse the existing tree structure from dot_general_int
@@ -71,10 +91,15 @@ module dot_general_fp #(
                 // Declare adders.
                 logic signed [dp_width-1:0] p0_add0   [block_count>>(1+i)];
                 logic signed [dp_width-1:0] p0_add1   [block_count>>(1+i)];
-                logic signed [dp_width-1:0] p0_sum    [block_count>>(1+i)];
+                
+                logic signed [dp_width-1:0] p0_sum_comb    [block_count>>(1+i)];
+                logic signed [dp_width-1:0] p0_sum         [block_count>>(1+i)];
+                
                 logic signed     [scale_width-1:0] p0_scale0 [block_count>>(1+i)];
                 logic signed     [scale_width-1:0] p0_scale1 [block_count>>(1+i)];
-                logic signed     [scale_width-1:0] p0_scale  [block_count>>(1+i)];
+                
+                logic signed     [scale_width-1:0] p0_scale_comb  [block_count>>(1+i)];
+                logic signed     [scale_width-1:0] p0_scale       [block_count>>(1+i)];
 
                 for(genvar j=0; j<block_count>>(1+i); j++) begin
                     add_nrm #(
@@ -84,9 +109,14 @@ module dot_general_fp #(
                         .i_op1(p0_add1[j]),
                         .i_scale0(p0_scale0[j]),
                         .i_scale1(p0_scale1[j]),
-                        .out(p0_sum[j]),
-                        .o_scale(p0_scale[j])
+                        .out(p0_sum_comb[j]),
+                        .o_scale(p0_scale_comb[j])
                     );
+                    
+                    always_ff @(posedge i_clk) begin
+                        p0_sum[j]   <= p0_sum_comb[j];
+                        p0_scale[j] <= p0_scale_comb[j];
+                    end
                 end
 
                 // Connections to previous layers.
@@ -101,8 +131,8 @@ module dot_general_fp #(
                     for(genvar j=0; j<(block_count>>(1+i)); j++) begin
                         assign p0_add0[j] = dot_out[2*j];
                         assign p0_add1[j] = dot_out[2*j+1];
-                        assign p0_scale0[j] = dot_scales[2*j];
-                        assign p0_scale1[j] = dot_scales[2*j+1];
+                        assign p0_scale0[j] = dot_scales_delayed[2*j];
+                        assign p0_scale1[j] = dot_scales_delayed[2*j+1];
                     end
                 end
             end
@@ -110,7 +140,7 @@ module dot_general_fp #(
             assign o_scale = tree_add[tree_depth-1].p0_scale[0];
         end else begin
             assign o_dp = dot_out[0][out_width-1:0];
-            assign o_scale = dot_scales[0];
+            assign o_scale = dot_scales_delayed[0];
         end
     endgenerate
 

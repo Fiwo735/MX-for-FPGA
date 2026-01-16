@@ -7,6 +7,7 @@ module vec_sum_int #(
     parameter sum_width  = bit_width + $clog2(length),
     parameter tree_depth = $clog2(length)
 )(
+    input  logic i_clk,
     input  logic signed [bit_width-1:0] i_vec [length],
     output logic signed [sum_width-1:0] o_sum
 );
@@ -16,10 +17,16 @@ module vec_sum_int #(
         // Declare adders.
         logic signed [bit_width+i-1:0] p0_add0 [length>>(1+i)];
         logic signed [bit_width+i-1:0] p0_add1 [length>>(1+i)];
-        logic signed   [bit_width+i:0] p0_sum  [length>>(1+i)];
+        
+        logic signed [bit_width+i:0]   p0_sum_comb  [length>>(1+i)];
+        logic signed [bit_width+i:0]   p0_sum       [length>>(1+i)];
 
         for(genvar j=0; j<length>>(1+i); j++) begin
-            assign p0_sum[j] = p0_add0[j] + p0_add1[j];
+            assign p0_sum_comb[j] = p0_add0[j] + p0_add1[j];
+            
+            always_ff @(posedge i_clk) begin
+                p0_sum[j] <= p0_sum_comb[j];
+            end
         end
 
         // Connections to previous layers.
@@ -37,7 +44,6 @@ module vec_sum_int #(
     end
 
     // Assign outputs.
-    // assign o_sum = tree_add[tree_depth-1].p0_sum[0];
     assign o_sum = tree_add[tree_depth-1].p0_sum[0][sum_width-1:0]; // Truncate to sum_width
     
 

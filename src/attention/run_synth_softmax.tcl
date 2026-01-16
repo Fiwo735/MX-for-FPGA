@@ -102,6 +102,7 @@ set prefix "${outputDir}/${prefix_name}_S_q_${S_q}_S_kv_${S_kv}_d_kq_${d_kq}_d_v
 # Read sources - Include everything for dependency resolution
 read_verilog    [glob ./src/attention/attention_fp.sv]
 read_verilog    [glob ./src/attention/matmul_fp.sv]
+read_verilog    [glob ./src/attention/mxoperators/mxint_softmax.sv]
 read_verilog    [glob ./src/dot/dot_general_fp.sv]
 read_verilog    [glob ./src/dot/dot_fp.sv]
 read_verilog    [glob ./src/util/arith/mul_fp.sv]

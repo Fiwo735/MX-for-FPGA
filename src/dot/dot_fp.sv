@@ -20,8 +20,15 @@ module dot_fp #(
     output logic signed [out_width-1:0] o_dp
 );
 
-    // Perform multiplications.
+    // Elementwise multiplication of vectors.
+    logic signed [prd_width-1:0] p0_prd_comb [k];
     logic signed [prd_width-1:0] p0_prd [k];
+    
+    always_ff @(posedge i_clk) begin
+        for(int i=0; i<k; i++) begin
+             p0_prd[i] <= p0_prd_comb[i];
+        end
+    end
 
     vec_mul_fp #(
         .exp_width(exp_width),
@@ -31,7 +38,7 @@ module dot_fp #(
     ) u_vec_mul (
         .i_vec_a(i_vec_a),
         .i_vec_b(i_vec_b),
-        .o_prd(p0_prd)
+        .o_prd(p0_prd_comb)
     );
 
     // Calculate sum.
@@ -44,6 +51,7 @@ module dot_fp #(
                 .length(k),
                 .sum_width(out_width) // Enforce output width
             ) u_tree_add (
+                .i_clk(i_clk),
                 .i_vec(p0_prd),
                 .o_sum(p0_sum)
             );
