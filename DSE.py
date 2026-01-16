@@ -329,11 +329,12 @@ class SynthesisResult:
     return s
 
 class SynthesisHandler:
-  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", synth_output_dir="synth_output", clock_period_ns=5):
+  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", synth_output_dir="synth_output", clock_period_ns=5, max_workers=4):
     self.results = []
     self.designs_to_synthesise = designs_to_synthesise
     self.hdl_dir = hdl_dir
     self.clock_period_ns = clock_period_ns
+    self.max_workers = max_workers
 
     # Max frequency for the board, used to filter out results with invalid frequencies
     # TODO placeholder
@@ -421,7 +422,7 @@ class SynthesisHandler:
       print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
     
     jobs = []
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
       for design_id, design in enumerate(self.designs_to_synthesise):
         # time.sleep(design_id)
         if self.check_if_design_is_invalid(design):
@@ -1079,6 +1080,7 @@ if __name__ == "__main__":
   parser = ArgumentParser(description='Run DSE for attention module synthesis')
   parser.add_argument('--dry', action='store_true', help='Dry run, do not run synthesis')
   parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+  parser.add_argument('--max-workers', type=int, default=4, help='Maximum number of parallel synthesis processes')
   args = parser.parse_args()
   
   # Combined Sweep:
@@ -1180,27 +1182,89 @@ if __name__ == "__main__":
   #   for m3_dsp in ["auto"]
   # ]
   
+
+
+
+
+
   # Analatical model: 
-  designs_to_synthesise += [
+  designs_to_synthesise = [
     DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["mxint_softmax"]
     for S in [4, 8, 16]
-    for d in [4, 8,16]
+    for d in [4, 8, 16]
     # for k in [8]
     for scale_width in [8]
     for M1_E, M1_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
     for M2_E, M2_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
-    for accum_method_1 in [AccumMethod.Kulisch]
+    for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan]
     for m1_dsp in ["auto"]
   ]
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
-  for i in range(1):
+  # designs_to_synthesise = [
+  #   DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #   for name in ["mxint_softmax"]
+  #   for S in [4]
+  #   for d in [4]
+  #   # for k in [8]
+  #   for scale_width in [8]
+  #   for M1_E, M1_M in [(e, 2) for e in range(0, 10, 2)]
+  #   for M2_E, M2_M in [(e, 2) for e in range(0, 10, 2)]
+  #   for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
+  #   for m1_dsp in ["auto"]
+  # ]
+
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax", max_workers=args.max_workers)
+  for i in range(50):
     synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
-    print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
+    print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
+  
+  
+  
+  
+  
+  
+  # # Analatical model: 
+  designs_to_synthesise = [
+    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["matmul_fp"]
+    for S in [2, 4, 8, 16]
+    for d in [2, 4, 8, 16]
+    # for k in [8]
+    for scale_width in [8]
+    for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for accum_method_1 in [AccumMethod.Kahan]
+    for m1_dsp in ["auto"]
+  ]
+
+  # designs_to_synthesise = [
+  #     DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #     for name in ["matmul_fp"]
+  #     for S in [4]
+  #     for d in [4]
+  #     # for k in [8]
+  #     for scale_width in [8]
+  #     for M_E, M_M in [(e, 2) for e in range(0, 10, 2)]
+  #     for accum_method_1 in [AccumMethod.Kulisch, AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
+  #     for m1_dsp in ["auto"]
+  #   ]
+
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul", max_workers=args.max_workers)
+  for i in range(50):
+    synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+    print(f"========================================================\n========================================================\n========================================================\n MATMUL RUN {i}\n========================================================\n========================================================\n========================================================\n")
+  
+  
+  
+  
+  
+  
+  
+  
+  
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
-  synthesis_handler.find_and_process_results()
+  # synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
 
   # pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
