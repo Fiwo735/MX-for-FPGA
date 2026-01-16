@@ -10,12 +10,74 @@ import time
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import statsmodels.api as sm
 from enum import Enum
 from datetime import datetime
 from argparse import ArgumentParser
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures, StandardScaler
+from gplearn.genetic import SymbolicRegressor
 
 DEBUG_COUNTER = 0
+
+def gplearn_expr_to_math(expr):
+    """
+    Convert a gplearn prefix expression (e.g. mul(add(X0, X1), log(X2)))
+    into a human-readable math expression.
+    """
+
+    def split_args(s):
+        depth = 0
+        for i, c in enumerate(s):
+            if c == ',' and depth == 0:
+                return s[:i], s[i+1:]
+            elif c == '(':
+                depth += 1
+            elif c == ')':
+                depth -= 1
+        raise ValueError(f"Cannot split arguments: {s}")
+
+    def parse(e):
+        e = e.strip()
+
+        # Variable or constant
+        if not '(' in e:
+            return e
+
+        op, rest = e.split('(', 1)
+        rest = rest[:-1]  # strip trailing ')'
+
+        if op == 'add':
+            a, b = split_args(rest)
+            return f"({parse(a)} + {parse(b)})"
+
+        if op == 'sub':
+            a, b = split_args(rest)
+            return f"({parse(a)} − {parse(b)})"
+
+        if op == 'mul':
+            a, b = split_args(rest)
+            return f"({parse(a)} · {parse(b)})"
+
+        if op == 'div':
+            a, b = split_args(rest)
+            return f"({parse(a)} ÷ {parse(b)})"
+
+        if op == 'log':
+            return f"log({parse(rest)})"
+
+        if op == 'sqrt':
+            return f"√({parse(rest)})"
+
+        if op == 'neg':
+            return f"−({parse(rest)})"
+
+        # Fallback
+        return e
+
+    return parse(expr)
 
 class MXFPBits:
   def __init__(self, exp_bits, mant_bits):
@@ -161,17 +223,31 @@ class SynthesisResult:
     self.utilisation = utilisation
     self.accuracy = accuracy
     
-  def get_aggregated_resource_usage(self, keys=None):
+    # TODO placeholder
+    self.resource_multipliers = {
+      "LUTs": 30.0,
+      "FFs": 15.0,
+      "BRAMs": 45.0,
+      "DSPs": 60.0,
+    }
+    
+  def get_aggregated_resource_usage(self, keys=None, use_multipliers=False):
     if keys is None:
       keys = SynthesisHandler.get_available_fpga_resources().keys()
       
-    return sum(
-      100 * self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
-      for key in keys
-    ) / len(keys)
+    utilisation_sum = 0.0
     
-  def get_aggregated_resource_multiplier(self):
-    return 30 # TODO placeholder
+    for key in keys:
+      current_utilisation = self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
+      if use_multipliers:
+        current_utilisation *= self.resource_multipliers[key]
+        
+      utilisation_sum += current_utilisation
+      
+    return utilisation_sum / len(keys)
+  
+  def get_throughput_multiplier(self):
+    return 1 # TODO placeholder
   
   @classmethod
   def create_ideal_result(cls, all_results):
@@ -252,7 +328,7 @@ class SynthesisResult:
     return s
 
 class SynthesisHandler:
-  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", clock_period_ns=5):
+  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", synth_output_dir="synth_output", clock_period_ns=5):
     self.results = []
     self.designs_to_synthesise = designs_to_synthesise
     self.hdl_dir = hdl_dir
@@ -262,18 +338,24 @@ class SynthesisHandler:
     # Technically, max frequency is 500 MHz, but we use 400 MHz to be safe
     self.board_max_freq = 500 # MHz
     
-    self.synth_output_dir = os.path.join(self.hdl_dir, "synth_output")
+    self.synth_output_dir = os.path.join(self.hdl_dir, synth_output_dir)
     
     self._time_format = "%Y%m%d_%H%M"
     
+    self.powers = []
+    self.resource_usages = []
+    self.throughputs = []
+    self.accuracies = []
+    
   @staticmethod
   def get_available_fpga_resources(key=None):
-    # Device: xcu250figd2104-2L
+    # Device: xcv80-lsva4737-2MHP-e-S
+    # TODO update according to actual device
     AVAILABLE_FPGA_RESOURCES = {
       "LUTs": 1728000,
       "FFs": 3456000,
-      "CARRY8": 216000,
-      "Muxes": 864000+432000+216000,
+      # "CARRY8": 216000,
+      # "Muxes": 864000+432000+216000,
       "BRAMs": 2688,
       "DSPs": 12288,
     }
@@ -340,7 +422,7 @@ class SynthesisHandler:
     jobs = []
     with ProcessPoolExecutor() as executor:
       for design_id, design in enumerate(self.designs_to_synthesise):
-        time.sleep(design_id)
+        # time.sleep(design_id)
         if self.check_if_design_is_invalid(design):
           if verbose:
             print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
@@ -391,12 +473,12 @@ class SynthesisHandler:
     with open(file_path, 'r') as file:
       text = file.read()
       
-    timing_match = re.search(r"\n\s*([-\d\.]+)\s+([-\d\.]+)\s+\d+\s+\d+\s+([-\d\.]+)\s+([-\d\.]+)\s+\d+\s+\d+", text)
+    timing_match = re.search(r"\n\s*([-?\d\.]+)\s+([-?\d\.]+)\s+\d+\s+\d+\s+([-?\d\.]+)\s+([-?\d\.]+)\s+\d+\s+\d+", text)
     
-    wns = float(timing_match.group(1)) if timing_match else None
-    tns = float(timing_match.group(2)) if timing_match else None
-    whs = float(timing_match.group(3)) if timing_match else None
-    ths = float(timing_match.group(4)) if timing_match else None
+    wns = float(timing_match.group(1)) if timing_match else 0
+    tns = float(timing_match.group(2)) if timing_match else 0
+    whs = float(timing_match.group(3)) if timing_match else 0
+    ths = float(timing_match.group(4)) if timing_match else 0
     
     no_timing_violation = wns >= 0
     if no_timing_violation:
@@ -415,24 +497,25 @@ class SynthesisHandler:
 
     patterns = {
         "LUTs": r"\|\s*CLB LUTs\*?\s*\|\s*(\d+)",
-        "FFs": r"\|\s*CLB Registers\s*\|\s*(\d+)",
-        "CARRY8": r"\|\s*CARRY8\s*\|\s*(\d+)",
-        "F7_Muxes": r"\|\s*F7 Muxes\s*\|\s*(\d+)",
-        "F8_Muxes": r"\|\s*F8 Muxes\s*\|\s*(\d+)",
-        "F9_Muxes": r"\|\s*F9 Muxes\s*\|\s*(\d+)",
+        "FFs": r"\|\s*Registers\s*\|\s*(\d+)",
+        # "CARRY8": r"\|\s*CARRY8\s*\|\s*(\d+)",
+        # "F7_Muxes": r"\|\s*F7 Muxes\s*\|\s*(\d+)",
+        # "F8_Muxes": r"\|\s*F8 Muxes\s*\|\s*(\d+)",
+        # "F9_Muxes": r"\|\s*F9 Muxes\s*\|\s*(\d+)",
         "BRAMs": r"\|\s*Block RAM Tile\s*\|\s*(\d+)",
-        "DSPs": r"\|\s*DSPs\s*\|\s*(\d+)"
+        "DSPs": r"\|\s*DSP Slices\s*\|\s*(\d+)"
     }
 
-    total_muxes = 0
+    # total_muxes = 0
     for key, pattern in patterns.items():
         match = re.search(pattern, text)
-        if key in ["F7_Muxes", "F8_Muxes", "F9_Muxes"]:
-            total_muxes += int(match.group(1)) if match else 0
-        else:
-            results[key] = int(match.group(1)) if match else 0
+        # if key in ["F7_Muxes", "F8_Muxes", "F9_Muxes"]:
+        #     total_muxes += int(match.group(1)) if match else 0
+        # else:
+        #     results[key] = int(match.group(1)) if match else 0
+        results[key] = int(match.group(1)) if match else 0
 
-    results["Muxes"] = total_muxes
+    # results["Muxes"] = total_muxes
 
     return results
   
@@ -445,7 +528,7 @@ class SynthesisHandler:
       accuracy_match = re.search(r"Perplexity:\s*(\d+\.\d+)", text)
       accuracy = float(accuracy_match.group(1))
     except FileNotFoundError:
-      print(f"Accuracy report file not found: {file_path}")
+      # print(f"Accuracy report file not found: {file_path}")
       # TODO placeholder
       accuracy = random.Random(DEBUG_COUNTER).uniform(1.0, 10.0)
       DEBUG_COUNTER += 1
@@ -483,7 +566,7 @@ class SynthesisHandler:
     except Exception as e:
         print(f"An unknown error occurred while running accuracy measurement for {design}: {e}")
     
-  def _process_results(self, design_str, date_time):
+  def _process_result(self, design_str, date_time):
     file_path = os.path.join(self.synth_output_dir, f"{design_str}_time_{date_time.strftime(self._time_format)}")
     design = DesignConfig.from_str(design_str)
     
@@ -539,6 +622,7 @@ class SynthesisHandler:
       # Match the filename against the regex
       m = pattern.match(filename)
       # print(pattern)
+      # print()
       if not m:
         print(f"Filename {filename} does not match expected pattern, skipping.")
         continue
@@ -557,12 +641,23 @@ class SynthesisHandler:
         matches[matched_str] = result_date_time
         # print(f"Updated match with newer datetime: {matched_str}")
 
+    print (f"Found {len(matches)} synthesis results in {directory}.")
     return matches
   
   def find_and_process_results(self):  
     matches = self._find_results(self.synth_output_dir)
     for design_str, date_time in matches.items():
-      self._process_results(design_str, date_time)
+      self._process_result(design_str, date_time)
+    
+    self.designs = [r.design_config for r in self.results]
+    self.powers = [r.power['total'] for r in self.results]
+    self.resource_usages = [r.get_aggregated_resource_usage(use_multipliers=True) for r in self.results]
+    self.LUTs = [r.get_aggregated_resource_usage(["LUTs"], use_multipliers=True) for r in self.results]
+    self.FFs = [r.get_aggregated_resource_usage(["FFs"], use_multipliers=True) for r in self.results]
+    self.BRAMs = [r.get_aggregated_resource_usage(["BRAMs"], use_multipliers=True) for r in self.results]
+    self.DSPs = [r.get_aggregated_resource_usage(["DSPs"], use_multipliers=True) for r in self.results]
+    self.throughputs = [r.timing['max_freq'] * r.get_throughput_multiplier() for r in self.results]
+    self.accuracies = [r.accuracy for r in self.results]
    
   def find_pareto_optimal(self, weights):
     if not self.results:
@@ -644,21 +739,12 @@ class SynthesisHandler:
     return pareto
 
 
-  def plot_results(self, directory="./plots", plot_file_format="svg"):
-    # color_values = np.array([r.design_config.bit_width for r in self.results])
+  def plot_perplexity(self, directory="./plots", plot_file_format="svg"):
     color_values = np.array([r.design_config.get_total_bits() for r in self.results])
-    # color_values = np.array([6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
-    designs = [r.design_config for r in self.results]
-    resource_usages = [synth_result.get_aggregated_resource_usage() * synth_result.get_aggregated_resource_multiplier() for synth_result in self.results]
-    # powers = [synth_result.power['total'] for synth_result in self.results]
-    frequencies = [synth_result.timing['max_freq'] for synth_result in self.results]
-    throughputs = [freq * 1 for freq in frequencies] # TODO Placeholder
-    accuracies = [synth_result.accuracy for synth_result in self.results]
     
     self._plot(
-      designs=designs,
-      x=resource_usages,
-      y=accuracies,
+      x=self.resource_usages,
+      y=self.accuracies,
       color_values=color_values,
       xlabel="Resource Usage (%)",
       ylabel="Perplexity",
@@ -669,9 +755,8 @@ class SynthesisHandler:
     )
     
     self._plot(
-      designs=designs,
-      x=throughputs,
-      y=accuracies,
+      x=self.throughputs,
+      y=self.accuracies,
       color_values=color_values,
       xlabel="Throughput (T/s)",
       ylabel="Perplexity",
@@ -681,7 +766,7 @@ class SynthesisHandler:
       show_colorbar=True
     )
 
-  def _plot(self, designs, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False, show_colorbar=True):
+  def _plot(self, x, y, color_values, xlabel, ylabel, title, filename, directory, do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False, show_colorbar=True):
     # Differentiate designs by block_size k
     marker_map = {
       "KULISCH": "o",
@@ -701,7 +786,7 @@ class SynthesisHandler:
     fig, ax = plt.subplots(figsize=figsize)
     plotted_markers = {}
 
-    for design, xi, yi, cval in zip(designs, x, y, color_values):
+    for design, xi, yi, cval in zip(self.designs, x, y, color_values):
       accum_method = design.accum_method1.value
       label = f"{accum_method.capitalize()}"
       marker = marker_map.get(accum_method, "s")
@@ -825,6 +910,80 @@ class SynthesisHandler:
 
     fig.tight_layout()
     fig.savefig(os.path.join(directory, filename))
+    
+  def find_fit(self, degree=2, threshold=1e-3, combine_E_M=True, verbose=True):
+    # Create a DataFrame from design parameters
+    data = {
+      'S': np.array([d.S_q for d in self.designs]),
+      'd': np.array([d.d_kq for d in self.designs]),
+    }
+    if combine_E_M:
+      data['(E+M)'] = np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in self.designs])
+    else:
+      data['E'] = np.array([d.M1_bits.exp_bits for d in self.designs])
+      data['M'] = np.array([d.M1_bits.mant_bits for d in self.designs])
+      
+    df = pd.DataFrame(data)
+    y = np.array(self.LUTs)
+
+    # Generate polynomial features (can include log or exp too)
+    poly = PolynomialFeatures(degree=degree, include_bias=False)
+    X_poly = poly.fit_transform(df)
+
+    # Fit a linear regression model
+    model = LinearRegression()
+    model.fit(X_poly, y)
+
+    if verbose:
+      print("\nPolynomial model fit")
+      if combine_E_M:
+        print(f"(Using combined (E+M) feature)")
+      feature_names = poly.get_feature_names_out(df.columns)
+      formula = ""
+      for coef, name in zip(model.coef_, feature_names):
+        if coef > threshold:
+          formula += f"{coef:.4f} * {name} + "
+          
+      print("Fitted formula (terms with coef > {:.3f}):".format(threshold))
+      print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
+      print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
+    
+    return model, poly
+  
+  def find_fit_with_gplearn(self, population_size=5000, generations=50, parsimony_coefficient=1e-3):
+    # Prepare the design matrix
+    X = np.array([[d.S_q, d.d_kq, d.M1_bits.exp_bits + d.M1_bits.mant_bits] for d in self.designs])
+    y = np.array(self.LUTs)
+
+    # Normalize the features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Use symbolic regression to fit a model
+    model = SymbolicRegressor(
+      population_size=population_size,
+      generations=generations,
+      function_set=['add', 'mul', 'log'],
+      stopping_criteria=0.01,
+      p_crossover=0.7,
+      p_subtree_mutation=0.1,
+      p_hoist_mutation=0.05,
+      p_point_mutation=0.1,
+      max_samples=1.0,
+      verbose=1,
+      parsimony_coefficient=parsimony_coefficient,
+      random_state=124,
+      n_jobs=-1,
+      feature_names=['S', 'd', '(E+M)']
+    )
+
+    model.fit(X_scaled, y)
+
+    print("\nGenetic Symbolic Regression:")
+    print(model._program)
+    print(gplearn_expr_to_math(model._program.__str__()))
+    print(f"\nR² score: {model.score(X_scaled, y):.4f}")
+    
   
   def __str__(self):
     spacer = "="*60 + "\n"
@@ -943,7 +1102,7 @@ if __name__ == "__main__":
     DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
     for S in [2, 4, 8, 16]
-    for d in [8, 16]
+    for d in [2, 4]
     # for k in [8]
     for scale_width in [8]
     for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8)]
@@ -951,14 +1110,18 @@ if __name__ == "__main__":
     for m1_dsp in ["auto"]
   ]
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise)
-  synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul")
+  # synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
-  print(synthesis_handler)
+  # print(synthesis_handler)
 
   # pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
   # print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  # synthesis_handler.plot_results(directory="./plots", plot_file_format="png")
+  # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
+  
+  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=False, verbose=args.verbose)
+  synthesis_handler.find_fit_with_gplearn(population_size=10000, generations=10, parsimony_coefficient=0.0010)
