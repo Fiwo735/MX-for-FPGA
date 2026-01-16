@@ -34,7 +34,7 @@ class AccumMethod(Enum):
   FastTwoSum = "FASTTWOSUM"
 
 class DesignConfig:
-  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k1=-1, k2=-1, k3=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
+  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
     self.name = name
     
     self.S_q = S_q
@@ -42,9 +42,7 @@ class DesignConfig:
     self.d_kq = d_kq
     self.d_v = d_v
     
-    self.k1 = k1
-    self.k2 = k2
-    self.k3 = k3
+    self.k = k
     self.scale_width = scale_width
     
     self.M1_bits = MXFPBits(M1_E, M1_M)
@@ -68,9 +66,9 @@ class DesignConfig:
   def get_bert_flags(self):
     return (
       "--model_id 'meta-llama/Llama-3.2-1B' "
-      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k1}}}\' '
-      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k2}}}\' '
-      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k3}}}\' '
+      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k}}}\' '
+      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k}}}\' '
       f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
       f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
       f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
@@ -138,24 +136,22 @@ class DesignConfig:
     S_kv = int(details.group(3))
     d_kq = int(details.group(4))
     d_v = int(details.group(5))
-    k1 = int(details.group(6))
-    k2 = int(details.group(7))
-    k3 = int(details.group(8))
-    scale_width = int(details.group(9))
-    M1_E = int(details.group(10))
-    M1_M = int(details.group(11))
-    M2_E = int(details.group(12))
-    M2_M = int(details.group(13))
-    M3_E = int(details.group(14))
-    M3_M = int(details.group(15))
-    accum_method1 = AccumMethod(details.group(16))
-    accum_method2 = AccumMethod(details.group(17))
-    accum_method3 = AccumMethod(details.group(18))
-    m1_dsp = details.group(19)
-    m2_dsp = details.group(20)
-    m3_dsp = details.group(21)
+    k = int(details.group(6))
+    scale_width = int(details.group(7))
+    M1_E = int(details.group(8))
+    M1_M = int(details.group(9))
+    M2_E = int(details.group(10))
+    M2_M = int(details.group(11))
+    M3_E = int(details.group(12))
+    M3_M = int(details.group(13))
+    accum_method1 = AccumMethod(details.group(14))
+    accum_method2 = AccumMethod(details.group(15))
+    accum_method3 = AccumMethod(details.group(16))
+    m1_dsp = details.group(17)
+    m2_dsp = details.group(18)
+    m3_dsp = details.group(19)
     
-    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k1=k1, k2=k2, k3=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
+    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
 
 class SynthesisResult:
   def __init__(self, design_config, power, timing, utilisation, accuracy):
@@ -266,7 +262,7 @@ class SynthesisHandler:
     # Technically, max frequency is 500 MHz, but we use 400 MHz to be safe
     self.board_max_freq = 500 # MHz
     
-    self.synth_output_dir = os.path.join(self.hdl_dir, "synth_output")
+    self.synth_output_dir = os.path.join(self.hdl_dir, "synth_output_matmul") #========================================== CHANGE
     
     self._time_format = "%Y%m%d_%H%M"
     
@@ -344,7 +340,7 @@ class SynthesisHandler:
     jobs = []
     with ProcessPoolExecutor() as executor:
       for design_id, design in enumerate(self.designs_to_synthesise):
-        time.sleep(design_id)
+        # time.sleep(design_id)
         if self.check_if_design_is_invalid(design):
           if verbose:
             print(f"Skipping synthesis for {design!r} as design configuration is invalid.")
@@ -865,15 +861,13 @@ if __name__ == "__main__":
   
   # # INT Sweep (2-16)
   # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S_q in [4]
   #   for S_kv in [4]
   #   for d_kq in [4]
   #   for d_v in [4]
-    # for k1 in [2]
-    # for k2 in [2]
-    # for k3 in [2]
+  #   for k in [2]
   #   for scale_width in [8]
   #   for width in range(2, 17) # INT 2-16
   #   for M1_E, M1_M in [(0, width-1)]
@@ -889,15 +883,13 @@ if __name__ == "__main__":
 
   # # FP Sweep (2-16)
   # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S_q in [4]
   #   for S_kv in [4]
   #   for d_kq in [4]
   #   for d_v in [4]
-    # for k1 in [2]
-    # for k2 in [2]
-    # for k3 in [2]
+  #   for k in [2]
   #   for scale_width in [8]
   #   for width in range(2, 17) # FP 2-16
   #   for exp_width, man_width in [get_fp_config(width)] 
@@ -914,13 +906,11 @@ if __name__ == "__main__":
 
   # # int baseline
   # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
+  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
   #   for name in ["attention_fp"] # Reverted to standard name
   #   for S in [8]
   #   for d in [8]
-  #   for k1 in [8]
-  #  for k2 in [8]
-  #  for k3 in [8]
+  #   for k in [8]
   #   for scale_width in [8]
   #   for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
   #   for accum_method_1 in [AccumMethod.Kulisch]
@@ -950,15 +940,13 @@ if __name__ == "__main__":
   
   # Analatical model: 
   designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
     for S in [2, 4, 8, 16]
-    for d in [8, 16]
-    # for k1 in [8]
-    # for k2 in [8]
-    # for k3 in [8]
+    for d in [2, 4, 8, 16]
+    # for k in [8]
     for scale_width in [8]
-    for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8)]
+    for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
