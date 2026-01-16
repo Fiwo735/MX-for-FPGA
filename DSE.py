@@ -19,6 +19,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from gplearn.genetic import SymbolicRegressor
+from deap import base, creator, tools, algorithms
 
 DEBUG_COUNTER = 0
 
@@ -225,10 +226,10 @@ class SynthesisResult:
     
     # TODO placeholder
     self.resource_multipliers = {
-      "LUTs": 30.0,
-      "FFs": 15.0,
-      "BRAMs": 45.0,
-      "DSPs": 60.0,
+      "LUTs": 1.0,
+      "FFs": 1.0,
+      "BRAMs": 1.0,
+      "DSPs": 1.0,
     }
     
   def get_aggregated_resource_usage(self, keys=None, use_multipliers=False):
@@ -335,8 +336,8 @@ class SynthesisHandler:
     self.clock_period_ns = clock_period_ns
 
     # Max frequency for the board, used to filter out results with invalid frequencies
-    # Technically, max frequency is 500 MHz, but we use 400 MHz to be safe
-    self.board_max_freq = 500 # MHz
+    # TODO placeholder
+    self.board_max_freq = 1200 # MHz 
     
     self.synth_output_dir = os.path.join(self.hdl_dir, synth_output_dir)
     
@@ -481,11 +482,7 @@ class SynthesisHandler:
     ths = float(timing_match.group(4)) if timing_match else 0
     
     no_timing_violation = wns >= 0
-    if no_timing_violation:
-      max_freq = 1e3 / (self.clock_period_ns - wns)
-    else:
-      # max_freq = 0
-      max_freq = 1e3 / (self.clock_period_ns - wns) #if (self.clock_period_ns - wns) > 1 else 0
+    max_freq = 1e3 / (self.clock_period_ns - wns)
 
     return no_timing_violation, max_freq
     
@@ -517,6 +514,10 @@ class SynthesisHandler:
 
     # results["Muxes"] = total_muxes
 
+    # if results["DSPs"] > 0:
+    #   print(results["DSPs"])
+    #   raise(Exception("Debug stop"))
+    
     return results
   
   def _read_accuracy_report(self, file_path):
@@ -911,7 +912,7 @@ class SynthesisHandler:
     fig.tight_layout()
     fig.savefig(os.path.join(directory, filename))
     
-  def find_fit(self, degree=2, threshold=1e-3, combine_E_M=True, verbose=True):
+  def find_fit(self, y_type, degree=2, threshold=1e-3, combine_E_M=True, verbose=True):
     # Create a DataFrame from design parameters
     data = {
       'S': np.array([d.S_q for d in self.designs]),
@@ -924,7 +925,14 @@ class SynthesisHandler:
       data['M'] = np.array([d.M1_bits.mant_bits for d in self.designs])
       
     df = pd.DataFrame(data)
-    y = np.array(self.LUTs)
+    if y_type == "LUTs":
+      y = np.array(self.LUTs)
+    elif y_type == "FFs":
+      y = np.array(self.FFs)
+    elif y_type == "throughput":
+      y = np.array(self.throughputs)
+    else:
+      raise ValueError(f"Unknown y_type: {y_type}")
 
     # Generate polynomial features (can include log or exp too)
     poly = PolynomialFeatures(degree=degree, include_bias=False)
@@ -935,14 +943,14 @@ class SynthesisHandler:
     model.fit(X_poly, y)
 
     if verbose:
-      print("\nPolynomial model fit")
+      print(f"\nPolynomial model fit for {y_type}")
       if combine_E_M:
         print(f"(Using combined (E+M) feature)")
       feature_names = poly.get_feature_names_out(df.columns)
       formula = ""
       for coef, name in zip(model.coef_, feature_names):
         if coef > threshold:
-          formula += f"{coef:.4f} * {name} + "
+          formula += f"{coef:.5f} * {name} + "
           
       print("Fitted formula (terms with coef > {:.3f}):".format(threshold))
       print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
@@ -950,10 +958,17 @@ class SynthesisHandler:
     
     return model, poly
   
-  def find_fit_with_gplearn(self, population_size=5000, generations=50, parsimony_coefficient=1e-3):
+  def find_fit_with_gplearn(self, y_type, population_size=5000, generations=50, parsimony_coefficient=1e-3):
     # Prepare the design matrix
     X = np.array([[d.S_q, d.d_kq, d.M1_bits.exp_bits + d.M1_bits.mant_bits] for d in self.designs])
-    y = np.array(self.LUTs)
+    if y_type == "LUTs":
+      y = np.array(self.LUTs)
+    elif y_type == "FFs":
+      y = np.array(self.FFs)
+    elif y_type == "throughput":
+      y = np.array(self.throughputs)
+    else:
+      raise ValueError(f"Unknown y_type: {y_type}")
 
     # Normalize the features
     scaler = StandardScaler()
@@ -983,6 +998,74 @@ class SynthesisHandler:
     print(model._program)
     print(gplearn_expr_to_math(model._program.__str__()))
     print(f"\nR² score: {model.score(X_scaled, y):.4f}")
+    
+    
+  def genetic_perplexity_search(self):
+    def run(k1, k2, k3, e1, e2, e3, m1, m2, m3, accum_method):
+      # Simulate delay
+      time.sleep(0.1)  # in real use, it's ~180 seconds
+      return random.uniform(0, 1)  # Replace with real result
+  
+    # 1. Create fitness and individual
+    creator.create("FitnessMin", base.Fitness, weights=(-1.0,))  # Minimise
+    creator.create("Individual", list, fitness=creator.FitnessMin)
+
+    # 2. Initialize toolbox
+    toolbox = base.Toolbox()
+
+    # Discrete values
+    K_RANGE = [1, 2, 4, 8]
+    E_RANGE = [2, 3, 4]
+    M_RANGE = [2, 3, 4]
+    ACCUM_METHODS = ['kahan', 'neumaier', 'kulisch', 'klein', 'tree', 'vanilla']
+
+    # Register attributes
+    toolbox.register("k_val", lambda: random.choice(K_RANGE))
+    toolbox.register("e_val", lambda: random.choice(E_RANGE))
+    toolbox.register("m_val", lambda: random.choice(M_RANGE))
+    toolbox.register("accum", lambda: random.choice(range(len(ACCUM_METHODS))))  # use int index
+
+    # One individual = [k1, k2, k3, e1, e2, e3, m1, m2, m3, accum_method_index]
+    toolbox.register("individual", tools.initCycle, creator.Individual,
+                    (toolbox.k_val, toolbox.k_val, toolbox.k_val,
+                      toolbox.e_val, toolbox.e_val, toolbox.e_val,
+                      toolbox.m_val, toolbox.m_val, toolbox.m_val,
+                      toolbox.accum),
+                    n=1)
+
+    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+    # Evaluation
+    def evaluate(individual):
+        k1, k2, k3, e1, e2, e3, m1, m2, m3, accum_idx = individual
+        accum_method = ACCUM_METHODS[accum_idx]
+        result = run(k1, k2, k3, e1, e2, e3, m1, m2, m3, accum_method)
+        return (result,)  # tuple!
+
+    toolbox.register("evaluate", evaluate)
+    toolbox.register("mate", tools.cxTwoPoint)
+    toolbox.register("mutate", tools.mutUniformInt,
+                    low=[min(K_RANGE)]*3 + [min(E_RANGE)]*3 + [min(M_RANGE)]*3 + [0],
+                    up=[max(K_RANGE)]*3 + [max(E_RANGE)]*3 + [max(M_RANGE)]*3 + [len(ACCUM_METHODS)-1],
+                    indpb=0.2)
+    toolbox.register("select", tools.selTournament, tournsize=3) 
+    
+    # 3. Run genetic algorithm
+    pop_size = 50
+    ngen = 20
+
+    pop = toolbox.population(n=pop_size)
+    hof = tools.HallOfFame(1)
+
+    stats = tools.Statistics(lambda ind: ind.fitness.values)
+    stats.register("avg", lambda fits: sum(fits)/len(fits))
+    stats.register("min", min)
+
+    algorithms.eaSimple(pop, toolbox, cxpb=0.5, mutpb=0.2,
+                        ngen=ngen, stats=stats, halloffame=hof, verbose=True)
+
+    print("Best individual:", hof[0])
+    print("Best fitness:", hof[0].fitness.values[0])
     
   
   def __str__(self):
@@ -1122,6 +1205,8 @@ if __name__ == "__main__":
 
   # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
   
-  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=False, verbose=args.verbose)
-  synthesis_handler.find_fit_with_gplearn(population_size=10000, generations=10, parsimony_coefficient=0.0010)
+  for y_type in ["LUTs", "FFs", "throughput"]:
+    synthesis_handler.find_fit(y_type, degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+    
+  # synthesis_handler.find_fit_with_gplearn("LUTs",       population_size=5000, generations=20, parsimony_coefficient=0.0001)
+  synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)
