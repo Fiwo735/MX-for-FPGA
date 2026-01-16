@@ -945,7 +945,7 @@ class SynthesisHandler:
           formula += f"{coef:.4f} * {name} + "
           
       print("Fitted formula (terms with coef > {:.3f}):".format(threshold))
-      print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
+      # print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
       print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
     
     return model, poly
@@ -1099,19 +1099,20 @@ if __name__ == "__main__":
   
   # Analatical model: 
   designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-    for name in ["matmul_fp"]
-    for S in [2, 4, 8, 16]
-    for d in [2, 4, 8, 16]
+    DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["mxint_softmax"]
+    for S in [4, 8, 16]
+    for d in [4]
     # for k in [8]
     for scale_width in [8]
-    for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for M1_E, M1_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
+    for M2_E, M2_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul")
-  # synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
+  synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
@@ -1120,8 +1121,8 @@ if __name__ == "__main__":
   # pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})
   # print(f"\nPareto Optimal Result:\n{pareto_optimal}")
 
-  # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
+  # # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
   
-  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=False, verbose=args.verbose)
-  synthesis_handler.find_fit_with_gplearn(population_size=10000, generations=10, parsimony_coefficient=0.0010)
+  # synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=True, verbose=args.verbose)
+  # synthesis_handler.find_fit(degree=2, threshold=1e-3, combine_E_M=False, verbose=args.verbose)
+  # synthesis_handler.find_fit_with_gplearn(population_size=10000, generations=10, parsimony_coefficient=0.0010)

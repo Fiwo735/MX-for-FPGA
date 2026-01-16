@@ -1,16 +1,16 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
-| Date             : Thu Jan 15 23:02:38 2026
+| Date             : Fri Jan 16 03:20:31 2026
 | Host             : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
-| Command          : report_power -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_16_S_kv_16_d_kq_16_d_v_16_k_16_scale_width_8_M1_E_0_M1_M_3_M2_E_0_M2_M_3_M3_E_0_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_2259_power.rpt
+| Command          : report_power -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_8_S_kv_8_d_kq_4_d_v_4_k_4_scale_width_8_M1_E_3_M1_M_3_M2_E_3_M2_M_3_M3_E_4_M3_M_4_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260116_0316_power.rpt
 | Design           : mxint_softmax
 | Device           : xcv80-lsva4737-2MHP-e-S
 | Design State     : synthesized
 | Grade            : extended
 | Process          : typical
 | Characterization : Production
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Power Report
 
@@ -30,14 +30,14 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 33.415       |
-|   FPGA Power (W)         | 32.313       |
+| Total On-Chip Power (W)  | 30.879       |
+|   FPGA Power (W)         | 29.777       |
 |   HBM Power (W)          | 1.101        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 10.477       |
+| Dynamic (W)              | 7.941        |
 | Device Static (W)        | 22.938**     |
-| Effective TJA (C/W)      | 2.2          |
+| Effective TJA (C/W)      | 2.4          |
 | Max Ambient (C)          | 25.0         |
 | Junction Temperature (C) | 100.0**      |
 | Confidence Level         | Low          |
@@ -64,17 +64,18 @@ For the Versal architecture, a default junction temperature of 100C is assumed w
 +--------------------------+-----------+----------+-----------+-----------------+
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
-| Logic                    |     4.099 |     1989 |       --- |             --- |
-|   LUT as Logic           |     3.388 |     1160 |   2574208 |            0.05 |
-|   LUT as Distributed RAM |     0.594 |       36 |   1287104 |           <0.01 |
-|   CLE FF Register        |     0.116 |      439 |   5148416 |           <0.01 |
+| Logic                    |     4.059 |     2281 |       --- |             --- |
+|   LUT as Logic           |     3.399 |     1036 |   2574208 |            0.04 |
+|   LUT as Distributed RAM |     0.514 |       36 |   1287104 |           <0.01 |
+|   CLE FF Register        |     0.124 |      459 |   5148416 |           <0.01 |
+|   LOOKAHEAD8             |     0.020 |       81 |    321776 |            0.03 |
+|   LUT as Shift Register  |    <0.001 |        8 |   1287104 |           <0.01 |
 |   BUFG                   |    <0.001 |        1 |        88 |            1.14 |
-|   LOOKAHEAD8             |    <0.001 |        2 |    321776 |           <0.01 |
-|   Others                 |     0.000 |       25 |       --- |             --- |
-| Signals                  |     6.378 |     1724 |       --- |             --- |
-| I/O                      |     0.000 |      147 |       --- |             --- |
+|   Others                 |     0.000 |       36 |       --- |             --- |
+| Signals                  |     3.882 |     1402 |       --- |             --- |
+| I/O                      |     0.000 |       84 |       --- |             --- |
 | Static Power             |    22.938 |          |           |                 |
-| Total                    |    33.415 |          |           |                 |
+| Total                    |    30.879 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -84,7 +85,7 @@ For the Versal architecture, a default junction temperature of 100C is assumed w
 +---------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source        | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +---------------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint        |       0.800 |    30.855 |      13.095 |     17.760 |       NA    | Unspecified | NA         |
+| Vccint        |       0.800 |    27.685 |       9.925 |     17.760 |       NA    | Unspecified | NA         |
 | VCC_SOC       |       0.800 |     3.171 |       0.000 |      3.171 |       NA    | Unspecified | NA         |
 | VCC_IO        |       0.800 |     0.297 |       0.000 |      0.297 |       NA    | Unspecified | NA         |
 | VCC_RAM       |       0.800 |     1.497 |       0.001 |      1.497 |       NA    | Unspecified | NA         |
@@ -147,7 +148,7 @@ For the Versal architecture, a default junction temperature of 100C is assumed w
 
 +------------------+------+
 | Ambient Temp (C) | 25.0 |
-| ThetaJA (C/W)    | 2.2  |
+| ThetaJA (C/W)    | 2.4  |
 +------------------+------+
 
 
@@ -165,50 +166,109 @@ For the Versal architecture, a default junction temperature of 100C is assumed w
 3.1 By Hierarchy
 ----------------
 
-+----------------------------------------------+-----------+
-| Name                                         | Power (W) |
-+----------------------------------------------+-----------+
-| mxint_softmax                                |    10.477 |
-|   acc_circular                               |     0.208 |
-|     mdata_in_0_buffer                        |     0.208 |
-|       genblk1[0].bram                        |     0.088 |
-|       reg_inst                               |     0.095 |
-|   cast_exp_inst                              |     7.264 |
-|     data_in_0_unpacked_mx_split2_with_data_i |     6.782 |
-|       fifo_out_reg_slice                     |     0.438 |
-|       split2_with_data_i                     |     6.344 |
-|     fixed_cast_inst                          |     0.169 |
-|       parallel_round[0].fr_inst              |     0.010 |
-|       parallel_round[10].fr_inst             |     0.011 |
-|       parallel_round[11].fr_inst             |     0.011 |
-|       parallel_round[12].fr_inst             |     0.011 |
-|       parallel_round[13].fr_inst             |     0.011 |
-|       parallel_round[14].fr_inst             |     0.011 |
-|       parallel_round[15].fr_inst             |     0.011 |
-|       parallel_round[1].fr_inst              |     0.011 |
-|       parallel_round[2].fr_inst              |     0.011 |
-|       parallel_round[3].fr_inst              |     0.011 |
-|       parallel_round[4].fr_inst              |     0.011 |
-|       parallel_round[5].fr_inst              |     0.011 |
-|       parallel_round[6].fr_inst              |     0.011 |
-|       parallel_round[7].fr_inst              |     0.011 |
-|       parallel_round[8].fr_inst              |     0.011 |
-|       parallel_round[9].fr_inst              |     0.011 |
-|     log2_reg_slice                           |     0.035 |
-|       data_out_valid_i_1__1                  |     0.003 |
-|     max_bas_i                                |     0.254 |
-|       or_tree_i                              |     0.254 |
-|     output_skid_buffer                       |     0.023 |
-|       register_slice_i                       |     0.023 |
-|   div_inst                                   |     0.502 |
-|     div_inst                                 |     0.005 |
-|       divisor_skid                           |     0.005 |
-|     split2_divisor                           |     0.498 |
-|       fifo_out_reg_slice                     |     0.002 |
-|       split2_with_data_i                     |     0.495 |
-|   gen_kulisch_accum.u_tree_add               |     0.029 |
-|   mxint_exp_inst                             |     1.186 |
-|     buffer[1]_i_1__1                         |     0.006 |
-+----------------------------------------------+-----------+
++---------------------------------------------------+-----------+
+| Name                                              | Power (W) |
++---------------------------------------------------+-----------+
+| mxint_softmax                                     |     7.941 |
+|   acc_circular                                    |     0.244 |
+|     mdata_in_0_buffer                             |     0.244 |
+|       genblk1[0].bram                             |     0.120 |
+|       reg_inst                                    |     0.074 |
+|   cast_exp_inst                                   |     1.502 |
+|     data_in_0_unpacked_mx_split2_with_data_i      |     1.123 |
+|       fifo_out_reg_slice                          |     0.111 |
+|       split2_with_data_i                          |     1.011 |
+|     log2_reg_slice                                |     0.334 |
+|       data_out[20]_i_3                            |     0.003 |
+|       data_out[30]_i_2                            |     0.003 |
+|       data_out[34]_i_6                            |     0.004 |
+|       data_out_reg[35]_i_11                       |     0.001 |
+|       data_out_reg[35]_i_4                        |     0.001 |
+|       data_out_reg[35]_i_6                        |     0.001 |
+|       data_out_reg[35]_i_7                        |     0.001 |
+|       data_out_reg[35]_i_8                        |     0.001 |
+|       data_out_reg[35]_i_9                        |     0.001 |
+|     max_bas_i                                     |     0.042 |
+|       or_tree_i                                   |     0.042 |
+|     output_skid_buffer                            |     0.004 |
+|       register_slice_i                            |     0.004 |
+|   div_inst                                        |     2.593 |
+|     div_inst                                      |     1.880 |
+|       dividend_skid                               |     0.012 |
+|       divisor_skid                                |     1.868 |
+|     split2_dividend                               |     0.100 |
+|       fifo_out_reg_slice                          |     0.008 |
+|       split2_with_data_i                          |     0.092 |
+|     split2_divisor                                |     0.612 |
+|       fifo_out_reg_slice                          |     0.023 |
+|       split2_with_data_i                          |     0.588 |
+|   gen_kulisch_accum.u_tree_add                    |     0.065 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][2]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][3]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][4]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][5]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][6]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][7]_i_1   |     0.002 |
+|     tree_add[1].genblk1[0].p0_sum_reg[0][8]_i_1   |     0.003 |
+|   mxint_exp_inst                                  |     2.609 |
+|     power2_lut_inst[0].edata_out_0[0][3]_i_8      |     0.007 |
+|     power2_lut_inst[0].edata_out_0[0][7]_i_6      |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_18 |     0.004 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_19 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_20 |     0.007 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_22 |     0.005 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_23 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_52 |     0.006 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_53 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_54 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_55 |     0.001 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_56 |     0.002 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_57 |     0.003 |
+|     power2_lut_inst[0].mdata_out_0_reg[0][6]_i_7  |     0.003 |
+|     power2_lut_inst[1].mdata_out_0[1][6]_i_59     |     0.007 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_15 |     0.004 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_16 |     0.006 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_17 |     0.007 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_19 |     0.005 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_20 |     0.006 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_43 |     0.006 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_44 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_45 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_46 |     0.001 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_47 |     0.002 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_48 |     0.003 |
+|     power2_lut_inst[1].mdata_out_0_reg[1][6]_i_5  |     0.003 |
+|     power2_lut_inst[2].mdata_out_0[2][0]_i_36     |     0.007 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_13 |     0.005 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_15 |     0.007 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][0]_i_5  |     0.003 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_11 |     0.006 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_12 |     0.006 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_13 |     0.004 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_17 |     0.001 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_18 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_19 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_20 |     0.002 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_21 |     0.003 |
+|     power2_lut_inst[2].mdata_out_0_reg[2][1]_i_22 |     0.006 |
+|     power2_lut_inst[3].mdata_out_0[3][0]_i_36     |     0.007 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][0]_i_13 |     0.005 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][0]_i_15 |     0.007 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][0]_i_5  |     0.003 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_14 |     0.006 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_15 |     0.006 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_16 |     0.004 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_20 |     0.001 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_21 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_22 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_23 |     0.002 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_24 |     0.003 |
+|     power2_lut_inst[3].mdata_out_0_reg[3][1]_i_25 |     0.006 |
+|   split2_mxint_exp_inst                           |     0.188 |
+|     fifo_out_reg_slice                            |     0.013 |
+|       register_slice_i                            |     0.013 |
+|     split2_with_data_i                            |     0.175 |
+|       ff_inst                                     |     0.175 |
++---------------------------------------------------+-----------+
 
 
