@@ -949,14 +949,15 @@ class SynthesisHandler:
       feature_names = poly.get_feature_names_out(df.columns)
       formula = ""
       for coef, name in zip(model.coef_, feature_names):
+        # print(f"  Coefficient for {name}: {coef:.10f}")
         if coef > threshold:
-          formula += f"{coef:.5f} * {name} + "
+          formula += f"{coef:.10f} * {name} + "
           
-      print("Fitted formula (terms with coef > {:.3f}):".format(threshold))
-      # print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
+      print(f"Fitted formula (terms with coef > {threshold:.3f}):")
+      print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
       print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
     
-    return model, poly
+    return zip(model.coef_ + model.intercept_, feature_names + ["Intercept"]), model.score(X_poly, y)
   
   def find_fit_with_gplearn(self, y_type, population_size=5000, generations=50, parsimony_coefficient=1e-3):
     # Prepare the design matrix
@@ -1099,105 +1100,47 @@ if __name__ == "__main__":
       # For w >= 10, use E5 (converging to FP16)
       return (5, w - 6)
 
-  designs_to_synthesise = []
-  
-  # # INT Sweep (2-16)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S_q in [4]
-  #   for S_kv in [4]
-  #   for d_kq in [4]
-  #   for d_v in [4]
-  #   for k in [2]
-  #   for scale_width in [8]
-  #   for width in range(2, 17) # INT 2-16
-  #   for M1_E, M1_M in [(0, width-1)]
-  #   for M2_E, M2_M in [(0, width-1)]
-  #   for M3_E, M3_M in [(0, width-1)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
 
-  # # FP Sweep (2-16)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S_q, S_kv, d_kq, d_v, k, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S_q in [4]
-  #   for S_kv in [4]
-  #   for d_kq in [4]
-  #   for d_v in [4]
-  #   for k in [2]
-  #   for scale_width in [8]
-  #   for width in range(2, 17) # FP 2-16
-  #   for exp_width, man_width in [get_fp_config(width)] 
-  #   for M1_E, M1_M in [(exp_width, man_width)]
-  #   for M2_E, M2_M in [(exp_width, man_width)]
-  #   for M3_E, M3_M in [(exp_width, man_width)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-
-  # # int baseline
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S in [8]
-  #   for d in [8]
-  #   for k in [8]
-  #   for scale_width in [8]
-  #   for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-
-  # # fp baseline (the standard)
-  # designs_to_synthesise += [
-  #   DesignConfig(name, S, S, d, d, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M,accum_method_1, accum_method_2, accum_method_3, m1_dsp, m2_dsp, m3_dsp)
-  #   for name in ["attention_fp"] # Reverted to standard name
-  #   for S in [8]
-  #   for d in [8]
-  #   for k in [8]
-  #   for scale_width in [8]
-  #   for M_E, M_M in [(5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for accum_method_2 in [AccumMethod.Kulisch]
-  #   for accum_method_3 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  #   for m2_dsp in ["auto"]
-  #   for m3_dsp in ["auto"]
-  # ]
-  
-  # Analatical model: 
-  designs_to_synthesise += [
-    DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-    for name in ["mxint_softmax"]
-    for S in [4, 8, 16]
-    for d in [4, 8,16]
+  # Analatical model: MATMUL 
+  designs_to_synthesise = [
+    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["matmul_fp"]
+    for S in [2, 4, 8, 16]
+    for d in [2, 4, 8, 16]
     # for k in [8]
     for scale_width in [8]
-    for M1_E, M1_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
-    for M2_E, M2_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
+    for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
 
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul")
+  synthesis_handler.find_and_process_results()
+  
+  LUTs_coeffs, LUTs_score = synthesis_handler.find_fit("LUTs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit("FFs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit("throughput", degree=3, threshold=0.01, combine_E_M=True, verbose=args.verbose)
+  
+  # Analatical model: SOFTMAX 
+  designs_to_synthesise = [
+    DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["mxint_softmax"]
+    for S in [4, 8, 16]
+    for d in [4, 8, 16]
+    # for k in [8]
+    for scale_width in [8]
+    for M1_E, M1_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for M2_E, M2_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for m1_dsp in ["auto"]
+  ]
+  
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
-  for i in range(1):
-    synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
-    print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
+  
+  
+  # for i in range(1):
+  #   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  #   print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
@@ -1208,8 +1151,19 @@ if __name__ == "__main__":
 
   # # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
   
-  for y_type in ["LUTs", "FFs", "throughput"]:
-    synthesis_handler.find_fit(y_type, degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit("LUTs", degree=3, threshold=0, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit("FFs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
+  synthesis_handler.find_fit("throughput", degree=3, threshold=0.01, combine_E_M=True, verbose=args.verbose)
     
   # synthesis_handler.find_fit_with_gplearn("LUTs",       population_size=5000, generations=20, parsimony_coefficient=0.0001)
-  synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)
+  # synthesis_handler.find_fit_with_gplearn("FFs",        population_size=5000, generations=20, parsimony_coefficient=0.0001)
+  # synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)
+  # synthesis_handler.genetic_perplexity_search()
+  
+  # design_to_predict = DesignConfig(
+  #   name= "attention_fp",
+  #   S_q=2048, S_kv=2048,
+  #   d_kq=64, d_v=64,
+    
+    
+  # synthesis_handler.predict_synthesis_results("LUTs", design_to_predict)
