@@ -1102,7 +1102,7 @@ if __name__ == "__main__":
     DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["mxint_softmax"]
     for S in [4, 8, 16]
-    for d in [4]
+    for d in [4, 8,16]
     # for k in [8]
     for scale_width in [8]
     for M1_E, M1_M in [(2, 3), (3, 3), (3, 4), (4, 4)]
@@ -1112,7 +1112,9 @@ if __name__ == "__main__":
   ]
 
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
-  synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  for i in range(1):
+    synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+    print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   synthesis_handler.find_and_process_results()
