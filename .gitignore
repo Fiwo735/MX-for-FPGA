@@ -12,6 +12,9 @@ tb/attention_test
 attention_test
 src/attention/attention_int/synth_output
 *.pb
+.gen
+bert/quant_acc/build
+bert/quant_acc/*.egg-info
 
 # Vivado Generated Files
 *.jou
@@ -19,7 +22,6 @@ src/attention/attention_int/synth_output
 *.dcp
 *.str
 *.lpr
-.gen/
 
 # Synthesis Outputs
 src/attention/synth_logs/

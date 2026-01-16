@@ -1,0 +1,655 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2024.2 (lin64) Build 5239630 Fri Nov 08 22:34:34 MST 2024
+| Date              : Fri Jan 16 06:19:09 2026
+| Host              : ee-kraken running 64-bit Red Hat Enterprise Linux 9.5 (Plow)
+| Command           : report_timing_summary -datasheet -file ./src/attention/synth_output_softmax/mxint_softmax_S_q_4_S_kv_4_d_kq_4_d_v_4_k_4_scale_width_8_M1_E_3_M1_M_4_M2_E_3_M2_M_4_M3_E_2_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260116_0615_timing.rpt
+| Design            : mxint_softmax
+| Device            : xcv80-lsva4737
+| Speed File        : -2MHP  PRODUCTION 2.04 2024-08-06
+| Design State      : Synthesized
+| Temperature Grade : E
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (40)
+6. checking no_output_delay (33)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (40)
+-------------------------------
+ There are 40 input ports with no input delay specified. (HIGH)
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (33)
+--------------------------------
+ There are 33 ports with no output delay specified. (HIGH)
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      2.869        0.000                      0                  893       -0.305     -137.767                    861                  893        1.894        0.000                       0                   478  
+
+
+Timing constraints are not met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock  Waveform(ns)         Period(ns)      Frequency(MHz)
+-----  ------------         ----------      --------------
+i_clk  {0.000 2.500}        5.000           200.000         
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+i_clk               2.869        0.000                      0                  893       -0.305     -137.767                    861                  893        1.894        0.000                       0                   478  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  i_clk
+  To Clock:  i_clk
+
+Setup :            0  Failing Endpoints,  Worst Slack        2.869ns,  Total Violation        0.000ns
+Hold  :          861  Failing Endpoints,  Worst Slack       -0.305ns,  Total Violation     -137.767ns
+PW    :            0  Failing Endpoints,  Worst Slack        1.894ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             2.869ns  (required time - arrival time)
+  Source:                 cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out_reg[33]_fret__1/C
+                            (rising edge-triggered cell FDSE clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            cast_exp_inst/output_skid_buffer/register_slice_i/data_out_reg[0]_bret__1/D
+                            (rising edge-triggered cell FDRE clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             i_clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            5.000ns  (i_clk rise@5.000ns - i_clk rise@0.000ns)
+  Data Path Delay:        1.709ns  (logic 0.577ns (33.762%)  route 1.132ns (66.238%))
+  Logic Levels:           6  (LOOKAHEAD8=1 LUT2=2 LUT6=1 LUTCY1=2)
+  Clock Path Skew:        -0.351ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    3.826ns = ( 8.826 - 5.000 ) 
+    Source Clock Delay      (SCD):    4.685ns
+    Clock Pessimism Removal (CPR):    0.508ns
+  Clock Uncertainty:      0.078ns  (CJ)/2 + PE + PJ
+    Clock Jitter             (CJ):    0.155ns
+    Phase Error              (PE):    0.000ns
+    Phase Jitter             (PJ):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock i_clk rise edge)      0.000     0.000 r  
+                                                      0.000     0.000 r  i_clk (IN)
+                         net (fo=0)                   0.000     0.000    i_clk
+                         IBUF (Prop_IBUF_I_O)         0.685     0.685 r  i_clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.738     1.423    i_clk_IBUF
+                         BUFGCE (Prop_BUFGCE_I_O)     0.078     1.501 r  i_clk_IBUF_BUFG_inst/O
+                         net (fo=477, unplaced)       3.184     4.685    cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/i_clk_IBUF_BUFG
+                         FDSE                                         r  cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out_reg[33]_fret__1/C
+  -------------------------------------------------------------------    -------------------
+                         FDSE (Prop_FDSE_C_Q)         0.090     4.775 r  cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out_reg[33]_fret__1/Q
+                         net (fo=14, unplaced)        0.196     4.971    cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out_reg[33]_fret__1_0
+                         LUT2 (Prop_LUT2_I1_O)        0.051     5.022 r  cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out[31]_i_3/O
+                         net (fo=9, unplaced)         0.178     5.200    cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out_reg[35]_fret_0
+                         LUT2 (Prop_LUT2_I0_O)        0.082     5.282 r  cast_exp_inst/data_in_0_unpacked_mx_split2_with_data_i/fifo_out_reg_slice/register_slice_i/data_out[5]_bret__4_i_8/O
+                         net (fo=4, unplaced)         0.211     5.493    cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__4_i_2/I2
+                         LUTCY1 (Prop_LUTCY1_I2_PROP)
+                                                      0.085     5.578 r  cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__4_i_2/LUTCY1_INST/PROP
+                         net (fo=1, unplaced)         0.002     5.580    cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__4_i_2_n_3
+                         LOOKAHEAD8 (Prop_LOOKAHEAD8_PROPG_COUTH)
+                                                      0.124     5.704 r  cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__1_i_3/COUTH
+                         net (fo=3, unplaced)         0.166     5.870    cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__1_i_1/I4
+                         LUTCY1 (Prop_LUTCY1_I4_O)    0.057     5.927 r  cast_exp_inst/log2_reg_slice/data_out_reg[5]_bret__1_i_1/LUTCY1_INST/O
+                         net (fo=16, unplaced)        0.317     6.244    cast_exp_inst/log2_reg_slice/data_out_reg[33]_fret__1[3]
+                         LUT6 (Prop_LUT6_I1_O)        0.088     6.332 r  cast_exp_inst/log2_reg_slice/data_out[0]_bret__1_i_1/O
+                         net (fo=1, unplaced)         0.062     6.394    cast_exp_inst/output_skid_buffer/register_slice_i/data_out_reg[0]_bret__1_0
+                         FDRE                                         r  cast_exp_inst/output_skid_buffer/register_slice_i/data_out_reg[0]_bret__1/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock i_clk rise edge)      5.000     5.000 r  
+                                                      0.000     5.000 r  i_clk (IN)
+                         net (fo=0)                   0.000     5.000    i_clk
+                         IBUF (Prop_IBUF_I_O)         0.377     5.377 r  i_clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.646     6.023    i_clk_IBUF
+                         BUFGCE (Prop_BUFGCE_I_O)     0.063     6.086 r  i_clk_IBUF_BUFG_inst/O
+                         net (fo=477, unplaced)       2.740     8.826    cast_exp_inst/output_skid_buffer/register_slice_i/i_clk_IBUF_BUFG
+                         FDRE                                         r  cast_exp_inst/output_skid_buffer/register_slice_i/data_out_reg[0]_bret__1/C
+                         clock pessimism              0.508     9.334    
+                         clock uncertainty           -0.078     9.257    
+                         FDRE (Setup_FDRE_C_D)        0.007     9.264    cast_exp_inst/output_skid_buffer/register_slice_i/data_out_reg[0]_bret__1
+  -------------------------------------------------------------------
+                         required time                          9.264    
+                         arrival time                          -6.394    
+  -------------------------------------------------------------------
+                         slack                                  2.869    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (VIOLATED) :        -0.305ns  (arrival time - required time)
+  Source:                 edata_delay_line_reg[1][0]_srl2/CLK
+                            (rising edge-triggered cell SRL16E clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Destination:            edata_delay_line_reg[2][0]/D
+                            (rising edge-triggered cell FDRE clocked by i_clk  {rise@0.000ns fall@2.500ns period=5.000ns})
+  Path Group:             i_clk
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (i_clk rise@0.000ns - i_clk rise@0.000ns)
+  Data Path Delay:        0.130ns  (logic 0.114ns (87.692%)  route 0.016ns (12.308%))
+  Logic Levels:           0  
+  Clock Path Skew:        0.400ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    3.335ns
+    Source Clock Delay      (SCD):    2.626ns
+    Clock Pessimism Removal (CPR):    0.309ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock i_clk rise edge)      0.000     0.000 r  
+                                                      0.000     0.000 r  i_clk (IN)
+                         net (fo=0)                   0.000     0.000    i_clk
+                         IBUF (Prop_IBUF_I_O)         0.313     0.313 r  i_clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.414     0.727    i_clk_IBUF
+                         BUFGCE (Prop_BUFGCE_I_O)     0.045     0.772 r  i_clk_IBUF_BUFG_inst/O
+                         net (fo=477, unplaced)       1.854     2.626    i_clk_IBUF_BUFG
+                         SRL16E                                       r  edata_delay_line_reg[1][0]_srl2/CLK
+  -------------------------------------------------------------------    -------------------
+                         SRL16E (Prop_SRL16E_CLK_Q)
+                                                      0.114     2.740 r  edata_delay_line_reg[1][0]_srl2/Q
+                         net (fo=1, unplaced)         0.016     2.756    edata_delay_line_reg[1][0]_srl2_n_0
+                         FDRE                                         r  edata_delay_line_reg[2][0]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock i_clk rise edge)      0.000     0.000 r  
+                                                      0.000     0.000 r  i_clk (IN)
+                         net (fo=0)                   0.000     0.000    i_clk
+                         IBUF (Prop_IBUF_I_O)         0.473     0.473 r  i_clk_IBUF_inst/O
+                         net (fo=1, unplaced)         0.527     1.000    i_clk_IBUF
+                         BUFGCE (Prop_BUFGCE_I_O)     0.061     1.061 r  i_clk_IBUF_BUFG_inst/O
+                         net (fo=477, unplaced)       2.273     3.335    i_clk_IBUF_BUFG
+                         FDRE                                         r  edata_delay_line_reg[2][0]/C
+                         clock pessimism             -0.309     3.026    
+                         FDRE (Hold_FDRE_C_D)         0.035     3.061    edata_delay_line_reg[2][0]
+  -------------------------------------------------------------------
+                         required time                         -3.061    
+                         arrival time                           2.756    
+  -------------------------------------------------------------------
+                         slack                                 -0.305    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         i_clk
+Waveform(ns):       { 0.000 2.500 }
+Period(ns):         5.000
+Sources:            { i_clk }
+
+Check Type        Corner  Lib Pin     Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location  Pin
+Min Period        n/a     SRL16E/CLK  n/a            1.213         5.000       3.787                edata_delay_line_reg[1][0]_srl2/CLK
+Low Pulse Width   Slow    SRL16E/CLK  n/a            0.606         2.500       1.894                edata_delay_line_reg[1][0]_srl2/CLK
+High Pulse Width  Slow    SRL16E/CLK  n/a            0.606         2.500       1.894                edata_delay_line_reg[1][0]_srl2/CLK
+
+
+
+------------------------------------------------------------------------------------------------
+| Data sheet
+| ----------
+------------------------------------------------------------------------------------------------
+
+Input Ports Setup/Hold
+
+----------+------------------+---------+-------+---------------+---------+---------------+---------+----------+
+Reference | Input            | IO Reg  | Delay |     Setup(ns) | Process |      Hold(ns) | Process | Internal |
+Clock     | Port             | Type    | Type  | to Clk (Edge) | Corner  | to Clk (Edge) | Corner  | Clock    |
+----------+------------------+---------+-------+---------------+---------+---------------+---------+----------+
+i_clk     | data_in_0_valid  | FDRE    | -     |    -0.939 (r) | FAST    |     3.462 (r) | SLOW    |          |
+i_clk     | edata_in_0[0]    | FDRE    | -     |     0.628 (r) | FAST    |     3.172 (r) | SLOW    |          |
+i_clk     | edata_in_0[1]    | FDRE    | -     |     0.619 (r) | FAST    |     3.153 (r) | SLOW    |          |
+i_clk     | edata_in_0[2]    | FDRE    | -     |     0.616 (r) | FAST    |     3.165 (r) | SLOW    |          |
+i_clk     | edata_in_0[3]    | FDRE    | -     |     0.581 (r) | FAST    |     3.176 (r) | SLOW    |          |
+i_clk     | edata_in_0[4]    | FDRE    | -     |     0.573 (r) | FAST    |     3.183 (r) | SLOW    |          |
+i_clk     | edata_in_0[5]    | FDRE    | -     |     0.484 (r) | FAST    |     3.177 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][0] | FDRE    | -     |     1.369 (r) | FAST    |     2.908 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][1] | FDRE    | -     |     1.157 (r) | FAST    |     2.940 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][2] | FDRE    | -     |     1.370 (r) | FAST    |     2.951 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][3] | FDRE    | -     |     1.293 (r) | FAST    |     2.950 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][4] | FDRE    | -     |     1.349 (r) | FAST    |     2.962 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][5] | FDRE    | -     |     1.361 (r) | FAST    |     2.964 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][6] | FDRE    | -     |     1.296 (r) | FAST    |     3.047 (r) | SLOW    |          |
+i_clk     | mdata_in_0[0][7] | FDRE    | -     |     1.355 (r) | FAST    |     3.073 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][0] | FDRE    | -     |     1.214 (r) | FAST    |     2.925 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][1] | FDRE    | -     |     1.002 (r) | FAST    |     2.957 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][2] | FDRE    | -     |     1.215 (r) | FAST    |     2.968 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][3] | FDRE    | -     |     1.096 (r) | FAST    |     2.967 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][4] | FDRE    | -     |     1.194 (r) | FAST    |     2.979 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][5] | FDRE    | -     |     1.206 (r) | FAST    |     2.981 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][6] | FDRE    | -     |     1.110 (r) | FAST    |     3.064 (r) | SLOW    |          |
+i_clk     | mdata_in_0[1][7] | FDRE    | -     |     1.200 (r) | FAST    |     3.090 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][0] | FDRE    | -     |     1.214 (r) | FAST    |     2.925 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][1] | FDRE    | -     |     1.002 (r) | FAST    |     2.957 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][2] | FDRE    | -     |     1.215 (r) | FAST    |     2.968 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][3] | FDRE    | -     |     1.096 (r) | FAST    |     2.967 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][4] | FDRE    | -     |     1.177 (r) | FAST    |     2.979 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][5] | FDRE    | -     |     1.206 (r) | FAST    |     2.981 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][6] | FDRE    | -     |     1.090 (r) | FAST    |     3.064 (r) | SLOW    |          |
+i_clk     | mdata_in_0[2][7] | FDRE    | -     |     1.180 (r) | FAST    |     3.090 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][0] | FDRE    | -     |     1.214 (r) | FAST    |     2.925 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][1] | FDRE    | -     |     1.002 (r) | FAST    |     2.957 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][2] | FDRE    | -     |     1.215 (r) | FAST    |     2.968 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][3] | FDRE    | -     |     1.096 (r) | FAST    |     2.967 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][4] | FDRE    | -     |     1.177 (r) | FAST    |     2.979 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][5] | FDRE    | -     |     1.206 (r) | FAST    |     2.981 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][6] | FDRE    | -     |     1.090 (r) | FAST    |     3.064 (r) | SLOW    |          |
+i_clk     | mdata_in_0[3][7] | FDRE    | -     |     1.180 (r) | FAST    |     3.090 (r) | SLOW    |          |
+i_clk     | rst              | FDRE    | -     |    -0.599 (r) | FAST    |     3.307 (r) | SLOW    |          |
+----------+------------------+---------+-------+---------------+---------+---------------+---------+----------+
+
+
+Output Ports Clock-to-out
+
+----------+-------------------+--------+-------+----------------+---------+----------------+---------+----------+
+Reference | Output            | IO Reg | Delay | Max Clk (Edge) | Process | Min Clk (Edge) | Process | Internal |
+Clock     | Port              | Type   | Type  |    to port(ns) | Corner  |    to port(ns) | Corner  | Clock    |
+----------+-------------------+--------+-------+----------------+---------+----------------+---------+----------+
+i_clk     | data_in_0_ready   | FDRE   | -     |      7.929 (r) | SLOW    |      3.735 (r) | FAST    |          |
+i_clk     | edata_out_0[0]    | FDRE   | -     |      7.466 (r) | SLOW    |      3.622 (r) | FAST    |          |
+i_clk     | edata_out_0[1]    | FDRE   | -     |      7.662 (r) | SLOW    |      3.733 (r) | FAST    |          |
+i_clk     | edata_out_0[2]    | FDRE   | -     |      7.699 (r) | SLOW    |      3.751 (r) | FAST    |          |
+i_clk     | edata_out_0[3]    | FDRE   | -     |      7.677 (r) | SLOW    |      3.728 (r) | FAST    |          |
+i_clk     | edata_out_0[4]    | FDRE   | -     |      7.699 (r) | SLOW    |      3.745 (r) | FAST    |          |
+i_clk     | edata_out_0[5]    | FDRE   | -     |      7.776 (r) | SLOW    |      3.723 (r) | FAST    |          |
+i_clk     | edata_out_0[6]    | FDRE   | -     |      7.971 (r) | SLOW    |      3.723 (r) | FAST    |          |
+i_clk     | edata_out_0[7]    | FDRE   | -     |      7.995 (r) | SLOW    |      3.743 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][0] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][1] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][2] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][3] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][4] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[0][5] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][0] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][1] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][2] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][3] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][4] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[1][5] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][0] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][1] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][2] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][3] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][4] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[2][5] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][0] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][1] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][2] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][3] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][4] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+i_clk     | mdata_out_0[3][5] | FDRE   | -     |      7.790 (r) | SLOW    |      3.742 (r) | FAST    |          |
+----------+-------------------+--------+-------+----------------+---------+----------------+---------+----------+
+
+
+Setup between Clocks
+
+-------+-------------+---------------+---------+---------------+---------+---------------+---------+---------------+---------+
+Source | Destination |  Src:Rise     | Process |  Src:Rise     | Process |  Src:Fall     | Process |  Src:Fall     | Process |
+Clock  | Clock       | Dest:Rise(ns) | Corner  | Dest:Fall(ns) | Corner  | Dest:Rise(ns) | Corner  | Dest:Fall(ns) | Corner  |
+-------+-------------+---------------+---------+---------------+---------+---------------+---------+---------------+---------+
+i_clk  | i_clk       |         2.131 | SLOW    |               |         |               |         |               |         |
+-------+-------------+---------------+---------+---------------+---------+---------------+---------+---------------+---------+
+
+
+Setup / Hold times for input bus
+Clocked by: i_clk
+Worst Case Data Window: 3.811 ns
+Ideal Clock Offset to Actual Clock: 1.278 ns
+-------------------+------------+---------+-------------+---------+-----------+-----------+---------------+
+                   |            | Process |             | Process | Setup     |  Hold     | Source Offset |
+Source             |  Setup(ns) | Corner  |    Hold(ns) | Corner  | Slack(ns) | Slack(ns) | to Center(ns) |
+-------------------+------------+---------+-------------+---------+-----------+-----------+---------------+
+edata_in_0[0]      |  0.628 (r) | FAST    |   3.172 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[1]      |  0.619 (r) | FAST    |   3.153 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[2]      |  0.616 (r) | FAST    |   3.165 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[3]      |  0.581 (r) | FAST    |   3.176 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[4]      |  0.573 (r) | FAST    |   3.183 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[5]      |  0.484 (r) | FAST    |   3.177 (r) | SLOW    |       inf |       inf |             - |
+edata_in_0[6]      |          - | -       |           - | -       |       inf |       inf |             - |
+edata_in_0[7]      |          - | -       |           - | -       |       inf |       inf |             - |
+-------------------+------------+---------+-------------+---------+-----------+-----------+---------------+
+Worst Case Summary |  0.628 (r) | FAST    |   3.183 (r) | SLOW    |       inf |       inf |             - |
+-------------------+------------+---------+-------------+---------+-----------+-----------+---------------+
+
+
+
+Setup / Hold times for input bus
+Clocked by: i_clk
+Worst Case Data Window: 4.443 ns
+Ideal Clock Offset to Actual Clock: 0.852 ns
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+                   |             | Process |             | Process | Setup     |  Hold     | Source Offset |
+Source             |   Setup(ns) | Corner  |    Hold(ns) | Corner  | Slack(ns) | Slack(ns) | to Center(ns) |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+mdata_in_0[0][0]   |   1.369 (r) | FAST    |   2.908 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][1]   |   1.157 (r) | FAST    |   2.940 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][2]   |   1.370 (r) | FAST    |   2.951 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][3]   |   1.293 (r) | FAST    |   2.950 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][4]   |   1.349 (r) | FAST    |   2.962 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][5]   |   1.361 (r) | FAST    |   2.964 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][6]   |   1.296 (r) | FAST    |   3.047 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[0][7]   |   1.355 (r) | FAST    |   3.073 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+Worst Case Summary |   1.370 (r) | FAST    |   3.073 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+
+
+
+Setup / Hold times for input bus
+Clocked by: i_clk
+Worst Case Data Window: 4.305 ns
+Ideal Clock Offset to Actual Clock: 0.938 ns
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+                   |             | Process |             | Process | Setup     |  Hold     | Source Offset |
+Source             |   Setup(ns) | Corner  |    Hold(ns) | Corner  | Slack(ns) | Slack(ns) | to Center(ns) |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+mdata_in_0[1][0]   |   1.214 (r) | FAST    |   2.925 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][1]   |   1.002 (r) | FAST    |   2.957 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][2]   |   1.215 (r) | FAST    |   2.968 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][3]   |   1.096 (r) | FAST    |   2.967 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][4]   |   1.194 (r) | FAST    |   2.979 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][5]   |   1.206 (r) | FAST    |   2.981 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][6]   |   1.110 (r) | FAST    |   3.064 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[1][7]   |   1.200 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+Worst Case Summary |   1.215 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+
+
+
+Setup / Hold times for input bus
+Clocked by: i_clk
+Worst Case Data Window: 4.305 ns
+Ideal Clock Offset to Actual Clock: 0.938 ns
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+                   |             | Process |             | Process | Setup     |  Hold     | Source Offset |
+Source             |   Setup(ns) | Corner  |    Hold(ns) | Corner  | Slack(ns) | Slack(ns) | to Center(ns) |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+mdata_in_0[2][0]   |   1.214 (r) | FAST    |   2.925 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][1]   |   1.002 (r) | FAST    |   2.957 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][2]   |   1.215 (r) | FAST    |   2.968 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][3]   |   1.096 (r) | FAST    |   2.967 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][4]   |   1.177 (r) | FAST    |   2.979 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][5]   |   1.206 (r) | FAST    |   2.981 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][6]   |   1.090 (r) | FAST    |   3.064 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[2][7]   |   1.180 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+Worst Case Summary |   1.215 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+
+
+
+Setup / Hold times for input bus
+Clocked by: i_clk
+Worst Case Data Window: 4.305 ns
+Ideal Clock Offset to Actual Clock: 0.938 ns
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+                   |             | Process |             | Process | Setup     |  Hold     | Source Offset |
+Source             |   Setup(ns) | Corner  |    Hold(ns) | Corner  | Slack(ns) | Slack(ns) | to Center(ns) |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+mdata_in_0[3][0]   |   1.214 (r) | FAST    |   2.925 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][1]   |   1.002 (r) | FAST    |   2.957 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][2]   |   1.215 (r) | FAST    |   2.968 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][3]   |   1.096 (r) | FAST    |   2.967 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][4]   |   1.177 (r) | FAST    |   2.979 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][5]   |   1.206 (r) | FAST    |   2.981 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][6]   |   1.090 (r) | FAST    |   3.064 (r) | SLOW    |       inf |       inf |             - |
+mdata_in_0[3][7]   |   1.180 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+Worst Case Summary |   1.215 (r) | FAST    |   3.090 (r) | SLOW    |       inf |       inf |             - |
+-------------------+-------------+---------+-------------+---------+-----------+-----------+---------------+
+
+
+
+Max / Min delays for output bus
+Clocked by: i_clk
+Bus Skew: 0.529 ns
+-------------------+-------------+---------+-------------+---------+----------+
+                   |     Max     | Process |     Min     | Process | Edge     |
+Pad                |   Delay(ns) | Corner  |   Delay(ns) | Corner  | Skew(ns) |
+-------------------+-------------+---------+-------------+---------+----------+
+edata_out_0[0]     |   7.466 (r) | SLOW    |   3.622 (r) | FAST    |    0.000 |
+edata_out_0[1]     |   7.662 (r) | SLOW    |   3.733 (r) | FAST    |    0.196 |
+edata_out_0[2]     |   7.699 (r) | SLOW    |   3.751 (r) | FAST    |    0.233 |
+edata_out_0[3]     |   7.677 (r) | SLOW    |   3.728 (r) | FAST    |    0.211 |
+edata_out_0[4]     |   7.699 (r) | SLOW    |   3.745 (r) | FAST    |    0.233 |
+edata_out_0[5]     |   7.776 (r) | SLOW    |   3.723 (r) | FAST    |    0.310 |
+edata_out_0[6]     |   7.971 (r) | SLOW    |   3.723 (r) | FAST    |    0.505 |
+edata_out_0[7]     |   7.995 (r) | SLOW    |   3.743 (r) | FAST    |    0.529 |
+-------------------+-------------+---------+-------------+---------+----------+
+Worst Case Summary |   7.995 (r) | SLOW    |   3.622 (r) | FAST    |    0.529 |
+-------------------+-------------+---------+-------------+---------+----------+
+
+
+
+Max / Min delays for output bus
+Clocked by: i_clk
+Bus Skew: 0.000 ns
+-------------------+-------------+---------+-------------+---------+----------+
+                   |     Max     | Process |     Min     | Process | Edge     |
+Pad                |   Delay(ns) | Corner  |   Delay(ns) | Corner  | Skew(ns) |
+-------------------+-------------+---------+-------------+---------+----------+
+mdata_out_0[0][0]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[0][1]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[0][2]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[0][3]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[0][4]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[0][5]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+Worst Case Summary |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+
+
+
+Max / Min delays for output bus
+Clocked by: i_clk
+Bus Skew: 0.000 ns
+-------------------+-------------+---------+-------------+---------+----------+
+                   |     Max     | Process |     Min     | Process | Edge     |
+Pad                |   Delay(ns) | Corner  |   Delay(ns) | Corner  | Skew(ns) |
+-------------------+-------------+---------+-------------+---------+----------+
+mdata_out_0[1][0]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[1][1]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[1][2]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[1][3]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[1][4]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[1][5]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+Worst Case Summary |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+
+
+
+Max / Min delays for output bus
+Clocked by: i_clk
+Bus Skew: 0.000 ns
+-------------------+-------------+---------+-------------+---------+----------+
+                   |     Max     | Process |     Min     | Process | Edge     |
+Pad                |   Delay(ns) | Corner  |   Delay(ns) | Corner  | Skew(ns) |
+-------------------+-------------+---------+-------------+---------+----------+
+mdata_out_0[2][0]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[2][1]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[2][2]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[2][3]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[2][4]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[2][5]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+Worst Case Summary |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+
+
+
+Max / Min delays for output bus
+Clocked by: i_clk
+Bus Skew: 0.000 ns
+-------------------+-------------+---------+-------------+---------+----------+
+                   |     Max     | Process |     Min     | Process | Edge     |
+Pad                |   Delay(ns) | Corner  |   Delay(ns) | Corner  | Skew(ns) |
+-------------------+-------------+---------+-------------+---------+----------+
+mdata_out_0[3][0]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[3][1]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[3][2]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[3][3]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[3][4]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+mdata_out_0[3][5]  |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+Worst Case Summary |   7.790 (r) | SLOW    |   3.742 (r) | FAST    |    0.000 |
+-------------------+-------------+---------+-------------+---------+----------+
+
+
+
+

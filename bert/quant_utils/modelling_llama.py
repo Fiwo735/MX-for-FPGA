@@ -148,6 +148,7 @@ class QuantLlamaAttention(nn.Module):
         # Quantize attention scores to arbitrary FP, no scales
         if hasattr(self, "s_quantizer"):
             self.s_quantizer.static_scale = True
+            self.s_quantizer.calibrated = True
             self.s_quantizer.scale_calib = torch.tensor(1)
             attn_weights = self.s_quantizer(attn_weights)
 

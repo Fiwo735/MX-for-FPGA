@@ -97,7 +97,7 @@ class AccumMethod(Enum):
   FastTwoSum = "FASTTWOSUM"
 
 class DesignConfig:
-  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
+  def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k1=-1, k2=-1, k3=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
     self.name = name
     
     self.S_q = S_q
@@ -105,7 +105,9 @@ class DesignConfig:
     self.d_kq = d_kq
     self.d_v = d_v
     
-    self.k = k
+    self.k1 = k1
+    self.k2 = k2
+    self.k3 = k3
     self.scale_width = scale_width
     
     self.M1_bits = MXFPBits(M1_E, M1_M)
@@ -127,19 +129,32 @@ class DesignConfig:
     )
     
   def get_bert_flags(self):
-    return (
-      "--model_id 'meta-llama/Llama-3.2-1B' "
-      f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k}}}\' '
-      f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
-      f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
-      f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
-    )
+    out = "--model_id 'meta-llama/Llama-3.2-1B' "
+
+    if self.M1_bits.exp_bits == 0:
+      out += f'--config \'k_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M1_bits.mant_bits},"group_size":{self.k1}}}\' '
+    else:
+      out += f'--config \'k_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M1_bits.mant_bits},"exp_w":{self.M1_bits.exp_bits},"group_size":{self.k1}}}\' '
+
+    if self.M2_bits.exp_bits == 0:
+      out += f'--config \'s_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M2_bits.mant_bits},"group_size":{self.k2}}}\' '
+    else:
+      out += f'--config \'s_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M2_bits.mant_bits},"exp_w":{self.M2_bits.exp_bits},"group_size":{self.k2}}}\' '
+
+    if self.M3_bits.exp_bits == 0:
+      out += f'--config \'v_quantizer={{"quant":"MXINTQuantizer","bit_w":{self.M3_bits.mant_bits},"group_size":{self.k3}}}\' '
+    else:
+      out += f'--config \'v_quantizer={{"quant":"MXFPQuantizer","man_w":{self.M3_bits.mant_bits},"exp_w":{self.M3_bits.exp_bits},"group_size":{self.k3}}}\' '
+    
+    out += f'--config \'sum_type_attn_s="{self.accum_method1.value}"\' '
+    out += f'--config \'sum_type_smax="{self.accum_method2.value}"\' '
+    out += f'--config \'sum_type_attn_o="{self.accum_method3.value}"\' '
+
+    return out
 
   def __repr__(self):
     return (
-      f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k_{self.k}_"
+      f"{self.name}_S_q_{self.S_q}_S_kv_{self.S_kv}_d_kq_{self.d_kq}_d_v_{self.d_v}_k1_{self.k1}_k2_{self.k2}_k3_{self.k3}_"
       f"scale_width_{self.scale_width}_M1_E_{self.M1_bits.exp_bits}_M1_M_{self.M1_bits.mant_bits}_"
       f"M2_E_{self.M2_bits.exp_bits}_M2_M_{self.M2_bits.mant_bits}_M3_E_{self.M3_bits.exp_bits}_M3_M_{self.M3_bits.mant_bits}_"
       f"ACCUM_METHOD_{self.accum_method1.value}_{self.accum_method2.value}_{self.accum_method3.value}_"
@@ -152,7 +167,9 @@ class DesignConfig:
     s += f"  S_kv: {self.S_kv}\n"
     s += f"  d_kq: {self.d_kq}\n"
     s += f"  d_v: {self.d_v}\n"
-    s += f"  k: {self.k}\n"
+    s += f"  k1: {self.k1}\n"
+    s += f"  k2: {self.k2}\n"
+    s += f"  k3: {self.k3}\n"
     s += f"  scale_width: {self.scale_width}\n"
     s += f"  M1 bits: {self.M1_bits}\n"
     s += f"  M2 bits: {self.M2_bits}\n"
@@ -163,7 +180,7 @@ class DesignConfig:
     return s
     
   def get_vivado_tclargs(self):
-    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
+    return f"{self.S_q} {self.S_kv} {self.d_kq} {self.d_v} {self.k1} {self.k2} {self.k3} {self.scale_width} {self.M1_bits.exp_bits} {self.M1_bits.mant_bits} {self.M2_bits.exp_bits} {self.M2_bits.mant_bits} {self.M3_bits.exp_bits} {self.M3_bits.mant_bits} {self.accum_method1.value} {self.accum_method2.value} {self.accum_method3.value} {self.m1_dsp} {self.m2_dsp} {self.m3_dsp} {self.name}"
   
   def get_tcl_filename(self):
     if self.name == "attention_fp":
@@ -199,22 +216,24 @@ class DesignConfig:
     S_kv = int(details.group(3))
     d_kq = int(details.group(4))
     d_v = int(details.group(5))
-    k = int(details.group(6))
-    scale_width = int(details.group(7))
-    M1_E = int(details.group(8))
-    M1_M = int(details.group(9))
-    M2_E = int(details.group(10))
-    M2_M = int(details.group(11))
-    M3_E = int(details.group(12))
-    M3_M = int(details.group(13))
-    accum_method1 = AccumMethod(details.group(14))
-    accum_method2 = AccumMethod(details.group(15))
-    accum_method3 = AccumMethod(details.group(16))
-    m1_dsp = details.group(17)
-    m2_dsp = details.group(18)
-    m3_dsp = details.group(19)
+    k1 = int(details.group(6))
+    k2 = int(details.group(7))
+    k3 = int(details.group(8))
+    scale_width = int(details.group(9))
+    M1_E = int(details.group(10))
+    M1_M = int(details.group(11))
+    M2_E = int(details.group(12))
+    M2_M = int(details.group(13))
+    M3_E = int(details.group(14))
+    M3_M = int(details.group(15))
+    accum_method1 = AccumMethod(details.group(16))
+    accum_method2 = AccumMethod(details.group(17))
+    accum_method3 = AccumMethod(details.group(18))
+    m1_dsp = details.group(19)
+    m2_dsp = details.group(20)
+    m3_dsp = details.group(21)
     
-    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k=k, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
+    return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k1=k1, k2=k2, k3=k3, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
 
 class SynthesisResult:
   def __init__(self, design_config, power, timing, utilisation, accuracy):
@@ -329,11 +348,12 @@ class SynthesisResult:
     return s
 
 class SynthesisHandler:
-  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", synth_output_dir="synth_output", clock_period_ns=5):
+  def __init__(self, designs_to_synthesise=None, hdl_dir="./src/attention/", synth_output_dir="synth_output", clock_period_ns=5, max_workers=4):
     self.results = []
     self.designs_to_synthesise = designs_to_synthesise
     self.hdl_dir = hdl_dir
     self.clock_period_ns = clock_period_ns
+    self.max_workers = max_workers
 
     # Max frequency for the board, used to filter out results with invalid frequencies
     # TODO placeholder
@@ -421,7 +441,7 @@ class SynthesisHandler:
       print(f"Starting synthesis for {len(self.designs_to_synthesise)} designs...")
     
     jobs = []
-    with ProcessPoolExecutor() as executor:
+    with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
       for design_id, design in enumerate(self.designs_to_synthesise):
         # time.sleep(design_id)
         if self.check_if_design_is_invalid(design):
@@ -559,6 +579,7 @@ class SynthesisHandler:
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
     accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
+    print(accuracy_cmd)
 
     try:
         completed_process = subprocess.run(accuracy_cmd, shell=True, stdout=open(accuracy_report_path, "w"), stderr=subprocess.DEVNULL, check=True)
@@ -1080,6 +1101,7 @@ if __name__ == "__main__":
   parser = ArgumentParser(description='Run DSE for attention module synthesis')
   parser.add_argument('--dry', action='store_true', help='Dry run, do not run synthesis')
   parser.add_argument('--verbose', action='store_true', help='Enable verbose output')
+  parser.add_argument('--max-workers', type=int, default=4, help='Maximum number of parallel synthesis processes')
   args = parser.parse_args()
   
   # Combined Sweep:
@@ -1143,7 +1165,22 @@ if __name__ == "__main__":
   #   print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
-  synthesis_handler.find_and_process_results()
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output", max_workers=args.max_workers)
+  # for i in range(50):
+  #   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
+  #   print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
+
+  # synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
 
   # pareto_optimal = synthesis_handler.find_pareto_optimal(weights={'timing': 1.0, 'utilisation': 1.0, 'accuracy': 1.0})

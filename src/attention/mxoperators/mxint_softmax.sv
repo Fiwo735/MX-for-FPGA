@@ -24,7 +24,7 @@ module mxint_softmax #(
 ) (
     /* verilator lint_off UNUSEDSIGNAL */
     input rst,
-    input clk,
+    input i_clk,
     input logic [DATA_IN_0_PRECISION_0-1:0] mdata_in_0[DATA_IN_0_PARALLELISM-1:0],
     input logic [DATA_IN_0_PRECISION_1-1:0] edata_in_0,
     output logic [DATA_OUT_0_PRECISION_0-1:0] mdata_out_0[DATA_OUT_0_PARALLELISM-1:0],
@@ -122,7 +122,7 @@ module mxint_softmax #(
       .USE_DSP(USE_DSP)
   ) mxint_exp_inst (
       .rst(rst),
-      .clk(clk),
+      .clk(i_clk),
       // Input interface
       .mdata_in_0(mdata_in_0),
       .edata_in_0(edata_in_0),
@@ -145,7 +145,7 @@ module mxint_softmax #(
       .BLOCK_SIZE(BLOCK_SIZE),
       .ROUND_BITS(4)
   ) cast_exp_inst (
-      .clk(clk),
+      .clk(i_clk),
       .rst(rst),
       .mdata_in(mdata_exp),
       .edata_in(edata_exp[0]), // Assuming uniform exponent or taking 0
@@ -163,7 +163,7 @@ module mxint_softmax #(
       .EXP_WIDTH(DATA_EXP_0_PRECISION_1),
       .IN_SIZE(DATA_IN_0_PARALLELISM)
   ) split2_mxint_exp_inst (
-      .clk(clk),
+      .clk(i_clk),
       .rst(rst),
       // Input from CAST (Low Precision)
       .mdata_in(cast_mdata),
@@ -205,7 +205,7 @@ module mxint_softmax #(
                 .length(DATA_IN_0_PARALLELISM),
                 .sum_width(ACC_WIDTH) // Enforce output width
             ) u_tree_add (
-                .i_clk(clk),            // FIX: Connected clock 
+                .i_clk(i_clk),            // FIX: Connected clock 
                 .i_vec(KULISCH_INPUT),
                 .o_sum(acc_mdata_tmp)
             );
@@ -218,7 +218,7 @@ module mxint_softmax #(
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
                     .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_kahan_tree (
-                    .clk_i(clk),
+                    .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
                     .i_vec(straight_exp_mdata_out),
                     .o_sum(acc_mdata_tmp)
@@ -230,7 +230,7 @@ module mxint_softmax #(
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
                     .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_twosum_tree (
-                    .clk_i(clk),
+                    .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
                     .i_vec(straight_exp_mdata_out),
                     .o_sum(acc_mdata_tmp)
@@ -242,7 +242,7 @@ module mxint_softmax #(
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
                     .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_fasttwosum_tree (
-                    .clk_i(clk),
+                    .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
                     .i_vec(straight_exp_mdata_out),
                     .o_sum(acc_mdata_tmp)
@@ -254,7 +254,7 @@ module mxint_softmax #(
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
                     .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_neumaier_tree (
-                    .clk_i(clk),
+                    .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
                     .i_vec(straight_exp_mdata_out),
                     .o_sum(acc_mdata_tmp)
@@ -266,7 +266,7 @@ module mxint_softmax #(
                     .ELEMS_COUNT(DATA_IN_0_PARALLELISM),
                     .SUM_WIDTH_O(ACC_WIDTH)
                 ) u_klein_tree (
-                    .clk_i(clk),
+                    .clk_i(i_clk),
                     .rst_ni(1'b1), // No reset
                     .i_vec(straight_exp_mdata_out),
                     .o_sum(acc_mdata_tmp)
@@ -293,7 +293,7 @@ module mxint_softmax #(
     logic [ACCUM_LATENCY:0] valid_delay_line; // Width is depth
     logic [DATA_EXP_0_PRECISION_1-1:0] edata_delay_line [ACCUM_LATENCY+1]; // Need Array for data
     
-    always_ff @(posedge clk) begin
+    always_ff @(posedge i_clk) begin
         if (rst) begin
              valid_delay_line <= '0;
         end else begin
@@ -330,7 +330,7 @@ module mxint_softmax #(
 //       .UNDERFLOW_BITS(EXP_SUM_UNDERFLOW_BITS),
 //       .DATA_OUT_0_PRECISION_0(DATA_EXP_0_PRECISION_0)
 //   ) mxint_accumulator_inst (
-//       .clk(clk),
+//       .clk(i_clk),
 //       .rst(rst),
 //       .mdata_in_0(straight_exp_mdata_out),     // From split2 straight output
 //       .edata_in_0(straight_exp_edata_out),     // From split2 straight output
@@ -350,7 +350,7 @@ module mxint_softmax #(
       .REPEAT(IN_0_DEPTH),
       .BUFFER_SIZE(1)
   ) acc_circular (
-      .clk(clk),
+      .clk(i_clk),
       .rst(rst),
       .mdata_in(acc_mdata_out),
       .edata_in(acc_edata_out),
@@ -376,7 +376,7 @@ module mxint_softmax #(
       .DATA_QUOTIENT_PRECISION_1(DATA_QUOTIENT_PRECISION_1),
       .BLOCK_SIZE(DATA_OUT_0_PARALLELISM)
   ) div_inst (
-      .clk(clk),
+      .clk(i_clk),
       .rst(rst),
       // Connect dividend (ff_exp_data)
       .mdividend_data(mdata_dividend),
