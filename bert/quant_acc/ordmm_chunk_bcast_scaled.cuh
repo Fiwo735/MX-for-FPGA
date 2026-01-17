@@ -66,8 +66,7 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
         float t_inner;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
 
             scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
             y_inner = round_rne_fp_full(scaled_product - c_inner, man_width, exp_width);
@@ -79,15 +78,10 @@ __global__ void ordmm_chunk_comp_sum_bcast_scaled_kernel(
 
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = acc;
-
-        y_outer = round_rne_fp_full(value_outer - c_outer, man_width, exp_width);
-        t_outer = round_rne_fp_full(sum_outer + y_outer, man_width, exp_width);
-        c_outer = round_rne_fp_full(t_outer - sum_outer, man_width, exp_width) - y_outer;
-        c_outer = round_rne_fp_full(c_outer, man_width, exp_width);
-        sum_outer = round_rne_fp_full(t_outer, man_width, exp_width);
+        value_outer *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         if (row < in_batch && col < out_features){
-            output[prt * in_batch * out_features + row * out_features + col] = sum_outer;
+            output[prt * in_batch * out_features + row * out_features + col] = sum_outer + value_outer;
         }
 
         __syncthreads();
@@ -160,8 +154,7 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
         float d_added_inner;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
 
             scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
             s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
@@ -176,18 +169,10 @@ __global__ void ordmm_chunk_2sum_bcast_scaled_kernel(
 
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
-
-        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
-        sum_p_outer = round_rne_fp_full(s_outer - value_outer, man_width, exp_width);
-        value_p_outer = round_rne_fp_full(s_outer - sum_p_outer, man_width, exp_width);
-        d_sum_outer = round_rne_fp_full(sum_outer - sum_p_outer, man_width, exp_width);
-        d_value_outer = round_rne_fp_full(value_outer - value_p_outer, man_width, exp_width);
-        d_added_outer = round_rne_fp_full(d_sum_outer + d_value_outer, man_width, exp_width);
-        error_outer = round_rne_fp_full(error_outer + d_added_outer, man_width, exp_width);
-        sum_outer = s_outer;
+        value_outer *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         if (row < in_batch && col < out_features){
-            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
+            output[prt * in_batch * out_features + row * out_features + col] = sum_outer + value_outer;
         }
 
         __syncthreads();
@@ -254,8 +239,7 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
         float val_z_sub_inner;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
 
             scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
             s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
@@ -267,15 +251,10 @@ __global__ void ordmm_chunk_fast2sum_bcast_scaled_kernel(
 
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + error_inner, man_width, exp_width);
-
-        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
-        z_outer = round_rne_fp_full(s_outer - sum_outer, man_width, exp_width);
-        val_z_sub_outer = round_rne_fp_full(value_outer - z_outer, man_width, exp_width);
-        error_outer = round_rne_fp_full(error_outer + val_z_sub_outer, man_width, exp_width);
-        sum_outer = s_outer;
+        value_outer *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         if (row < in_batch && col < out_features){
-            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + error_outer, man_width, exp_width);
+            output[prt * in_batch * out_features + row * out_features + col] = sum_outer + value_outer;
         }
 
         __syncthreads();
@@ -338,8 +317,7 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
         float s_inner;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
 
             scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
             s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
@@ -352,16 +330,10 @@ __global__ void ordmm_chunk_neumaier_bcast_scaled_kernel(
 
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + c_inner, man_width, exp_width);
-
-        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
-        c_outer += (fabsf(sum_outer) >= fabsf(value_outer)) ?
-            round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
-        c_outer = round_rne_fp_full(c_outer, man_width, exp_width);
-        sum_outer = s_outer;
+        value_outer *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         if (row < in_batch && col < out_features){
-            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + c_outer, man_width, exp_width);
+            output[prt * in_batch * out_features + row * out_features + col] = sum_outer + value_outer;
         }
 
         __syncthreads();
@@ -432,8 +404,7 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
         float cc_inner;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
 
             scaled_product = round_rne_fp_full(scaled_product, man_width, exp_width);
             s_inner = round_rne_fp_full(acc + scaled_product, man_width, exp_width);
@@ -451,21 +422,10 @@ __global__ void ordmm_chunk_klein_bcast_scaled_kernel(
 
         sum_outer = shared_C[threadIdx.y][threadIdx.x];
         value_outer = round_rne_fp_full(acc + round_rne_fp_full(cs_inner + ccs_inner, man_width, exp_width), man_width, exp_width);
-
-        s_outer = round_rne_fp_full(sum_outer + value_outer, man_width, exp_width);
-        c_outer = (fabsf(sum_outer) >= fabsf(value_outer)) ?
-            round_rne_fp_full(round_rne_fp_full(sum_outer - s_outer, man_width, exp_width) + value_outer, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(value_outer - s_outer, man_width, exp_width) + sum_outer, man_width, exp_width);
-        sum_outer = s_outer;
-        t_outer = round_rne_fp_full(cs_outer + c_outer, man_width, exp_width);
-        cc_outer = (fabsf(cs_outer) >= fabsf(c_outer)) ?
-            round_rne_fp_full(round_rne_fp_full(cs_outer - t_outer, man_width, exp_width) + c_outer, man_width, exp_width):
-            round_rne_fp_full(round_rne_fp_full(c_outer - t_outer, man_width, exp_width) + cs_outer, man_width, exp_width);
-        cs_outer = t_outer;
-        ccs_outer = round_rne_fp_full(ccs_outer + cc_outer, man_width, exp_width);
+        value_outer *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         if (row < in_batch && col < out_features){
-            output[prt * in_batch * out_features + row * out_features + col] = round_rne_fp_full(sum_outer + round_rne_fp_full(cs_outer + ccs_outer, man_width, exp_width), man_width, exp_width);
+            output[prt * in_batch * out_features + row * out_features + col] = sum_outer + value_outer;
         }
 
         __syncthreads();
@@ -523,14 +483,13 @@ __global__ void ordmm_chunk_full_quant_bcast_scaled_kernel(
         acc = 0;
 
         for (int k=0; k < TILE_SIZE_2; ++k){
-            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x] * 
-                                   shared_A_scale[threadIdx.y][k] * shared_B_scale[k][threadIdx.x];
+            float scaled_product = shared_A[threadIdx.y][k] * shared_B[k][threadIdx.x];
             acc += scaled_product;
             acc = round_rne_fp_full(acc, man_width, exp_width);
         }
+        acc *= shared_A_scale[threadIdx.y][0] * shared_B_scale[0][threadIdx.x];
 
         acc += shared_C[threadIdx.y][threadIdx.x];
-        acc = round_rne_fp_full(acc, man_width, exp_width);
         if (row < in_batch && col < out_features){
             output[prt * in_batch * out_features + row * out_features + col] = acc;
         }

@@ -40,13 +40,13 @@ class QuantLlamaAttention(nn.Module):
         self.init_quantizers(q_config)
 
         # Get summation method types
-        self.sum_type_attn_s = 'QUANT'
+        self.sum_type_attn_s = 'KULISCH'
         if 'sum_type_attn_s' in q_config.keys():
             self.sum_type_attn_s = q_config['sum_type_attn_s']
-        self.sum_type_smax = 'QUANT'
+        self.sum_type_smax = 'KULISCH'
         if 'sum_type_smax' in q_config.keys():
             self.sum_type_smax = q_config['sum_type_smax']
-        self.sum_type_attn_o = 'QUANT'
+        self.sum_type_attn_o = 'KULISCH'
         if 'sum_type_attn_o' in q_config.keys():
             self.sum_type_attn_o = q_config['sum_type_attn_o']
 
@@ -135,12 +135,13 @@ class QuantLlamaAttention(nn.Module):
                 q_scale = self.k_quantizer.dynamic_scale(query_states)
                 k_quant = key_states / k_scale
                 q_quant = query_states / q_scale
+                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.k_quantizer.group_size))) + (2 ** self.k_quantizer.exp_w - 1))) + 1
                 attn_weights = ordmm_chunk_bcast_scaled(q_quant,
                     k_quant,
                     q_scale,
                     k_scale,
                     self.k_quantizer.man_w,
-                    self.k_quantizer.exp_w,
+                    min(self.k_quantizer.exp_w + exp_ext, 7),
                     self.k_quantizer.group_size,
                     self.sum_type_attn_s
                 ) / math.sqrt(self.head_dim)
@@ -171,10 +172,11 @@ class QuantLlamaAttention(nn.Module):
             else:
                 e_scale = self.v_quantizer.dynamic_scale(exp_x)
                 e_quant = exp_x / e_scale
+                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1)))
                 sum_exp_x = ordacc_chunk_scaled(e_quant,
                     e_scale,
                     self.v_quantizer.man_w,
-                    self.v_quantizer.exp_w,
+                    min(self.v_quantizer.exp_w + exp_ext, 7),
                     self.v_quantizer.group_size,
                     self.sum_type_smax
                 ).unsqueeze(-1)
@@ -195,16 +197,17 @@ class QuantLlamaAttention(nn.Module):
                 attn_output = torch.matmul(attn_weights, value_states)
             else:
                 p_scale = self.v_quantizer.dynamic_scale(attn_weights)
-                v_scale = self.v_quantizer.dynamic_scale(value_states)
+                v_scale = self.v_quantizer.dynamic_scale(value_states.transpose(-1,-2))
                 p_quant = attn_weights / p_scale
-                v_quant = value_states / v_scale
+                v_quant = value_states.transpose(-1,-2) / v_scale
+                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1))) + 1
                 attn_output = ordmm_chunk_bcast_scaled(
                     p_quant,
-                    v_quant.transpose(-1,-2),
+                    v_quant,
                     p_scale,
-                    v_scale.transpose(-1,-2),
+                    v_scale,
                     self.v_quantizer.man_w,
-                    self.v_quantizer.exp_w,
+                    min(self.v_quantizer.exp_w + exp_ext, 7),
                     self.v_quantizer.group_size,
                     self.sum_type_attn_o
                 ).to(attn_weights.dtype)
