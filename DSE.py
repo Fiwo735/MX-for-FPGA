@@ -7,6 +7,7 @@ import copy
 import itertools
 import random
 import time
+import pickle
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
@@ -211,27 +212,49 @@ class DesignConfig:
     if not details:
       raise ValueError(f"Design string {design_str} does not match expected pattern.")
     
+    # name = details.group(1)
+    # S_q = int(details.group(2))
+    # S_kv = int(details.group(3))
+    # d_kq = int(details.group(4))
+    # d_v = int(details.group(5))
+    # k1 = int(details.group(6))
+    # k2 = int(details.group(7))
+    # k3 = int(details.group(8))
+    # scale_width = int(details.group(9))
+    # M1_E = int(details.group(10))
+    # M1_M = int(details.group(11))
+    # M2_E = int(details.group(12))
+    # M2_M = int(details.group(13))
+    # M3_E = int(details.group(14))
+    # M3_M = int(details.group(15))
+    # accum_method1 = AccumMethod(details.group(16))
+    # accum_method2 = AccumMethod(details.group(17))
+    # accum_method3 = AccumMethod(details.group(18))
+    # m1_dsp = details.group(19)
+    # m2_dsp = details.group(20)
+    # m3_dsp = details.group(21)
+    
     name = details.group(1)
     S_q = int(details.group(2))
     S_kv = int(details.group(3))
     d_kq = int(details.group(4))
     d_v = int(details.group(5))
     k1 = int(details.group(6))
-    k2 = int(details.group(7))
-    k3 = int(details.group(8))
-    scale_width = int(details.group(9))
-    M1_E = int(details.group(10))
-    M1_M = int(details.group(11))
-    M2_E = int(details.group(12))
-    M2_M = int(details.group(13))
-    M3_E = int(details.group(14))
-    M3_M = int(details.group(15))
-    accum_method1 = AccumMethod(details.group(16))
-    accum_method2 = AccumMethod(details.group(17))
-    accum_method3 = AccumMethod(details.group(18))
-    m1_dsp = details.group(19)
-    m2_dsp = details.group(20)
-    m3_dsp = details.group(21)
+    k2 = int(details.group(6))
+    k3 = int(details.group(6))
+    scale_width = int(details.group(7))
+    M1_E = int(details.group(8))
+    M1_M = int(details.group(9))
+    M2_E = int(details.group(10))
+    M2_M = int(details.group(11))
+    M3_E = int(details.group(12))
+    M3_M = int(details.group(13))
+    accum_method1 = AccumMethod(details.group(14))
+    accum_method2 = AccumMethod(details.group(15))
+    accum_method3 = AccumMethod(details.group(16))
+    m1_dsp = details.group(17)
+    m2_dsp = details.group(18)
+    m3_dsp = details.group(19)
     
     return cls(name=name, S_q=S_q, S_kv=S_kv, d_kq=d_kq, d_v=d_v, k1=k1, k2=k2, k3=k3, scale_width=scale_width, M1_E=M1_E, M1_M=M1_M, M2_E=M2_E, M2_M=M2_M, M3_E=M3_E, M3_M=M3_M, accum_method1=accum_method1, accum_method2=accum_method2, accum_method3=accum_method3, m1_dsp=m1_dsp, m2_dsp=m2_dsp, m3_dsp=m3_dsp)
 
@@ -243,31 +266,16 @@ class SynthesisResult:
     self.utilisation = utilisation
     self.accuracy = accuracy
     
-    # TODO placeholder
-    self.resource_multipliers = {
-      "LUTs": 1.0,
-      "FFs": 1.0,
-      "BRAMs": 1.0,
-      "DSPs": 1.0,
-    }
-    
-  def get_aggregated_resource_usage(self, keys=None, use_multipliers=False):
+  def get_aggregated_resource_usage(self, keys=None):
     if keys is None:
       keys = SynthesisHandler.get_available_fpga_resources().keys()
       
     utilisation_sum = 0.0
     
     for key in keys:
-      current_utilisation = self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
-      if use_multipliers:
-        current_utilisation *= self.resource_multipliers[key]
-        
-      utilisation_sum += current_utilisation
+      utilisation_sum = self.utilisation[key] / SynthesisHandler.get_available_fpga_resources(key)
       
     return utilisation_sum / len(keys)
-  
-  def get_throughput_multiplier(self):
-    return 1 # TODO placeholder
   
   @classmethod
   def create_ideal_result(cls, all_results):
@@ -365,20 +373,21 @@ class SynthesisHandler:
     
     self.powers = []
     self.resource_usages = []
-    self.throughputs = []
     self.accuracies = []
+    
+    self.pickle_dir = "./synthesis_fits"
     
   @staticmethod
   def get_available_fpga_resources(key=None):
     # Device: xcv80-lsva4737-2MHP-e-S
     # TODO update according to actual device
     AVAILABLE_FPGA_RESOURCES = {
-      "LUTs": 1728000,
-      "FFs": 3456000,
+      "LUTs": 2574208,
+      "FFs": 5148416,
       # "CARRY8": 216000,
       # "Muxes": 864000+432000+216000,
-      "BRAMs": 2688,
-      "DSPs": 12288,
+      "BRAMs": 3741,
+      "DSPs": 10848,
     }
     
     return AVAILABLE_FPGA_RESOURCES if key is None else AVAILABLE_FPGA_RESOURCES.get(key, None)
@@ -673,12 +682,15 @@ class SynthesisHandler:
     
     self.designs = [r.design_config for r in self.results]
     self.powers = [r.power['total'] for r in self.results]
-    self.resource_usages = [r.get_aggregated_resource_usage(use_multipliers=True) for r in self.results]
-    self.LUTs = [r.get_aggregated_resource_usage(["LUTs"], use_multipliers=True) for r in self.results]
-    self.FFs = [r.get_aggregated_resource_usage(["FFs"], use_multipliers=True) for r in self.results]
-    self.BRAMs = [r.get_aggregated_resource_usage(["BRAMs"], use_multipliers=True) for r in self.results]
-    self.DSPs = [r.get_aggregated_resource_usage(["DSPs"], use_multipliers=True) for r in self.results]
-    self.throughputs = [r.timing['max_freq'] * r.get_throughput_multiplier() for r in self.results]
+    self.resource_usages = [r.get_aggregated_resource_usage() for r in self.results]
+    # self.LUTs = [r.get_aggregated_resource_usage(["LUTs"]) for r in self.results]
+    # self.FFs = [r.get_aggregated_resource_usage(["FFs"]) for r in self.results]
+    # self.BRAMs = [r.get_aggregated_resource_usage(["BRAMs"]) for r in self.results]
+    # self.DSPs = [r.get_aggregated_resource_usage(["DSPs"]) for r in self.results]
+    self.LUTs = [r.utilisation["LUTs"] for r in self.results]
+    self.FFs = [r.utilisation["FFs"] for r in self.results]
+    self.BRAMs = [r.utilisation["BRAMs"] for r in self.results]
+    self.DSPs = [r.utilisation["DSPs"] for r in self.results]
     self.accuracies = [r.accuracy for r in self.results]
    
   def find_pareto_optimal(self, weights):
@@ -777,13 +789,13 @@ class SynthesisHandler:
     )
     
     self._plot(
-      x=self.throughputs,
+      x=self.resource_usages,
       y=self.accuracies,
       color_values=color_values,
-      xlabel="Throughput (T/s)",
+      xlabel="Resource Usage (%)",
       ylabel="Perplexity",
-      title=f"Perplexity vs Throughput",
-      filename=f"perplexity_vs_throughput.{plot_file_format}",
+      title=f"Perplexity vs Resource Usage",
+      filename=f"perplexity_vs_resource_usage.{plot_file_format}",
       directory=directory,
       show_colorbar=True
     )
@@ -933,25 +945,23 @@ class SynthesisHandler:
     fig.tight_layout()
     fig.savefig(os.path.join(directory, filename))
     
-  def find_fit(self, y_type, degree=2, threshold=1e-3, combine_E_M=True, verbose=True):
-    # Create a DataFrame from design parameters
-    data = {
-      'S': np.array([d.S_q for d in self.designs]),
-      'd': np.array([d.d_kq for d in self.designs]),
-    }
-    if combine_E_M:
-      data['(E+M)'] = np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in self.designs])
-    else:
-      data['E'] = np.array([d.M1_bits.exp_bits for d in self.designs])
-      data['M'] = np.array([d.M1_bits.mant_bits for d in self.designs])
+  def find_fit(self, y_type, data, degree=2, threshold=1e-3, verbose=True, pickle_suffix=""):
+    # # Create a DataFrame from design parameters
+    # data = {
+    #   'S': np.array([d.S_q for d in self.designs]),
+    #   'd': np.array([d.d_kq for d in self.designs]),
+    # }
+    # if combine_E_M:
+    #   data['(E+M)'] = np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in self.designs])
+    # else:
+    #   data['E'] = np.array([d.M1_bits.exp_bits for d in self.designs])
+    #   data['M'] = np.array([d.M1_bits.mant_bits for d in self.designs])
       
     df = pd.DataFrame(data)
     if y_type == "LUTs":
       y = np.array(self.LUTs)
     elif y_type == "FFs":
       y = np.array(self.FFs)
-    elif y_type == "throughput":
-      y = np.array(self.throughputs)
     else:
       raise ValueError(f"Unknown y_type: {y_type}")
 
@@ -965,8 +975,6 @@ class SynthesisHandler:
 
     if verbose:
       print(f"\nPolynomial model fit for {y_type}")
-      if combine_E_M:
-        print(f"(Using combined (E+M) feature)")
       feature_names = poly.get_feature_names_out(df.columns)
       formula = ""
       for coef, name in zip(model.coef_, feature_names):
@@ -978,17 +986,19 @@ class SynthesisHandler:
       print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
       print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
     
-    return zip(model.coef_ + model.intercept_, feature_names + ["Intercept"]), model.score(X_poly, y)
+    with open(f"{self.pickle_dir}/fit_model_{y_type}_{pickle_suffix}.pkl", "wb") as f:
+      pickle.dump({
+          "model": model,
+          "poly": poly,
+          "feature_names": df.columns.tolist()
+      }, f)
   
-  def find_fit_with_gplearn(self, y_type, population_size=5000, generations=50, parsimony_coefficient=1e-3):
+  def find_fit_with_gplearn(self, y_type, X, population_size=5000, generations=50, parsimony_coefficient=1e-3):
     # Prepare the design matrix
-    X = np.array([[d.S_q, d.d_kq, d.M1_bits.exp_bits + d.M1_bits.mant_bits] for d in self.designs])
     if y_type == "LUTs":
       y = np.array(self.LUTs)
     elif y_type == "FFs":
       y = np.array(self.FFs)
-    elif y_type == "throughput":
-      y = np.array(self.throughputs)
     else:
       raise ValueError(f"Unknown y_type: {y_type}")
 
@@ -1089,6 +1099,48 @@ class SynthesisHandler:
     print("Best individual:", hof[0])
     print("Best fitness:", hof[0].fitness.values[0])
     
+    
+  def predict_synthesis_results(self, y_type, dc):
+    def load_pickled_model(path):
+      with open(self.pickle_dir + "/" + path, "rb") as f:
+        saved = pickle.load(f)
+        return saved["model"], saved["poly"], saved["feature_names"]
+      
+    def predict(x, poly, model, feature_names):
+      x_df = pd.DataFrame(x, columns=feature_names)
+      x_poly = poly.transform(x_df)
+      y_pred = model.predict(x_poly)
+      return y_pred
+      
+    # Load models
+    model_matmul, poly_matmul, feature_names_matmul = load_pickled_model(f"fit_model_{y_type}_matmul.pkl")
+    model_softmax, poly_softmax, feature_names_softmax = load_pickled_model(f"fit_model_{y_type}_softmax.pkl") 
+    
+    # Matmul 1 => y(S_q, d_kq, S_kv, (E1+M1))
+    # x_matmul1 = np.array([[dc.S_q, dc.d_kq, dc.S_kv, dc.M1_bits.exp_bits + dc.M1_bits.mant_bits]])
+    x_matmul1 = np.array([[dc.S_q, dc.d_kq, dc.M1_bits.exp_bits + dc.M1_bits.mant_bits]])
+    y_matmul1 = predict(x_matmul1, poly_matmul, model_matmul, feature_names_matmul)[0] / dc.S_q
+    # print(f"Matmul1 prediction: {y_matmul1}")
+    
+    # Softmax => y(k2, (E2+M2), (E3+M3))
+    x_softmax = np.array([[dc.k2, dc.M2_bits.exp_bits + dc.M2_bits.mant_bits, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
+    y_softmax = predict(x_softmax, poly_softmax, model_softmax, feature_names_softmax)[0]
+    # print(f"Softmax prediction: {y_softmax}")
+    
+    # Matmul 2 => y(S_q, S_kv, d_v, (E3+M3))
+    # x_matmul2 = np.array([[dc.S_q, dc.S_kv, dc.d_v, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
+    x_matmul2 = np.array([[dc.S_q, dc.S_kv, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
+    y_matmul2 = predict(x_matmul2, poly_matmul, model_matmul, feature_names_matmul)[0]  / dc.S_q
+    # print(f"Matmul2 prediction: {y_matmul2}")
+    
+    if y_type in ["LUTs", "FFs"]:
+      softmax_parallelism = dc.S_q * dc.S_kv // dc.k2  / dc.S_q
+      prediction = y_matmul1 + softmax_parallelism * y_softmax + y_matmul2
+    else:
+      raise ValueError(f"Unknown y_type: {y_type}")
+    
+    return prediction
+    
   
   def __str__(self):
     spacer = "="*60 + "\n"
@@ -1125,7 +1177,7 @@ if __name__ == "__main__":
 
   # Analatical model: MATMUL 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
     for S in [2, 4, 8, 16]
     for d in [2, 4, 8, 16]
@@ -1139,13 +1191,25 @@ if __name__ == "__main__":
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul")
   synthesis_handler.find_and_process_results()
   
-  LUTs_coeffs, LUTs_score = synthesis_handler.find_fit("LUTs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit("FFs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit("throughput", degree=3, threshold=0.01, combine_E_M=True, verbose=args.verbose)
+  # print([d.S_q for d in synthesis_handler.designs])
+  
+  matmul_fit_data = {
+    'S':     np.array([d.S_q for d in synthesis_handler.designs]),
+    'd':     np.array([d.d_kq for d in synthesis_handler.designs]),
+    '(E+M)': np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in synthesis_handler.designs])
+  }
+
+  synthesis_handler.find_fit("LUTs", matmul_fit_data, degree=2, threshold=0, verbose=args.verbose, pickle_suffix="matmul")
+  synthesis_handler.find_fit("FFs", matmul_fit_data, degree=2, threshold=0, verbose=args.verbose, pickle_suffix="matmul")
+  
+  # matmul_fit_data_gplearn = np.array([[d.S_q, d.d_kq, d.M1_bits.exp_bits + d.M1_bits.mant_bits] for d in synthesis_handler.designs])
+  
+  # synthesis_handler.find_fit_with_gplearn("LUTs", matmul_fit_data_gplearn,       population_size=5000, generations=20, parsimony_coefficient=0.0001)
+  # synthesis_handler.find_fit_with_gplearn("FFs", matmul_fit_data_gplearn,        population_size=5000, generations=20, parsimony_coefficient=0.0001)
   
   # Analatical model: SOFTMAX 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["mxint_softmax"]
     for S in [4, 8, 16]
     for d in [4, 8, 16]
@@ -1158,6 +1222,7 @@ if __name__ == "__main__":
   ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
+  synthesis_handler.find_and_process_results()
   
   
   # for i in range(1):
@@ -1165,7 +1230,6 @@ if __name__ == "__main__":
   #   print(f"========================================================\n========================================================\n========================================================\nRUN {i}\n========================================================\n========================================================\n========================================================\n")
   # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output", max_workers=args.max_workers)
   # for i in range(50):
   #   synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
   #   print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
@@ -1178,7 +1242,7 @@ if __name__ == "__main__":
   
   
   
-  synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
+  # synthesis_handler.run_accuracy_measurement(dry_run=args.dry, verbose=args.verbose)
 
   # synthesis_handler.find_and_process_results()
   # print(synthesis_handler)
@@ -1188,19 +1252,75 @@ if __name__ == "__main__":
 
   # # synthesis_handler.plot_perplexity(directory="./plots", plot_file_format="png")
   
-  synthesis_handler.find_fit("LUTs", degree=3, threshold=0, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit("FFs", degree=2, threshold=0, combine_E_M=True, verbose=args.verbose)
-  synthesis_handler.find_fit("throughput", degree=3, threshold=0.01, combine_E_M=True, verbose=args.verbose)
+  softmax_fit_data = {
+    'k':     np.array([d.k2 for d in synthesis_handler.designs]),
+    '(E2+M2)': np.array([d.M2_bits.exp_bits + d.M2_bits.mant_bits for d in synthesis_handler.designs]),
+    '(E3+M3)': np.array([d.M3_bits.exp_bits + d.M3_bits.mant_bits for d in synthesis_handler.designs])
+  }
+  
+  synthesis_handler.find_fit("LUTs", softmax_fit_data, degree=3, threshold=0, verbose=args.verbose, pickle_suffix="softmax")
+  synthesis_handler.find_fit("FFs", softmax_fit_data, degree=2, threshold=0, verbose=args.verbose, pickle_suffix="softmax")
     
-  # synthesis_handler.find_fit_with_gplearn("LUTs",       population_size=5000, generations=20, parsimony_coefficient=0.0001)
-  # synthesis_handler.find_fit_with_gplearn("FFs",        population_size=5000, generations=20, parsimony_coefficient=0.0001)
-  # synthesis_handler.find_fit_with_gplearn("throughput", population_size=5000, generations=20, parsimony_coefficient=0.1000)
+  # softmax_fit_data_gplearn = np.array([[d.k2, d.M2_bits.exp_bits + d.M2_bits.mant_bits, d.M3_bits.exp_bits + d.M3_bits.mant_bits] for d in synthesis_handler.designs])
+    
+  # synthesis_handler.find_fit_with_gplearn("LUTs", softmax_fit_data_gplearn,       population_size=5000, generations=20, parsimony_coefficient=0.0001)
+  # synthesis_handler.find_fit_with_gplearn("FFs", softmax_fit_data_gplearn,        population_size=5000, generations=20, parsimony_coefficient=0.0001)
   # synthesis_handler.genetic_perplexity_search()
   
   # design_to_predict = DesignConfig(
   #   name= "attention_fp",
-  #   S_q=2048, S_kv=2048,
+  #   S_q=512, S_kv=512,
   #   d_kq=64, d_v=64,
+  #   k1=32, k2=32, k3=32,
+  #   scale_width=8,
+  #   M1_E=5, M1_M=2,
+  #   M2_E=5, M2_M=2,
+  #   M3_E=5, M3_M=2,
+  #   accum_method1=AccumMethod.Kulisch,
+  #   accum_method2=AccumMethod.Kulisch,
+  #   accum_method3=AccumMethod.Kulisch,
+  # )
+  # print(synthesis_handler.predict_synthesis_results("LUTs", design_to_predict))
+  # print(synthesis_handler.predict_synthesis_results("FFs", design_to_predict))
+  
+  # read all configs from dir
+  # for luts, ffs:
+    # call predict_synthesis_results
+    # compare with actual results
+    # compute mse by doing (pred - actual)^2 / n
     
     
-  # synthesis_handler.predict_synthesis_results("LUTs", design_to_predict)
+  # Validation
+  designs_to_synthesise = [
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["attention_fp"]
+    for S in [8]
+    for d in [8]
+    # for k in [8]
+    for scale_width in [8]
+    for M_E, M_M in [(0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10), (2, 1), (2, 3), (3, 2), (4, 3), (5, 2)]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for m1_dsp in ["auto"]
+  ]
+  
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output")
+  synthesis_handler.find_and_process_results()
+  
+  LUTs_diffs = []
+  FFs_diffs = []
+  for result in synthesis_handler.results:
+    predicted_luts = synthesis_handler.predict_synthesis_results("LUTs", result.design_config)
+    predicted_ffs = synthesis_handler.predict_synthesis_results("FFs", result.design_config)
+    
+    LUTs_diffs.append((predicted_luts - result.utilisation['LUTs']) ** 2)
+    FFs_diffs.append((predicted_ffs - result.utilisation['FFs']) ** 2)
+    
+    # print(f"Design: {result.design_config}")
+    # print(f"  Actual LUTs: {result.utilisation['LUTs']}, Predicted LUTs: {predicted_luts:.2f}")
+    # print(f"  Actual FFs: {result.utilisation['FFs']}, Predicted FFs: {predicted_ffs:.2f}")
+    
+  mse_luts = sum(LUTs_diffs) / len(LUTs_diffs)
+  mse_ffs = sum(FFs_diffs) / len(FFs_diffs)
+  print(f"\nLUTs Prediction MSE: {mse_luts:.4f}")
+  print(f"FFs Prediction MSE: {mse_ffs:.4f}")
+  
