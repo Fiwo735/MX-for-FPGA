@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaAttention, Cache, logger, repeat_kv, apply_rotary_pos_emb
 
-from .quant_utils import q_reg
+from .quant_utils import q_reg, MXFPQuantizer, MXINTQuantizer
 from ordmm import ordmm_chunk_bcast_scaled, ordacc_chunk_scaled
 
 
@@ -135,16 +135,30 @@ class QuantLlamaAttention(nn.Module):
                 q_scale = self.k_quantizer.dynamic_scale(query_states)
                 k_quant = key_states / k_scale
                 q_quant = query_states / q_scale
-                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.k_quantizer.group_size))) + (2 ** self.k_quantizer.exp_w - 1))) + 1
-                attn_weights = ordmm_chunk_bcast_scaled(q_quant,
-                    k_quant,
-                    q_scale,
-                    k_scale,
-                    self.k_quantizer.man_w,
-                    min(self.k_quantizer.exp_w + exp_ext, 7),
-                    self.k_quantizer.group_size,
-                    self.sum_type_attn_s
-                ) / math.sqrt(self.head_dim)
+                if type(self.k_quantizer) == MXFPQuantizer:
+                    exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.k_quantizer.group_size))) + (2 ** self.k_quantizer.exp_w - 1))) + 1
+                    attn_weights = ordmm_chunk_bcast_scaled(q_quant,
+                        k_quant,
+                        q_scale,
+                        k_scale,
+                        self.k_quantizer.man_w,
+                        min(self.k_quantizer.exp_w + exp_ext, 7),
+                        self.k_quantizer.group_size,
+                        self.sum_type_attn_s
+                    ) / math.sqrt(self.head_dim)
+                # elif type(self.k_quantizer) == MXINTQuantizer:
+                #     exp_ext = torch.ceil(torch.log2(torch.tensor(self.k_quantizer.group_size)))
+                #     attn_weights = ordmm_chunk_bcast_scaled_int(q_quant.to(torch.int32),
+                #         k_quant.to(torch.int32),
+                #         q_scale,
+                #         k_scale,
+                #         min(2*self.k_quantizer.bit_w + exp_ext, 24),
+                #         self.k_quantizer.group_size,
+                #         self.sum_type_attn_s
+                #     ) / math.sqrt(self.head_dim)
+                else:
+                    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+                    # raise RuntimeError('Non kulisch accumulation unavailable with this quantizer.')
 
         # Quantize attention scores to arbitrary FP, no scales
         if hasattr(self, "s_quantizer"):
@@ -172,14 +186,26 @@ class QuantLlamaAttention(nn.Module):
             else:
                 e_scale = self.v_quantizer.dynamic_scale(exp_x)
                 e_quant = exp_x / e_scale
-                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1)))
-                sum_exp_x = ordacc_chunk_scaled(e_quant,
-                    e_scale,
-                    self.v_quantizer.man_w,
-                    min(self.v_quantizer.exp_w + exp_ext, 7),
-                    self.v_quantizer.group_size,
-                    self.sum_type_smax
-                ).unsqueeze(-1)
+                if type(self.v_quantizer) == MXFPQuantizer:
+                    exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1)))
+                    sum_exp_x = ordacc_chunk_scaled(e_quant,
+                        e_scale,
+                        self.v_quantizer.man_w,
+                        min(self.v_quantizer.exp_w + exp_ext, 7),
+                        self.v_quantizer.group_size,
+                        self.sum_type_smax
+                    ).unsqueeze(-1)
+                # elif type(self.v_quantizer) == MXINTQuantizer:
+                #     exp_ext = torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size)))
+                #     sum_exp_x = ordacc_chunk_scaled_int(e_quant.to(torch.int32),
+                #         e_scale,
+                #         min(self.v_quantizer.exp_w + exp_ext, 7),
+                #         self.v_quantizer.group_size,
+                #         self.sum_type_smax
+                #     ).unsqueeze(-1)
+                else:
+                    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+                    # raise RuntimeError('Non kulisch accumulation unavailable with this quantizer.')
         # Step 4: normalize
         softmax_x = exp_x / sum_exp_x
         # Step 5: cast back
@@ -200,17 +226,34 @@ class QuantLlamaAttention(nn.Module):
                 v_scale = self.v_quantizer.dynamic_scale(value_states.transpose(-1,-2))
                 p_quant = attn_weights / p_scale
                 v_quant = value_states.transpose(-1,-2) / v_scale
-                exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1))) + 1
-                attn_output = ordmm_chunk_bcast_scaled(
-                    p_quant,
-                    v_quant,
-                    p_scale,
-                    v_scale,
-                    self.v_quantizer.man_w,
-                    min(self.v_quantizer.exp_w + exp_ext, 7),
-                    self.v_quantizer.group_size,
-                    self.sum_type_attn_o
-                ).to(attn_weights.dtype)
+                if type(self.v_quantizer) == MXFPQuantizer:
+                    exp_ext = torch.ceil(torch.log2(torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size))) + (2 ** self.v_quantizer.exp_w - 1))) + 1
+                    attn_output = ordmm_chunk_bcast_scaled(
+                        p_quant,
+                        v_quant,
+                        p_scale,
+                        v_scale,
+                        self.v_quantizer.man_w,
+                        min(self.v_quantizer.exp_w + exp_ext, 7),
+                        self.v_quantizer.group_size,
+                        self.sum_type_attn_o
+                    ).to(attn_weights.dtype)
+                # elif type(self.v_quantizer) == MXINTQuantizer:
+                #     exp_ext = torch.ceil(torch.log2(torch.tensor(self.v_quantizer.group_size)))
+                #     attn_output = ordmm_chunk_bcast_scaled_int(
+                #         p_quant.to(torch.int32),
+                #         v_quant.to(torch.int32),
+                #         p_scale,
+                #         v_scale,
+                #         24,
+                #         32,
+                #         self.sum_type_attn_o
+                #     ).to(attn_weights.dtype)
+                #     if attn_output.isnan().any():
+                #         import pdb; pdb.set_trace()
+                else:
+                    attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
+                    # raise RuntimeError('Non kulisch accumulation unavailable with this quantizer.')
 
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
             raise ValueError(

@@ -1152,7 +1152,7 @@ if __name__ == "__main__":
       # For w >= 10, use E5 (converging to FP16)
       return (5, w - 6)
 
-  GPUS = [0,1,2,3]
+  GPUS = [0,1,2]
   
   designs_to_synthesise = [
     DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
