@@ -1,0 +1,24 @@
+Using device: cuda
+Start to load tokenizer...
+Complete tokenizer loading...
+Replaced model.layers.0.self_attn with quantized attention.
+Replaced model.layers.1.self_attn with quantized attention.
+Replaced model.layers.2.self_attn with quantized attention.
+Replaced model.layers.3.self_attn with quantized attention.
+Replaced model.layers.4.self_attn with quantized attention.
+Replaced model.layers.5.self_attn with quantized attention.
+Replaced model.layers.6.self_attn with quantized attention.
+Replaced model.layers.7.self_attn with quantized attention.
+Replaced model.layers.8.self_attn with quantized attention.
+Replaced model.layers.9.self_attn with quantized attention.
+Replaced model.layers.10.self_attn with quantized attention.
+Replaced model.layers.11.self_attn with quantized attention.
+Replaced model.layers.12.self_attn with quantized attention.
+Replaced model.layers.13.self_attn with quantized attention.
+Replaced model.layers.14.self_attn with quantized attention.
+Replaced model.layers.15.self_attn with quantized attention.
+Model patched with quantized attention. Total replacements: 48 quantizers found.
+Model has 1,498,482,688 parameters
+Validation samples: 141
+
+Perplexity: 10.84
