@@ -69,9 +69,87 @@ WARNING: Filename attention_fp_S_q_8_S_kv_8_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_
 WARNING: Filename attention_fp_S_q_8_S_kv_8_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_4_M1_M_3_M2_E_4_M2_M_3_M3_E_4_M3_M_3_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_0350_accuracy.txt does not match expected pattern, skipping.
 WARNING: Filename attention_fp_S_q_8_S_kv_8_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_0_M1_M_9_M2_E_0_M2_M_9_M3_E_0_M3_M_9_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_0458_accuracy.txt does not match expected pattern, skipping.
 WARNING: Filename attention_fp_S_q_8_S_kv_8_d_kq_8_d_v_8_k_8_scale_width_8_M1_E_0_M1_M_10_M2_E_0_M2_M_10_M3_E_0_M3_M_10_ACCUM_METHOD_KULISCH_KULISCH_KULISCH_DSP_auto_auto_auto_time_20260115_0350_accuracy.txt does not match expected pattern, skipping.
-Found 91 synthesis results in ./src/attention/synth_output.
-Ablation check enabled, total valid results found: 54
-			54 Synthesis Results:
+Found 115 synthesis results in ./src/attention/synth_output.
+Ablation check enabled, total valid results found: 115
+			115 Synthesis Results:
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: FASTTWOSUM
+  Accumulation method 2: FASTTWOSUM
+  Accumulation method 3: FASTTWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.82
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E3M4
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.32
+
 ============================================================
 Design: attention_fp
   S_q: 2048
@@ -123,6 +201,58 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.08
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: TWOSUM
+  Accumulation method 2: TWOSUM
+  Accumulation method 3: TWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E2M3
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,431,738.160288678 (327.55%)
+	FFs: 2,370,997.740437271 (46.05%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 12.44
 
 ============================================================
 Design: attention_fp
@@ -286,6 +416,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E4M3
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.85
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 8
   k3: 8
@@ -338,6 +494,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E4M3
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.26
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 16
   k3: 8
@@ -383,6 +565,214 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.44
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M1
+  M2 bits: E2M1
+  M3 bits: E2M1
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,892,416.369889375 (306.60%)
+	FFs: 2,318,027.8970418316 (45.02%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 30.98
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M2
+  M2 bits: E5M2
+  M3 bits: E5M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.51
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E4M3
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.25
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E3M4
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.22
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E3M4
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.91
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E3M4
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.30
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E4M3
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.04
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E3M4
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.36
 
 ============================================================
 Design: attention_fp
@@ -468,6 +858,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: FASTTWOSUM
+  Accumulation method 2: FASTTWOSUM
+  Accumulation method 3: FASTTWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 16
   k2: 8
   k3: 16
@@ -487,6 +903,58 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 9.93
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: KAHAN
+  Accumulation method 2: KAHAN
+  Accumulation method 3: KAHAN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.82
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E3M4
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.83
 
 ============================================================
 Design: attention_fp
@@ -520,6 +988,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.96
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 16
   k3: 16
@@ -539,6 +1033,58 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 9.92
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E3M4
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.23
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: KLEIN
+  Accumulation method 2: KLEIN
+  Accumulation method 3: KLEIN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
 
 ============================================================
 Design: attention_fp
@@ -624,6 +1170,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E4M3
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.46
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 16
   k2: 8
   k3: 8
@@ -643,6 +1215,32 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.16
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: NAIVE
+  Accumulation method 2: NAIVE
+  Accumulation method 3: NAIVE
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
 
 ============================================================
 Design: attention_fp
@@ -702,6 +1300,84 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E3M4
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.40
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: QUANT
+  Accumulation method 2: QUANT
+  Accumulation method 3: QUANT
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.90
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E4M3
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.94
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 8
   k3: 16
@@ -721,6 +1397,32 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.10
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: TWOSUM
+  Accumulation method 2: TWOSUM
+  Accumulation method 3: TWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.80
 
 ============================================================
 Design: attention_fp
@@ -754,6 +1456,84 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: KLEIN
+  Accumulation method 2: KLEIN
+  Accumulation method 3: KLEIN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.82
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E3M4
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.03
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E4M3
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.95
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 8
   k3: 16
@@ -773,6 +1553,32 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 9.92
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: NAIVE
+  Accumulation method 2: NAIVE
+  Accumulation method 3: NAIVE
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
 
 ============================================================
 Design: attention_fp
@@ -1040,6 +1846,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: NEUMAIER
+  Accumulation method 2: NEUMAIER
+  Accumulation method 3: NEUMAIER
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 8
   k3: 8
@@ -1059,6 +1891,84 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 155.90
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E3M4
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.93
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: KAHAN
+  Accumulation method 2: KAHAN
+  Accumulation method 3: KAHAN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: QUANT
+  Accumulation method 2: QUANT
+  Accumulation method 3: QUANT
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
 
 ============================================================
 Design: attention_fp
@@ -1096,6 +2006,32 @@ Design: attention_fp
   k2: 32
   k3: 32
   scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E4M3
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.38
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
   M1 bits: E3M2
   M2 bits: E5M10
   M3 bits: E3M2
@@ -1111,6 +2047,136 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.39
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: NAIVE
+  Accumulation method 2: NAIVE
+  Accumulation method 3: NAIVE
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: KAHAN
+  Accumulation method 2: KAHAN
+  Accumulation method 3: KAHAN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: -1.00
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E4M3
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.33
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E3M4
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.31
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: QUANT
+  Accumulation method 2: QUANT
+  Accumulation method 3: QUANT
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.81
 
 ============================================================
 Design: attention_fp
@@ -1148,6 +2214,32 @@ Design: attention_fp
   k2: 32
   k3: 32
   scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E3M4
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.42
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
   M1 bits: E0M8
   M2 bits: E5M10
   M3 bits: E0M8
@@ -1163,6 +2255,84 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 62.69
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E3M4
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.85
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E4M3
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,618,493.205441497 (334.80%)
+	FFs: 2,433,466.0160502996 (47.27%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.34
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E4M3
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.96
 
 ============================================================
 Design: attention_fp
@@ -1189,6 +2359,32 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 145.89
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: TWOSUM
+  Accumulation method 2: TWOSUM
+  Accumulation method 3: TWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.81
 
 ============================================================
 Design: attention_fp
@@ -1248,6 +2444,32 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E3M4
+  M3 bits: E2M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.94
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 16
   k2: 16
   k3: 16
@@ -1267,6 +2489,32 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 90.05
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E4M3
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.93
 
 ============================================================
 Design: attention_fp
@@ -1300,6 +2548,240 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E3M2
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,431,738.160288678 (327.55%)
+	FFs: 2,370,997.740437271 (46.05%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.57
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E0M8
+  M2 bits: E0M8
+  M3 bits: E0M8
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,582,499.951535469 (333.40%)
+	FFs: 2,469,786.66995256 (47.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 71.46
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: KLEIN
+  Accumulation method 2: KLEIN
+  Accumulation method 3: KLEIN
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E3M4
+  M3 bits: E3M4
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.93
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M2
+  M2 bits: E4M3
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.43
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E4M3
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.02
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M4
+  M2 bits: E4M3
+  M3 bits: E4M3
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,620,723.168324664 (334.89%)
+	FFs: 2,434,279.13819118 (47.28%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.87
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E2M3
+  M2 bits: E4M3
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,451,657.494057156 (328.32%)
+	FFs: 2,403,768.382019607 (46.69%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.36
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
   k1: 8
   k2: 16
   k3: 16
@@ -1319,6 +2801,58 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 10.36
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E4M3
+  M2 bits: E3M4
+  M3 bits: E3M2
+  Accumulation method 1: KULISCH
+  Accumulation method 2: KULISCH
+  Accumulation method 3: KULISCH
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 8,453,887.456940321 (328.41%)
+	FFs: 2,404,581.504160487 (46.71%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 10.00
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E5M5
+  M2 bits: E5M10
+  M3 bits: E5M5
+  Accumulation method 1: NEUMAIER
+  Accumulation method 2: NEUMAIER
+  Accumulation method 3: NEUMAIER
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.81
 
 ============================================================
 Design: attention_fp
@@ -1397,6 +2931,58 @@ Resource utilisation:
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
 Perplexity: 145.89
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E7M3
+  M2 bits: E5M10
+  M3 bits: E7M3
+  Accumulation method 1: NEUMAIER
+  Accumulation method 2: NEUMAIER
+  Accumulation method 3: NEUMAIER
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 3002.81
+
+============================================================
+Design: attention_fp
+  S_q: 2048
+  S_kv: 2048
+  d_kq: 64
+  d_v: 64
+  k1: 32
+  k2: 32
+  k3: 32
+  scale_width: 8
+  M1 bits: E3M7
+  M2 bits: E5M10
+  M3 bits: E3M7
+  Accumulation method 1: FASTTWOSUM
+  Accumulation method 2: FASTTWOSUM
+  Accumulation method 3: FASTTWOSUM
+
+Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
+Max freq: 1.00 MHz (TIMING VIOLATION)
+Resource utilisation:
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
+	BRAMs: -1 (-0.03%)
+	DSPs: -1 (-0.01%)
+Perplexity: 9.80
 
 ============================================================
 Design: attention_fp
@@ -1483,13 +3069,13 @@ Design: attention_fp
   S_kv: 2048
   d_kq: 64
   d_v: 64
-  k1: 8
-  k2: 8
-  k3: 8
+  k1: 32
+  k2: 32
+  k3: 32
   scale_width: 8
-  M1 bits: E2M3
+  M1 bits: E3M7
   M2 bits: E5M10
-  M3 bits: E2M3
+  M3 bits: E3M7
   Accumulation method 1: KULISCH
   Accumulation method 2: KULISCH
   Accumulation method 3: KULISCH
@@ -1497,9 +3083,9 @@ Design: attention_fp
 Power: -2.00 W (Dynamic -1.00 W, Static -1.00 W)
 Max freq: 1.00 MHz (TIMING VIOLATION)
 Resource utilisation:
-	LUTs: 4,027,879.388920407 (156.47%)
-	FFs: 2,695,120.240616134 (52.35%)
+	LUTs: 7,944,935.591996367 (308.64%)
+	FFs: 2,675,448.714261708 (51.97%)
 	BRAMs: -1 (-0.03%)
 	DSPs: -1 (-0.01%)
-Perplexity: 10.08
+Perplexity: -1.00
 

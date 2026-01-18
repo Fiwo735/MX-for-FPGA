@@ -99,6 +99,8 @@ class AccumMethod(Enum):
   Klein = "KLEIN"
   TwoSum = "TWOSUM"
   FastTwoSum = "FASTTWOSUM"
+  Naive = "NAIVE"
+  Quant = "QUANT"
 
 class DesignConfig:
   def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k1=-1, k2=-1, k3=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
