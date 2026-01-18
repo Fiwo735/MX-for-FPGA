@@ -280,6 +280,29 @@ class DesignConfig:
       return False
     
     return True
+  
+    # designs_to_synthesise = [
+  #   DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #   for name in ["attention_fp"]
+  #   for S in [2048]
+  #   for d in [64]
+  #   for k1 in [64, 32]
+  #   for k2 in [32]
+  #   for k3 in [64, 32]
+  #   for scale_width in [8]
+  #   for M1_E, M1_M in [(2,3), (3,4), (4,3)]
+  #   for M2_E, M2_M in [(3,4), (4,3), (5,3)]
+  #   for M3_E, M3_M in [(2,3), (2,2), (3,2)]
+  #   for accum_method_1 in [AccumMethod.Kulisch]
+  #   for m1_dsp in ["auto"]
+  # ]
+  
+  def is_joint_ablation(self):
+    if self.M2_bits.exp_bits == 5 and self.M2_bits.mant_bits == 10:
+      return False
+    
+    return True
+ 
     
 
   def __repr__(self):
@@ -812,9 +835,30 @@ class SynthesisHandler:
       #   return
       
       # ABLATION: MIXED ACCUM
-      if (not design.is_baseline()) and (not design.is_mixed_accum_ablation()):
+      # if (not design.is_baseline()) and (not design.is_mixed_accum_ablation()):
+      #   if verbose:
+      #     print(f"Skipping result for {design} as it does not meet ablation check criteria.")
+      #   return
+      
+      # JOINT ABLATION:
+      if (not design.is_joint_ablation()):
         if verbose:
           print(f"Skipping result for {design} as it does not meet ablation check criteria.")
+        return
+      
+      if result.accuracy < 0:
+        if verbose:
+          print(f"Skipping result for {design} as accuracy could not be determined.")
+        return
+      
+      if result.accuracy > 12:
+        if verbose:
+          print(f"Skipping result for {design} as accuracy is too high.")
+        return
+      
+      if result.utilisation["LUTs"] > (2.5 * LUTS_BASELINE):
+        if verbose:
+          print(f"Skipping result for {design} as it exceeds FPGA resource limits.")
         return
 
     self.results.append(result)
@@ -971,8 +1015,8 @@ class SynthesisHandler:
     return pareto
 
   def plot_perplexity(self, directory="./plots", filename_suffix="", plot_file_format="svg"):
-    # color_values = np.array([r.design_config.get_total_bits() for r in self.results]) # BASELINE and ABLATION: MIXED PRECISION
-    color_values = np.array([r.design_config.get_total_k() for r in self.results]) # ABLATION: MIXED K
+    color_values = np.array([r.design_config.get_total_bits() for r in self.results]) # BASELINE and ABLATION: MIXED PRECISION
+    # color_values = np.array([r.design_config.get_total_k() for r in self.results]) # ABLATION: MIXED K
     # color_values = np.array([0, 1, 2, 3, 4, 5]) # ABLATION: MIXED ACCUM
 
     LUTs_mults = np.array(self.LUTs) / LUTS_BASELINE
@@ -1036,18 +1080,18 @@ class SynthesisHandler:
     }
     
     # ABLATION: BASELINE & MIXED PRECISION
-    # cmap = matplotlib.colormaps["viridis"].resampled(color_values.max() - color_values.min() + 1)
-    # bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
-    # norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+    cmap = matplotlib.colormaps["viridis"].resampled(color_values.max() - color_values.min() + 1)
+    bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
+    norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
     
-    # ABLATION: MIXED K
-    step = 16
-    vmin = int(np.floor(color_values.min() / step) * step)
-    vmax = int(np.ceil(color_values.max() / step) * step)
-    ticks = np.arange(vmin, vmax + 1, step)
-    bounds = np.concatenate(([ticks[0] - step / 2], (ticks[:-1] + ticks[1:]) / 2, [ticks[-1] + step / 2]))
-    norm = matplotlib.colors.BoundaryNorm(bounds, len(ticks))
-    cmap = matplotlib.colormaps["viridis"].resampled(len(ticks))
+    # # ABLATION: MIXED K
+    # step = 16
+    # vmin = int(np.floor(color_values.min() / step) * step)
+    # vmax = int(np.ceil(color_values.max() / step) * step)
+    # ticks = np.arange(vmin, vmax + 1, step)
+    # bounds = np.concatenate(([ticks[0] - step / 2], (ticks[:-1] + ticks[1:]) / 2, [ticks[-1] + step / 2]))
+    # norm = matplotlib.colors.BoundaryNorm(bounds, len(ticks))
+    # cmap = matplotlib.colormaps["viridis"].resampled(len(ticks))
     
     # ABLATION: MIXED ACCUM
 
@@ -1066,10 +1110,13 @@ class SynthesisHandler:
       
       # other_label = "Mixed precision" # ABLATION: MIXED PRECISION
       # other_label = "Mixed block size"        # ABLATION: MIXED K
-      other_label = "Mixed accumulation method"  # ABLATION: MIXED ACCUM
+      # other_label = "Mixed accumulation method"  # ABLATION: MIXED ACCUM
+      other_label = "New design" # JOINT ABLATION
       
-      label = "Baseline" if design.is_baseline() else other_label
-      marker = marker_map[design.is_baseline()]
+      # label = "Baseline" if design.is_baseline() else other_label # NO-JOINT ABLATION
+      label = other_label # JOINT ABLATION
+      # marker = marker_map[design.is_baseline()] # NO-JOINT ABLATION
+      marker = marker_map[False] # JOINT ABLATION
       
       ax.scatter(
         xi, yi,
@@ -1077,7 +1124,7 @@ class SynthesisHandler:
         alpha=1.0,
         s=120,
         marker=marker,
-        label=label
+        # label=label # NO-JOINT ABLATION
       )
       plotted_markers[label] = marker
 
@@ -1089,6 +1136,7 @@ class SynthesisHandler:
     # ax.set_ylim(bottom=9, top=35) # ABLATION: MIXED PRECISION ONLY
     # ax.set_ylim(bottom=9.75, top=11) # ABLATION: MIXED K
     # ax.set_ylim(bottom=9.75, top=15) # ABLATION: MIXED ACCUM
+    ax.set_ylim(bottom=9.7, top=11.2) # JOINT ABLATION
     
     
     ax.tick_params(axis='x', labelsize=16)
@@ -1098,11 +1146,11 @@ class SynthesisHandler:
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     if show_colorbar is True:
-      # cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(color_values.min(), color_values.max() + 1)) # BASELINE and ABLATION: MIXED PRECISION
-      cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=ticks) # ABLATION: MIXED K & ACCUM
-      # cbar.set_label("Combined bit widths across operators", fontsize=18) # BASELINE and ABLATION: MIXED PRECISION
+      cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(color_values.min(), color_values.max() + 1)) # BASELINE and ABLATION: MIXED PRECISION
+      # cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=ticks) # ABLATION: MIXED K & ACCUM
+      cbar.set_label("Combined bit widths across operators", fontsize=18) # BASELINE and ABLATION: MIXED PRECISION
       # cbar.set_label("Combined block sizes across operators", fontsize=18) # ABLATION: MIXED K
-      cbar.set_label("Accumulation method across operators", fontsize=18) # ABLATION: MIXED ACCUM
+      # cbar.set_label("Accumulation method across operators", fontsize=18) # ABLATION: MIXED ACCUM
       cbar.ax.tick_params(labelsize=16)
 
     handles, labels = ax.get_legend_handles_labels()
@@ -1525,10 +1573,10 @@ if __name__ == "__main__":
   
   # print(synthesis_handler)
   
-  pareto_point = synthesis_handler.find_pareto_optimal(weights={'LUTs': 1.0, 'FFs': 1.0, 'accuracy': 1.0})
+  pareto_point = synthesis_handler.find_pareto_optimal(weights={'LUTs': 1.0, 'FFs': 1.0, 'accuracy': 100.0})
   print(f"Pareto Optimal Design:\n{pareto_point}")
   
-  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="mixed_accum", plot_file_format="png")
+  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="joint", plot_file_format="png")
   
   
 
