@@ -487,7 +487,7 @@ class SynthesisHandler:
   
   def check_if_design_is_invalid(self, design):
     # All parameters must be >= 0
-    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k1, design.scale_width]:
+    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k, design.scale_width]:
       if param <= 0:
         return True
       
@@ -501,11 +501,11 @@ class SynthesisHandler:
         return True
       
     # d_kq and d_v must be divisible by k
-    if design.d_kq % design.k1 != 0 or design.d_v % design.k1 != 0:
+    if design.d_kq % design.k != 0 or design.d_v % design.k != 0:
       return True
       
     # S_kq and S_v must be divisible by k
-    if design.S_q % design.k1 != 0 or design.S_kv % design.k1 != 0:
+    if design.S_q % design.k != 0 or design.S_kv % design.k != 0:
       return True
     
     return False
@@ -1154,7 +1154,7 @@ class SynthesisHandler:
           formula += f"{coef:.10f} * {name} + "
           
       print(f"Fitted formula (terms with coef > {threshold:.3f}):")
-      # print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
+      print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
       print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
     
     with open(f"{self.pickle_dir}/fit_model_{y_type}_{pickle_suffix}.pkl", "wb") as f:
@@ -1340,13 +1340,13 @@ def calibrate_analytical_models(verbose):
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul")
   synthesis_handler.find_and_process_results(verbose=verbose)
   
-  # # print([d.S_q for d in synthesis_handler.designs])
+  # print([d.S_q for d in synthesis_handler.designs])
   
-  # matmul_fit_data = {
-  #   'S':     np.array([d.S_q for d in synthesis_handler.designs]),
-  #   'd':     np.array([d.d_kq for d in synthesis_handler.designs]),
-  #   '(E+M)': np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in synthesis_handler.designs])
-  # }
+  matmul_fit_data = {
+    'S':     np.array([d.S_q for d in synthesis_handler.designs]),
+    'd':     np.array([d.d_kq for d in synthesis_handler.designs]),
+    '(E+M)': np.array([d.M1_bits.exp_bits + d.M1_bits.mant_bits for d in synthesis_handler.designs])
+  }
 
   synthesis_handler.find_fit("LUTs", matmul_fit_data, degree=2, threshold=0, verbose=True, pickle_suffix="matmul")
   synthesis_handler.find_fit("FFs", matmul_fit_data, degree=2, threshold=0, verbose=True, pickle_suffix="matmul")
@@ -1356,19 +1356,19 @@ def calibrate_analytical_models(verbose):
   # synthesis_handler.find_fit_with_gplearn("LUTs", matmul_fit_data_gplearn,       population_size=5000, generations=20, parsimony_coefficient=0.0001)
   # synthesis_handler.find_fit_with_gplearn("FFs", matmul_fit_data_gplearn,        population_size=5000, generations=20, parsimony_coefficient=0.0001)
   
-  # # Analatical model: SOFTMAX 
-  # designs_to_synthesise = [
-  #   DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-  #   for name in ["mxint_softmax"]
-  #   for S in [4, 8, 16]
-  #   for d in [4, 8, 16]
-  #   # for k in [8]
-  #   for scale_width in [8]
-  #   for M1_E, M1_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
-  #   for M2_E, M2_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  # ]
+  # Analatical model: SOFTMAX 
+  designs_to_synthesise = [
+    DesignConfig(name, S, S, d, d, d, d, d, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    for name in ["mxint_softmax"]
+    for S in [4, 8, 16]
+    for d in [4, 8, 16]
+    # for k in [8]
+    for scale_width in [8]
+    for M1_E, M1_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for M2_E, M2_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    for accum_method_1 in [AccumMethod.Kulisch]
+    for m1_dsp in ["auto"]
+  ]
   
   synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax")
   synthesis_handler.find_and_process_results(verbose=verbose)
