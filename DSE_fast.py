@@ -96,6 +96,7 @@ class AccumMethod(Enum):
   Klein = "KLEIN"
   TwoSum = "TWOSUM"
   FastTwoSum = "FASTTWOSUM"
+  Naive = "QUANT"
 
 class DesignConfig:
   def __init__(self, name, S_q=-1, S_kv=-1, d_kq=-1, d_v=-1, k1=-1, k2=-1, k3=-1, scale_width=-1, M1_E=-1, M1_M=-1, M2_E=-1, M2_M=-1, M3_E=-1, M3_M=-1, accum_method1=AccumMethod.Kulisch, accum_method2=AccumMethod.Kulisch, accum_method3=AccumMethod.Kulisch, m1_dsp="yes", m2_dsp="yes", m3_dsp="yes"):
@@ -1152,7 +1153,7 @@ if __name__ == "__main__":
       # For w >= 10, use E5 (converging to FP16)
       return (5, w - 6)
 
-  GPUS = [0,1,2]
+  GPUS = [0,1,2,3]
   
   designs_to_synthesise = [
     DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
@@ -1163,10 +1164,10 @@ if __name__ == "__main__":
     for k2 in [32]
     for k3 in [32]
     for scale_width in [8]
-    for M1_E, M1_M in [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    for M1_E, M1_M in [(3,7), (5,5), (7,3)]
     for M2_E, M2_M in [(5, 10)]
     # for M3_E, M3_M in [(4, 3), (3, 4), (3, 2), (2, 3)]
-    for accum_method_1 in [AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
+    for accum_method_1 in [AccumMethod.Naive]
     for m1_dsp in ["auto"]
   ]
 
