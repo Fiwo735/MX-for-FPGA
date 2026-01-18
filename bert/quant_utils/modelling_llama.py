@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from transformers.models.llama.modeling_llama import LlamaAttention, Cache, logger, repeat_kv, apply_rotary_pos_emb
 
-from .quant_utils import q_reg
+from .quant_utils import q_reg, MXFPQuantizer
 from ordmm import ordmm_chunk_bcast_scaled, ordacc_chunk_scaled
 
 
@@ -128,7 +128,7 @@ class QuantLlamaAttention(nn.Module):
             key_states = self.k_quantizer(key_states)
             query_states = self.k_quantizer(query_states)
 
-            if self.sum_type_attn_s == 'KULISCH':
+            if (self.sum_type_attn_s == 'KULISCH') or (type(self.k_quantizer) != MXFPQuantizer):
                 attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
             else:
                 k_scale = self.k_quantizer.dynamic_scale(key_states)
@@ -145,6 +145,8 @@ class QuantLlamaAttention(nn.Module):
                     self.k_quantizer.group_size,
                     self.sum_type_attn_s
                 ) / math.sqrt(self.head_dim)
+        else:
+            attn_weights = torch.matmul(query_states, key_states.transpose(2, 3)) / math.sqrt(self.head_dim)
 
         # Quantize attention scores to arbitrary FP, no scales
         if hasattr(self, "s_quantizer"):
@@ -167,7 +169,7 @@ class QuantLlamaAttention(nn.Module):
         if hasattr(self, "v_quantizer"):
             exp_x = self.v_quantizer(exp_x)
 
-            if self.sum_type_smax == 'KULISCH':
+            if (self.sum_type_smax == 'KULISCH') or (type(self.v_quantizer) != MXFPQuantizer):
                 sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
             else:
                 e_scale = self.v_quantizer.dynamic_scale(exp_x)
@@ -180,6 +182,8 @@ class QuantLlamaAttention(nn.Module):
                     self.v_quantizer.group_size,
                     self.sum_type_smax
                 ).unsqueeze(-1)
+        else:
+            sum_exp_x = exp_x.sum(dim=-1, keepdim=True)
         # Step 4: normalize
         softmax_x = exp_x / sum_exp_x
         # Step 5: cast back
@@ -193,7 +197,7 @@ class QuantLlamaAttention(nn.Module):
             attn_weights = self.v_quantizer(attn_weights)
             value_states = self.v_quantizer(value_states.transpose(-1,-2)).transpose(-1,-2)
 
-            if self.sum_type_attn_o == 'KULISCH':
+            if (self.sum_type_attn_o == 'KULISCH') or (type(self.v_quantizer) != MXFPQuantizer):
                 attn_output = torch.matmul(attn_weights, value_states)
             else:
                 p_scale = self.v_quantizer.dynamic_scale(attn_weights)
@@ -211,6 +215,8 @@ class QuantLlamaAttention(nn.Module):
                     self.v_quantizer.group_size,
                     self.sum_type_attn_o
                 ).to(attn_weights.dtype)
+        else:
+            attn_output = torch.matmul(attn_weights, value_states)
 
         if attn_output.size() != (bsz, self.num_heads, q_len, self.head_dim):
             raise ValueError(

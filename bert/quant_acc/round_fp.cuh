@@ -2,6 +2,7 @@
 #define ROUNDING_FUNCTIONS_CUH
 
 #include <torch/extension.h>
+#include <stdint.h>
 
 __forceinline__ __device__ float round_rne_fp_full(float value, int man_width, int exp_width){
 
@@ -73,6 +74,35 @@ __forceinline__ __device__ float round_rne_fp_full(float value, int man_width, i
         // Reassemble the float
         return __int_as_float(sign | (exp << 23) | man);
     }
+}
+
+
+__forceinline__ __device__
+float round_rne_int(float value, int bit_width)
+{
+    // Degenerate cases
+    if (bit_width >= 24) {
+        return value;
+    }
+    if (bit_width <= 0) {
+        return 0.0f;
+    }
+
+    // Signed integer range for given bit width
+    const float max_val = float((1 << (bit_width - 1)) - 1);
+    const float min_val = -float(1 << (bit_width - 1));
+
+    // Clamp first to avoid NaNs during rounding
+    float clamped = fminf(fmaxf(value, min_val), max_val);
+
+    // Round-to-nearest-even
+    float rounded = nearbyintf(clamped);  // IEEE RNE on CUDA
+
+    // Final saturation (for safety)
+    if (rounded > max_val) return max_val;
+    if (rounded < min_val) return min_val;
+
+    return rounded;
 }
 
 
