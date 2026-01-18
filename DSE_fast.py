@@ -393,7 +393,7 @@ class SynthesisHandler:
   
   def check_if_design_is_invalid(self, design):
     # All parameters must be >= 0
-    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k, design.scale_width]:
+    for param in [design.S_q, design.S_kv, design.d_kq, design.d_v, design.k1, design.k2, design.k3, design.scale_width]:
       if param <= 0:
         return True
       
@@ -407,11 +407,27 @@ class SynthesisHandler:
         return True
       
     # d_kq and d_v must be divisible by k
-    if design.d_kq % design.k != 0 or design.d_v % design.k != 0:
+    if design.d_kq % design.k1 != 0 or design.d_v % design.k1 != 0:
       return True
       
     # S_kq and S_v must be divisible by k
-    if design.S_q % design.k != 0 or design.S_kv % design.k != 0:
+    if design.S_q % design.k1 != 0 or design.S_kv % design.k1 != 0:
+      return True
+
+    # d_kq and d_v must be divisible by k
+    if design.d_kq % design.k2 != 0 or design.d_v % design.k2 != 0:
+      return True
+      
+    # S_kq and S_v must be divisible by k
+    if design.S_q % design.k2 != 0 or design.S_kv % design.k2 != 0:
+      return True
+
+    # d_kq and d_v must be divisible by k
+    if design.d_kq % design.k3 != 0 or design.d_v % design.k3 != 0:
+      return True
+      
+    # S_kq and S_v must be divisible by k
+    if design.S_q % design.k3 != 0 or design.S_kv % design.k3 != 0:
       return True
     
     return False
@@ -1184,12 +1200,12 @@ if __name__ == "__main__":
   #   for S in [2048]
   #   for d in [64]
   #   for k1 in [64, 32]
-  #   for k2 in [64, 32]
+  #   for k2 in [32]
   #   for k3 in [64, 32]
   #   for scale_width in [8]
-  #   for M1_E, M1_M in [(2,3)]
-  #   for M2_E, M2_M in [(5,10)]
-  #   for M3_E, M3_M in [(2,3)]
+  #   for M1_E, M1_M in [(2,3), (3,4), (4,3)]
+  #   for M2_E, M2_M in [(3,4), (4,3), (5,3)]
+  #   for M3_E, M3_M in [(2,3), (2,2), (3,2)]
   #   # for M3_E, M3_M in [(4, 3), (3, 4), (3, 2), (2, 3)]
   #   for accum_method_1 in [AccumMethod.Kulisch]
   #   for m1_dsp in ["auto"]
@@ -1204,16 +1220,16 @@ if __name__ == "__main__":
   designs_to_synthesise = [
     DesignConfig(name, S, S, d, d, k, k, k, scale_width, M_E, M_M, M_E, M_M, M_E, M_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["matmul_fp"]
-    for S in [2, 4, 8, 16]
-    for d in [2, 4, 8, 16]
-    for k in [32,64]
+    for S in [2, 4, 8]
+    for d in [2, 4, 8]
+    for k in [2,4,8]
     for scale_width in [8]
     for M_E, M_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
 
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul", max_workers=args.max-workers)  
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_matmul", max_workers=16)  
   for i in range(50):
     synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
     print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")
@@ -1221,19 +1237,19 @@ if __name__ == "__main__":
   
   # Analatical model: SOFTMAX 
   designs_to_synthesise = [
-    DesignConfig(name, S, S, d, d, k, k, k, scale_width, M1_E, M1_M, M1_E, M1_M, M2_E, M2_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+    DesignConfig(name, S, S, d, d, k, k, k, scale_width, M1_E, M1_M, M1_E, M1_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
     for name in ["mxint_softmax"]
-    for S in [4, 8, 16]
-    for d in [4, 8, 16]
-    for k in [32,64]
+    for S in [2, 4, 8]
+    for d in [2, 4, 8]
+    for k in [2,4,8]
     for scale_width in [8]
     for M1_E, M1_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
-    for M2_E, M2_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
+    # for M2_E, M2_M in [(1, 1), (1, 2), (2, 2), (2, 3), (3, 3), (3, 4), (4, 4)]
     for accum_method_1 in [AccumMethod.Kulisch]
     for m1_dsp in ["auto"]
   ]
   
-  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax", max_workers=args.max-workers)
+  synthesis_handler = SynthesisHandler(designs_to_synthesise, synth_output_dir="synth_output_softmax", max_workers=16)
   for i in range(50):
     synthesis_handler.run_synthesis(dry_run=args.dry, verbose=args.verbose)
     print(f"========================================================\n========================================================\n========================================================\n SOFTMAX RUN {i}\n========================================================\n========================================================\n========================================================\n")

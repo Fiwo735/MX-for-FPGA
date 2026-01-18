@@ -79,12 +79,12 @@ puts "Time for write_checkpoint: [expr {($t3 - $t2) / 1000.0}] seconds"
 report_utilization      -file ${prefix}_util.rpt
 set t4 [clock milliseconds]
 puts "Time for report_utilization: [expr {($t4 - $t3) / 1000.0}] seconds"
-report_timing_summary   -datasheet -file ${prefix}_timing.rpt
-set t5 [clock milliseconds]
-puts "Time for report_timing_summary: [expr {($t5 - $t4) / 1000.0}] seconds"
-report_power            -file ${prefix}_power.rpt
-set t6 [clock milliseconds]
-puts "Time for report_power: [expr {($t6 - $t5) / 1000.0}] seconds"
+# report_timing_summary   -datasheet -file ${prefix}_timing.rpt
+# set t5 [clock milliseconds]
+# puts "Time for report_timing_summary: [expr {($t5 - $t4) / 1000.0}] seconds"
+# report_power            -file ${prefix}_power.rpt
+# set t6 [clock milliseconds]
+# puts "Time for report_power: [expr {($t6 - $t5) / 1000.0}] seconds"
 
 # opt_design
 # place_design
