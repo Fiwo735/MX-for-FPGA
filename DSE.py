@@ -182,8 +182,8 @@ class DesignConfig:
       self.d_kq == 64 and
       self.d_v == 64
     )
+    
   def is_baseline(self):
-      
     baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
     if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in baseline_e_m):
       return False
@@ -204,6 +204,21 @@ class DesignConfig:
   def is_mixed_precision_ablation(self):
     baseline_k = [32]
     if not any(self._check_all_k_are(k) for k in baseline_k):
+      return False
+    
+    baseline_accum_methods = [AccumMethod.Kulisch]
+    if not any(self._check_all_accum_methods_are(method) for method in baseline_accum_methods):
+      return False
+    
+    if not self._check_if_model_dims_are_baseline():
+      return False
+    
+    return True
+  
+  def is_mixed_k_ablation(self):
+    baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    # baseline_e_m = [(5, 2), (4, 3)]
+    if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in baseline_e_m):
       return False
     
     baseline_accum_methods = [AccumMethod.Kulisch]
@@ -727,16 +742,22 @@ class SynthesisHandler:
       
     if ablation_check:
       # BASELINE
-      if (not design.is_baseline()):
-        if verbose:
-          print(f"Skipping result for {design} as it does not meet ablation check criteria.")
-        return
+      # if (not design.is_baseline()):
+      #   if verbose:
+      #     print(f"Skipping result for {design} as it does not meet ablation check criteria.")
+      #   return
       
-      # ABLATION: MIXED PRECISION ONLY
+      # ABLATION: MIXED PRECISION
       # if (not design.is_baseline()) and (not design.is_mixed_precision_ablation()):
       #   if verbose:
       #     print(f"Skipping result for {design} as it does not meet ablation check criteria.")
       #   return
+      
+      # ABLATION: MIXED K
+      if (not design.is_baseline()) and (not design.is_mixed_k_ablation()):
+        if verbose:
+          print(f"Skipping result for {design} as it does not meet ablation check criteria.")
+        return
 
     self.results.append(result)
       
@@ -969,7 +990,10 @@ class SynthesisHandler:
       # label = f"{accum_method.capitalize()}"
       # marker = marker_map.get(accum_method, "s")
       
-      label = "Baseline" if design.is_baseline() else "Mixed precision"
+      # other_label = "Mixed precision" # ABLATION: MIXED PRECISION
+      other_label = "Mixed block size"        # ABLATION: MIXED K
+      
+      label = "Baseline" if design.is_baseline() else other_label
       marker = marker_map[design.is_baseline()]
       
       ax.scatter(
@@ -982,14 +1006,17 @@ class SynthesisHandler:
       )
       plotted_markers[label] = marker
 
-    ax.set_title(title, fontsize=18)
-    ax.set_xlabel(xlabel, fontsize=14)
-    ax.set_ylabel(ylabel, fontsize=14)
+    ax.set_title(title, fontsize=20)
+    ax.set_xlabel(xlabel, fontsize=18)
+    ax.set_ylabel(ylabel, fontsize=18)
     
-    # ax.set_ylim(bottom=9, top=18)
+    # ax.set_ylim(bottom=9, top=18) # BASELINE
+    # ax.set_ylim(bottom=9, top=35) # ABLATION: MIXED PRECISION ONLY
+    ax.set_ylim(bottom=9, top=18) # ABLATION: MIXED K
     
-    ax.tick_params(axis='x', labelsize=12)
-    ax.tick_params(axis='y', labelsize=12)
+    
+    ax.tick_params(axis='x', labelsize=16)
+    ax.tick_params(axis='y', labelsize=16)
     ax.grid(True)
     
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
@@ -997,8 +1024,8 @@ class SynthesisHandler:
     if show_colorbar is True:
       cbar = plt.colorbar(sm, ax=ax, boundaries=bounds,
                           ticks=np.arange(color_values.min(), color_values.max() + 1))
-      cbar.set_label("Combined bit widths across operators", fontsize=14)
-      cbar.ax.tick_params(labelsize=12)
+      cbar.set_label("Combined bit widths across operators", fontsize=18)
+      cbar.ax.tick_params(labelsize=16)
 
     handles, labels = ax.get_legend_handles_labels()
     unique_labels = list(dict.fromkeys(labels))
@@ -1412,12 +1439,12 @@ if __name__ == "__main__":
   synthesis_handler = SynthesisHandler([], synth_output_dir="synth_output")
   synthesis_handler.find_and_process_results(report_filter="accuracy", predict_resources=True, ablation_check=True, verbose=args.verbose)
   
-  # print(synthesis_handler)
+  print(synthesis_handler)
   
   pareto_point = synthesis_handler.find_pareto_optimal(weights={'LUTs': 1.0, 'FFs': 1.0, 'accuracy': 1.0})
   print(f"Pareto Optimal Design:\n{pareto_point}")
   
-  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="", plot_file_format="png")
+  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="mixed_k", plot_file_format="png")
   
   
 
