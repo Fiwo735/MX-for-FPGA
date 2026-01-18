@@ -24,7 +24,7 @@ from deap import base, creator, tools, algorithms
 
 DEBUG_COUNTER = 0
 
-LUTS_BASELINE = 8364022 # TODO
+LUTS_BASELINE = 11874317 # TODO
 FFS_BASELINE = 2592801 # TODO
 
 def gplearn_expr_to_math(expr):
@@ -189,7 +189,8 @@ class DesignConfig:
     )
     
   def is_baseline(self):
-    baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)] #  ABLATION: BASELINE & MIXED PRECISION
+    # baseline_e_m = [(5, 2), (4, 3), (3, 2), (2, 3)] # ABLATION: MIXED K
     if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in baseline_e_m):
       return False
     
@@ -218,6 +219,15 @@ class DesignConfig:
     if not self._check_if_model_dims_are_baseline():
       return False
     
+    if self.M1_bits.exp_bits + self.M1_bits.mant_bits > 7:
+      return False
+    
+    if self.M2_bits.exp_bits + self.M2_bits.mant_bits > 7:
+      return False
+    
+    if self.M3_bits.exp_bits + self.M3_bits.mant_bits > 7:
+      return False
+    
     return True
   
   def is_mixed_k_ablation(self):
@@ -225,6 +235,16 @@ class DesignConfig:
     baseline_e_m = [(2,3)]
     if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in baseline_e_m):
       return False
+    
+    # Only check for certain k values
+    allowed_k = [16, 32, 64]
+    if self.k1 not in allowed_k:
+      return False
+    if self.k2 not in allowed_k:
+      return False
+    if self.k3 not in allowed_k:
+      return False
+    
     
     baseline_accum_methods = [AccumMethod.Kulisch]
     if not any(self._check_all_accum_methods_are(method) for method in baseline_accum_methods):
@@ -234,6 +254,33 @@ class DesignConfig:
       return False
     
     return True
+  
+  # designs_to_synthesise = [
+  #   DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
+  #   for name in ["attention_fp"]
+  #   for S in [2048]
+  #   for d in [64]
+  #   for k1 in [32]
+  #   for k2 in [32]
+  #   for k3 in [32]
+  #   for scale_width in [8]
+  #   for M1_E, M1_M in [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+  #   for M2_E, M2_M in [(5, 10)]
+  #   for accum_method_1 in [AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
+  #   for m1_dsp in ["auto"]
+  # ]
+  
+  def is_mixed_accum_ablation(self):
+    baseline_k = [32]
+    if not any(self._check_all_k_are(k) for k in baseline_k):
+      return False
+    
+    e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in e_m):
+      return False
+    
+    return True
+    
 
   def __repr__(self):
     return (
@@ -759,7 +806,13 @@ class SynthesisHandler:
       #   return
       
       # ABLATION: MIXED K
-      if (not design.is_baseline()) and (not design.is_mixed_k_ablation()):
+      # if (not design.is_baseline()) and (not design.is_mixed_k_ablation()):
+      #   if verbose:
+      #     print(f"Skipping result for {design} as it does not meet ablation check criteria.")
+      #   return
+      
+      # ABLATION: MIXED ACCUM
+      if (not design.is_baseline()) and (not design.is_mixed_accum_ablation()):
         if verbose:
           print(f"Skipping result for {design} as it does not meet ablation check criteria.")
         return
@@ -918,8 +971,9 @@ class SynthesisHandler:
     return pareto
 
   def plot_perplexity(self, directory="./plots", filename_suffix="", plot_file_format="svg"):
-    # color_values = np.array([r.design_config.get_total_bits() for r in self.results])
+    # color_values = np.array([r.design_config.get_total_bits() for r in self.results]) # BASELINE and ABLATION: MIXED PRECISION
     color_values = np.array([r.design_config.get_total_k() for r in self.results]) # ABLATION: MIXED K
+    # color_values = np.array([0, 1, 2, 3, 4, 5]) # ABLATION: MIXED ACCUM
 
     LUTs_mults = np.array(self.LUTs) / LUTS_BASELINE
     FFs_mults = np.array(self.FFs) / FFS_BASELINE
@@ -981,10 +1035,24 @@ class SynthesisHandler:
       False: "s",  # new
     }
     
+    # ABLATION: BASELINE & MIXED PRECISION
+    # cmap = matplotlib.colormaps["viridis"].resampled(color_values.max() - color_values.min() + 1)
+    # bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
+    # norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+    
+    # ABLATION: MIXED K
+    step = 16
+    vmin = int(np.floor(color_values.min() / step) * step)
+    vmax = int(np.ceil(color_values.max() / step) * step)
+    ticks = np.arange(vmin, vmax + 1, step)
+    bounds = np.concatenate(([ticks[0] - step / 2], (ticks[:-1] + ticks[1:]) / 2, [ticks[-1] + step / 2]))
+    norm = matplotlib.colors.BoundaryNorm(bounds, len(ticks))
+    cmap = matplotlib.colormaps["viridis"].resampled(len(ticks))
+    
+    # ABLATION: MIXED ACCUM
 
-    cmap = matplotlib.colormaps["viridis"].resampled(color_values.max() - color_values.min() + 1)
-    bounds = np.arange(color_values.min() - 0.5, color_values.max() + 1.5, 1)
-    norm = matplotlib.colors.BoundaryNorm(bounds, cmap.N)
+    
+
 
     # figsize = (7, 6) if show_colorbar else (6, 6)
     # fig, ax = plt.subplots(figsize=figsize)
@@ -997,7 +1065,8 @@ class SynthesisHandler:
       # marker = marker_map.get(accum_method, "s")
       
       # other_label = "Mixed precision" # ABLATION: MIXED PRECISION
-      other_label = "Mixed block size"        # ABLATION: MIXED K
+      # other_label = "Mixed block size"        # ABLATION: MIXED K
+      other_label = "Mixed accumulation method"  # ABLATION: MIXED ACCUM
       
       label = "Baseline" if design.is_baseline() else other_label
       marker = marker_map[design.is_baseline()]
@@ -1018,7 +1087,8 @@ class SynthesisHandler:
     
     # ax.set_ylim(bottom=9, top=18) # BASELINE
     # ax.set_ylim(bottom=9, top=35) # ABLATION: MIXED PRECISION ONLY
-    ax.set_ylim(bottom=9, top=11) # ABLATION: MIXED K
+    # ax.set_ylim(bottom=9.75, top=11) # ABLATION: MIXED K
+    # ax.set_ylim(bottom=9.75, top=15) # ABLATION: MIXED ACCUM
     
     
     ax.tick_params(axis='x', labelsize=16)
@@ -1028,9 +1098,11 @@ class SynthesisHandler:
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     if show_colorbar is True:
-      cbar = plt.colorbar(sm, ax=ax, boundaries=bounds,
-                          ticks=np.arange(color_values.min(), color_values.max() + 1))
-      cbar.set_label("Combined bit widths across operators", fontsize=18)
+      # cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=np.arange(color_values.min(), color_values.max() + 1)) # BASELINE and ABLATION: MIXED PRECISION
+      cbar = plt.colorbar(sm, ax=ax, boundaries=bounds, ticks=ticks) # ABLATION: MIXED K & ACCUM
+      # cbar.set_label("Combined bit widths across operators", fontsize=18) # BASELINE and ABLATION: MIXED PRECISION
+      # cbar.set_label("Combined block sizes across operators", fontsize=18) # ABLATION: MIXED K
+      cbar.set_label("Accumulation method across operators", fontsize=18) # ABLATION: MIXED ACCUM
       cbar.ax.tick_params(labelsize=16)
 
     handles, labels = ax.get_legend_handles_labels()
@@ -1300,13 +1372,19 @@ def predict_synthesis_results(pickle_dir, y_type, dc, normalise_S_q=False):
     model_softmax, poly_softmax, feature_names_softmax = load_pickled_model(f"fit_model_{y_type}_softmax.pkl")
     
     # Normalisation scale
-    div_value = dc.S_q if normalise_S_q else 1.0
+    S_q_div_value = dc.S_q if normalise_S_q else 1.0
+    k_learned_as = 64  # During model training, k was fixed at 64
+    k1_div = (dc.k1 / k_learned_as)**2 if y_type == "LUTs" else 1.0
+    k2_div = 1.0 
+    k3_div = (dc.k3 / k_learned_as)**2 if y_type == "LUTs" else 1.0
+    
+    # matmul: if k is increased by 2 then FFs are the same but LUTs decrease by 2 while perplexity is worse (grows)
     
     # Matmul 1 => y(S_q, d_kq, S_kv, (E1+M1))
     # x_matmul1 = np.array([[dc.S_q, dc.d_kq, dc.S_kv, dc.M1_bits.exp_bits + dc.M1_bits.mant_bits]])
     x_matmul1 = np.array([[dc.S_q, dc.d_kq, dc.M1_bits.exp_bits + dc.M1_bits.mant_bits]])
     # x_matmul1 = np.array([[dc.d_kq, dc.S_kv, dc.M1_bits.exp_bits + dc.M1_bits.mant_bits]])
-    y_matmul1 = predict(x_matmul1, poly_matmul, model_matmul, feature_names_matmul)[0] / div_value
+    y_matmul1 = (predict(x_matmul1, poly_matmul, model_matmul, feature_names_matmul)[0] / S_q_div_value) / k1_div
     # print(f"Matmul1 prediction: {y_matmul1}")
     
     # Softmax => y(k2, (E2+M2), (E3+M3))
@@ -1318,11 +1396,11 @@ def predict_synthesis_results(pickle_dir, y_type, dc, normalise_S_q=False):
     # x_matmul2 = np.array([[dc.S_q, dc.S_kv, dc.d_v, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
     x_matmul2 = np.array([[dc.S_q, dc.S_kv, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
     # x_matmul2 = np.array([[dc.S_kv, dc.d_v, dc.M3_bits.exp_bits + dc.M3_bits.mant_bits]])
-    y_matmul2 = predict(x_matmul2, poly_matmul, model_matmul, feature_names_matmul)[0] / div_value
+    y_matmul2 = (predict(x_matmul2, poly_matmul, model_matmul, feature_names_matmul)[0] / S_q_div_value) / k3_div
     # print(f"Matmul2 prediction: {y_matmul2}")
     
     if y_type in ["LUTs", "FFs"]:
-      softmax_parallelism = dc.S_q * dc.S_kv // dc.k2 / div_value
+      softmax_parallelism = (dc.S_q * dc.S_kv // dc.k2 / S_q_div_value) / k2_div
       prediction = y_matmul1 + softmax_parallelism * y_softmax + y_matmul2
     else:
       raise ValueError(f"Unknown y_type: {y_type}")
@@ -1445,12 +1523,12 @@ if __name__ == "__main__":
   synthesis_handler = SynthesisHandler([], synth_output_dir="synth_output")
   synthesis_handler.find_and_process_results(report_filter="accuracy", predict_resources=True, ablation_check=True, verbose=args.verbose)
   
-  print(synthesis_handler)
+  # print(synthesis_handler)
   
   pareto_point = synthesis_handler.find_pareto_optimal(weights={'LUTs': 1.0, 'FFs': 1.0, 'accuracy': 1.0})
   print(f"Pareto Optimal Design:\n{pareto_point}")
   
-  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="mixed_k", plot_file_format="png")
+  synthesis_handler.plot_perplexity(directory="./plots", filename_suffix="mixed_accum", plot_file_format="png")
   
   
 
