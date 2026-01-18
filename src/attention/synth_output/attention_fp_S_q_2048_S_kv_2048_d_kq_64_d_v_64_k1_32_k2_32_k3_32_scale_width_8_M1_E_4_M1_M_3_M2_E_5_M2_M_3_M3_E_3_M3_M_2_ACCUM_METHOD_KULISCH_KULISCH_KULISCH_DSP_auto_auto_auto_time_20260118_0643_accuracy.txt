@@ -20,3 +20,5 @@ Replaced model.layers.15.self_attn with quantized attention.
 Model patched with quantized attention. Total replacements: 48 quantizers found.
 Model has 1,498,482,688 parameters
 Validation samples: 141
+
+Perplexity: 10.02
