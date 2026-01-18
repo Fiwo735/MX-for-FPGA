@@ -1232,7 +1232,7 @@ class SynthesisHandler:
           formula += f"{coef:.10f} * {name} + "
           
       print(f"Fitted formula (terms with coef > {threshold:.3f}):")
-      print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
+      # print(f"\ty({', '.join(list(data.keys()))}) = {formula.rstrip(" + ")} + {model.intercept_:.2f}")
       print(f"\tR² score: {model.score(X_poly, y):.4f}\n")
     
     with open(f"{self.pickle_dir}/fit_model_{y_type}_{pickle_suffix}.pkl", "wb") as f:
