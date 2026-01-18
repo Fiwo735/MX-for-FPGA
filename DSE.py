@@ -133,7 +133,10 @@ class DesignConfig:
       (self.M2_bits.exp_bits + self.M2_bits.mant_bits) +
       (self.M3_bits.exp_bits + self.M3_bits.mant_bits)
     )
-    
+  
+  def get_total_k(self):
+    return self.k1 + self.k2 + self.k3
+  
   def get_bert_flags(self):
     out = "--model_id 'meta-llama/Llama-3.2-1B' "
 
@@ -218,8 +221,8 @@ class DesignConfig:
     return True
   
   def is_mixed_k_ablation(self):
-    baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
-    # baseline_e_m = [(5, 2), (4, 3)]
+    # baseline_e_m = [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
+    baseline_e_m = [(2,3)]
     if not any(self._check_all_widths_are(e, m, 5, 10) for e, m in baseline_e_m):
       return False
     
@@ -915,7 +918,8 @@ class SynthesisHandler:
     return pareto
 
   def plot_perplexity(self, directory="./plots", filename_suffix="", plot_file_format="svg"):
-    color_values = np.array([r.design_config.get_total_bits() for r in self.results])
+    # color_values = np.array([r.design_config.get_total_bits() for r in self.results])
+    color_values = np.array([r.design_config.get_total_k() for r in self.results]) # ABLATION: MIXED K
 
     LUTs_mults = np.array(self.LUTs) / LUTS_BASELINE
     FFs_mults = np.array(self.FFs) / FFS_BASELINE
@@ -1014,7 +1018,7 @@ class SynthesisHandler:
     
     # ax.set_ylim(bottom=9, top=18) # BASELINE
     # ax.set_ylim(bottom=9, top=35) # ABLATION: MIXED PRECISION ONLY
-    ax.set_ylim(bottom=9, top=18) # ABLATION: MIXED K
+    ax.set_ylim(bottom=9, top=11) # ABLATION: MIXED K
     
     
     ax.tick_params(axis='x', labelsize=16)
