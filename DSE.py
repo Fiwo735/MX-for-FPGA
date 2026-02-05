@@ -4,7 +4,6 @@ import re
 import subprocess
 import time
 import copy
-import itertools
 import random
 import time
 import pickle
@@ -12,7 +11,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
 from enum import Enum
 from datetime import datetime
 from argparse import ArgumentParser
@@ -22,10 +20,8 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from gplearn.genetic import SymbolicRegressor
 from deap import base, creator, tools, algorithms
 
-DEBUG_COUNTER = 0
-
-LUTS_BASELINE = 11874317 # TODO
-FFS_BASELINE = 2592801 # TODO
+LUTS_BASELINE = 11874317
+FFS_BASELINE = 2592801
 
 def gplearn_expr_to_math(expr):
     """
@@ -137,7 +133,7 @@ class DesignConfig:
   def get_total_k(self):
     return self.k1 + self.k2 + self.k3
   
-  def get_bert_flags(self):
+  def get_quant_flags(self):
     out = "--model_id 'meta-llama/Llama-3.2-1B' "
 
     if self.M1_bits.exp_bits == 0:
@@ -712,7 +708,6 @@ class SynthesisHandler:
     return results
   
   def _read_accuracy_report(self, file_path, verbose):
-    global DEBUG_COUNTER
     try:
       with open(file_path, 'r') as file:
         text = file.read()
@@ -755,7 +750,7 @@ class SynthesisHandler:
       
   
   def _generate_accuracy_report(self, design, accuracy_report_path):
-    accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u bert/llama_ppl.py {design.get_bert_flags()}"
+    accuracy_cmd = f"CUDA_VISIBLE_DEVICES=1 python -u quant/llama_ppl.py {design.get_quant_flags()}"
     print(accuracy_cmd)
 
     try:

@@ -13,8 +13,8 @@ attention_test
 src/attention/attention_int/synth_output
 *.pb
 .gen
-bert/quant_acc/build
-bert/quant_acc/*.egg-info
+quant/quant_acc/build
+quant/quant_acc/*.egg-info
 
 # Vivado Generated Files
 *.jou

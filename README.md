@@ -22,7 +22,7 @@ First time:
 MX-for-FPGA:~$ python3 -m venv venv
 MX-for-FPGA:~$ source venv/bin/activate
 MX-for-FPGA:~$ pip install -r requirements.txt
-MX-for-FPGA:~$ python DSE.py
+MX-for-FPGA:~$ python DSE.py --verbose
 ```
 
 Afterwards:
@@ -42,5 +42,3 @@ Check XXXXXXX process status:
 ```
 MX-for-FPGA:~$ ps -fp XXXXXXX
 ```
-
-1741603
