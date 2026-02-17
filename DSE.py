@@ -251,21 +251,6 @@ class DesignConfig:
     
     return True
   
-  # designs_to_synthesise = [
-  #   DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M1_E, M1_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-  #   for name in ["attention_fp"]
-  #   for S in [2048]
-  #   for d in [64]
-  #   for k1 in [32]
-  #   for k2 in [32]
-  #   for k3 in [32]
-  #   for scale_width in [8]
-  #   for M1_E, M1_M in [(0, 8), (5, 2), (4, 3), (3, 2), (2, 3), (2, 1)]
-  #   for M2_E, M2_M in [(5, 10)]
-  #   for accum_method_1 in [AccumMethod.Kahan, AccumMethod.Neumaier, AccumMethod.Klein, AccumMethod.TwoSum, AccumMethod.FastTwoSum]
-  #   for m1_dsp in ["auto"]
-  # ]
-  
   def is_mixed_accum_ablation(self):
     baseline_k = [32]
     if not any(self._check_all_k_are(k) for k in baseline_k):
@@ -277,29 +262,11 @@ class DesignConfig:
     
     return True
   
-    # designs_to_synthesise = [
-  #   DesignConfig(name, S, S, d, d, k1, k2, k3, scale_width, M1_E, M1_M, M2_E, M2_M, M3_E, M3_M, accum_method_1, accum_method_1, accum_method_1, m1_dsp, m1_dsp, m1_dsp)
-  #   for name in ["attention_fp"]
-  #   for S in [2048]
-  #   for d in [64]
-  #   for k1 in [64, 32]
-  #   for k2 in [32]
-  #   for k3 in [64, 32]
-  #   for scale_width in [8]
-  #   for M1_E, M1_M in [(2,3), (3,4), (4,3)]
-  #   for M2_E, M2_M in [(3,4), (4,3), (5,3)]
-  #   for M3_E, M3_M in [(2,3), (2,2), (3,2)]
-  #   for accum_method_1 in [AccumMethod.Kulisch]
-  #   for m1_dsp in ["auto"]
-  # ]
-  
   def is_joint_ablation(self):
     if self.M2_bits.exp_bits == 5 and self.M2_bits.mant_bits == 10:
       return False
     
     return True
- 
-    
 
   def __repr__(self):
     return (
@@ -907,16 +874,10 @@ class SynthesisHandler:
     
     if ablation_check:
       print(f"Ablation check enabled, total valid results found: {len(self.results)}")
-      # for r in self.results:
-      #   print(r.design_config)
-    
+      
     self.designs = [r.design_config for r in self.results]
     self.powers = [r.power['total'] for r in self.results]
     self.resource_usages = [r.get_aggregated_resource_usage() for r in self.results]
-    # self.LUTs = [r.get_aggregated_resource_usage(["LUTs"]) for r in self.results]
-    # self.FFs = [r.get_aggregated_resource_usage(["FFs"]) for r in self.results]
-    # self.BRAMs = [r.get_aggregated_resource_usage(["BRAMs"]) for r in self.results]
-    # self.DSPs = [r.get_aggregated_resource_usage(["DSPs"]) for r in self.results]
     self.LUTs = [r.utilisation["LUTs"] for r in self.results]
     self.FFs = [r.utilisation["FFs"] for r in self.results]
     self.BRAMs = [r.utilisation["BRAMs"] for r in self.results]
@@ -926,9 +887,6 @@ class SynthesisHandler:
   def find_pareto_optimal(self, weights):
     if not self.results:
       raise ValueError("No synthesis results available to find Pareto optimal solution.")
-    
-    # ideal_result = SynthesisResult.create_ideal_result(self.results)
-    # print(f"Ideal Result:\n{ideal_result}")
     
     # Normalise results based on the ideal result
     results_normalised = SynthesisResult.normalise_results(self.results)
@@ -941,14 +899,6 @@ class SynthesisHandler:
     best_index = 0
     
     for index, result in enumerate(results_normalised):
-      # Compute aggregated resource metric (for plotting)
-      # actual_res_usage = result.get_aggregated_resource_usage()
-      # ideal_res_usage = ideal_result_normalised.get_aggregated_resource_usage()
-
-      # resource_diff = (actual_res_usage - ideal_res_usage) ** 2
-      # # power_diff = (result.power['total'] - ideal_result_normalised.power['total']) ** 2
-      # timing_diff = (result.timing['max_freq'] - ideal_result_normalised.timing['max_freq']) ** 2
-      
       actual_LUTs = result.utilisation["LUTs"]
       ideal_LUTs = ideal_result_normalised.utilisation["LUTs"]
       LUTs_diff = (actual_LUTs - ideal_LUTs) ** 2
@@ -962,9 +912,7 @@ class SynthesisHandler:
         FFs_diff * weights['FFs'] +
         accuracy_diff * weights['accuracy']
       ) ** 0.5
-      
-      # print(f"Distance for {result.design_config}): {distance:.4f}")
-      
+
       if distance < best_distance:
         best_index = index
         best_distance = distance
@@ -1020,7 +968,7 @@ class SynthesisHandler:
     # Create a single figure with two subplots
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6), sharey=True, gridspec_kw={'width_ratios': [8, 10]})
     
-    _, _, sm1 = self._plot(
+    self._plot(
       fig=fig,
       ax=ax1,
       x=LUTs_mults,
@@ -1030,12 +978,10 @@ class SynthesisHandler:
       ylabel="Perplexity",
       title=f"Perplexity vs LUTs",
       resource="LUTs",
-      filename=f"perplexity_vs_LUTs.{plot_file_format}",
-      directory=directory,
       show_colorbar=False
     )
     
-    _, _, sm1 = self._plot(
+    self._plot(
       fig=fig,
       ax=ax2,
       x=FFs_mults,
@@ -1045,8 +991,6 @@ class SynthesisHandler:
       ylabel="Perplexity",
       title=f"Perplexity vs FFs",
       resource="FFs",
-      filename=f"perplexity_vs_FFs.{plot_file_format}",
-      directory=directory,
       show_colorbar=True
     )
     
@@ -1054,20 +998,8 @@ class SynthesisHandler:
     fig.tight_layout()
     fig.savefig(os.path.join(directory, f"perplexity_combined_{filename_suffix}.{plot_file_format}"))
 
-  def _plot(self, fig, ax, x, y, color_values, xlabel, ylabel, title, resource, filename, directory,
-          do_pareto_front=True, do_pareto_optimal=True, do_best_fit_line=False,
-          show_colorbar=True):
-    
-    # Differentiate designs by block_size k
-    # marker_map = {
-    #   "KULISCH": "o",
-    #   "KAHAN": "^",
-    #   "TWOSUM": "s",
-    #   "FASTTWOSUM": "D",
-    #   "NEUMAIER": "P",
-    #   "KLEIN": "X",
-    #   "NAIVE": "v",
-    # }
+  def _plot(self, fig, ax, x, y, color_values, xlabel, ylabel, title, resource,
+            do_pareto_front=True, do_pareto_optimal=True, show_colorbar=True):
     
     marker_map = {
       True: "o",   # baseline
@@ -1088,21 +1020,9 @@ class SynthesisHandler:
     # norm = matplotlib.colors.BoundaryNorm(bounds, len(ticks))
     # cmap = matplotlib.colormaps["viridis"].resampled(len(ticks))
     
-    # ABLATION: MIXED ACCUM
-
-    
-
-
-    # figsize = (7, 6) if show_colorbar else (6, 6)
-    # fig, ax = plt.subplots(figsize=figsize)
     plotted_markers = {}
 
     for design, xi, yi, cval in zip(self.designs, x, y, color_values):
-      
-      # accum_method = design.accum_method1.value
-      # label = f"{accum_method.capitalize()}"
-      # marker = marker_map.get(accum_method, "s")
-      
       # other_label = "Mixed precision" # ABLATION: MIXED PRECISION
       # other_label = "Mixed block size"        # ABLATION: MIXED K
       # other_label = "Mixed accumulation method"  # ABLATION: MIXED ACCUM
@@ -1176,16 +1096,7 @@ class SynthesisHandler:
       # Compute X and Y of the pareto optimal point for this plot
       baseline = LUTS_BASELINE if resource == "LUTs" else FFS_BASELINE
       x_val = self.pareto_optimal.utilisation[resource] / baseline
-      # if xlabel.startswith("Resource"):
-      #   x_val = self.pareto_optimal.get_aggregated_resource_usage()
-      # else:
-      #   x_val = self.pareto_optimal.timing["max_freq"]
-
       y_val = self.pareto_optimal.accuracy
-      # if ylabel.startswith("Power"):
-        # y_val = self.pareto_optimal.power["total"]
-      # else:
-      #   y_val = self.pareto_optimal.timing["max_freq"]
 
       radius_coeff = 0.04
       radius_x = radius_coeff * (ax.get_xlim()[1] - ax.get_xlim()[0])
@@ -1215,28 +1126,6 @@ class SynthesisHandler:
       
       black_handles += [ellipse_legend]
       unique_labels += ["Optimal*"]
-      
-    # # === Plot best fit line (linear regression) ===
-    # if do_best_fit_line and len(x) > 1:
-    #   # Fit
-    #   coeffs = np.polyfit(x, y, 1)
-    #   fit_x = np.linspace(min(x), max(x), 100)
-    #   fit_y = np.polyval(coeffs, fit_x)
-
-    #   # Compute R^2
-    #   y_mean = np.mean(y)
-    #   ss_tot = np.sum((y - y_mean) ** 2)
-    #   ss_res = np.sum((y - np.polyval(coeffs, x)) ** 2)
-    #   r2 = 1 - (ss_res / ss_tot)
-
-    #   # Plot the line
-    #   ax.plot(fit_x, fit_y, color="gray", linestyle="dashdot", linewidth=1.3)
-
-    #   # Create a custom handle with R² in label
-    #   best_fit_label = f"Fit, R$^2$ = {r2:.3f}"
-    #   best_fit_handle = plt.Line2D([], [], color="gray", linestyle="dashdot", linewidth=1.3, label=best_fit_label)
-    #   black_handles += [best_fit_handle]
-    #   unique_labels += [best_fit_label]
 
     if not show_colorbar:
       ax.legend().set_visible(False)
@@ -1244,8 +1133,6 @@ class SynthesisHandler:
       ax.legend(black_handles, unique_labels, fontsize=14)
 
     fig.tight_layout()
-    # fig.savefig(os.path.join(directory, filename))
-    return fig, ax, sm
     
   def find_fit(self, y_type, data, degree=2, threshold=1e-3, verbose=True, pickle_suffix=""):
     # # Create a DataFrame from design parameters
