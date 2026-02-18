@@ -29,3 +29,5 @@ src/attention/synth_output_int/
 src/attention/synth_output_fp/
 *.tmp
 *.backup
+
+__pycache__

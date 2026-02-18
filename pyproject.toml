@@ -1,0 +1,8 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "A-PACE"
+version = "0.1.0"
+dependencies = []
