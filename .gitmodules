@@ -1,0 +1,4 @@
+[submodule "src/mase"]
+	path = src/mase
+	url = https://github.com/DeepWok/mase.git
+	branch = cx/IntViT

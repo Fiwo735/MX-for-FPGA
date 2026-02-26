@@ -81,7 +81,11 @@ read_verilog    [glob ./src/util/accum/fasttwosum/*.sv]
 read_verilog    [glob ./src/util/accum/neumaier/*.sv]
 read_verilog    [glob ./src/util/accum/klein/*.sv]
 read_verilog    [glob ./src/attention/mxoperators/*.sv]
-read_verilog    [glob ./src/attention/mxoperators/lib/*.sv]
+read_verilog    [glob ./src/mase/src/mase_components/linear_layers/mxint_operators/rtl/*.sv]
+read_verilog    [glob ./src/mase/src/mase_components/memory/rtl/*.sv]
+read_verilog    [glob ./src/mase/src/mase_components/common/rtl/*.sv]
+read_verilog    [glob ./src/mase/src/mase_components/cast/rtl/*.sv]
+read_verilog    [glob ./src/mase/src/mase_components/scalar_operators/fixed/rtl/*.sv]
 read_xdc        [ glob ./src/*.xdc ]
 
 # Synthesis
